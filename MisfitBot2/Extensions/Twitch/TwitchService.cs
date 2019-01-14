@@ -1,0 +1,159 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using TwitchLib.Client.Interfaces;
+using TwitchLib.Api.Interfaces;
+using TwitchLib.Client.Events;
+using TwitchLib.Api;
+using TwitchLib.Client.Models;
+using TwitchLib.Client;
+using MisfitBot2;
+using Discord;
+using System.Threading.Tasks;
+using Discord.WebSocket;
+using MisfitBot2.Twitch;
+
+namespace MisfitBot2.Services
+{
+    public class TwitchService
+    {
+        private readonly string PLUGINNAME = "TwitchService";
+        private int _maxMissingConnection = 60, _missedConnections = 0;
+        public string _channel = "munglo";
+        public readonly ITwitchAPI _api;
+        public readonly ITwitchClient _client;
+        public TwitchCredentials _credentials;
+        public TwitchUsers _twitchUsers;
+
+        public TwitchService()
+        {
+            _credentials = new TwitchCredentials();
+            _twitchUsers = new TwitchUsers();
+            _api = new TwitchAPI();
+            _api.Settings.SkipDynamicScopeValidation = true;
+            _api.Settings.ClientId = _credentials._clientid;
+            _api.Settings.AccessToken = "";
+            ConnectionCredentials cred = new ConnectionCredentials(_credentials._username, _credentials._oauth);
+            _client = new TwitchClient();
+            _client.Initialize(cred, _channel);
+            _client.RemoveChatCommandIdentifier('!');
+            _client.AddChatCommandIdentifier(Program._commandCharacter);
+            _client.OnConnected += TwitchOnConnected;
+            _client.OnDisconnected += TwitchOnDisconnected;
+
+            _client.OnReSubscriber += TwitchOnReSubscriber;
+            _client.OnConnectionError += TwitchOnConnectionError;
+
+            //_client.OnLog += TwitchOnLog;
+
+            _client.OnUserBanned += TwitchOnUserBanned;
+
+            _client.OnUserJoined += TwitchOnUserJoined;
+            _client.OnMessageReceived += TwitchOnMessageReceived;
+            _client.OnExistingUsersDetected += TwitchOnExistingUsersDetected;
+            _client.Connect();
+            Core.Twitch = this;
+        }
+
+        private void TwitchOnMessageReceived(object sender, OnMessageReceivedArgs e)
+        {
+            _twitchUsers.TouchUser(e.ChatMessage.Channel, e.ChatMessage.Username);
+        }
+
+        private void TwitchOnUserJoined(object sender, OnUserJoinedArgs e)
+        {
+            _twitchUsers.TouchUser(e.Channel, e.Username);
+        }
+
+        private async void TwitchOnUserBanned(object sender, OnUserBannedArgs e)
+        {
+            UserEntry BannedUser = await Core.UserMan.GetUserByTwitchUserName(e.UserBan.Username);
+            BotChannel bChan = await Core.Channels.GetTwitchChannelByName(e.UserBan.Channel);
+            BanEventArguments banEvent = new BanEventArguments(
+                bChan,
+                null,
+                BannedUser, 
+                Core.CurrentTime, 
+                0, 
+                e.UserBan.BanReason, 
+                true
+                );
+            Core.RaiseBanEvent(banEvent);
+        }
+
+        
+
+        private async void TwitchOnLog(object sender, OnLogArgs e)
+        {
+            await Core.LOG(new LogMessage(LogSeverity.Info, PLUGINNAME, $"LOG:{e.Data}"));
+        }
+
+        public void ConnectionStatus()
+        {
+            int top = Console.CursorTop;
+            int left = Console.CursorLeft;
+
+            Console.SetCursorPosition(20, 1);
+
+            if (_client.IsConnected)
+            {
+                Console.BackgroundColor = ConsoleColor.Green;
+            }
+            else
+            {
+                Console.BackgroundColor = ConsoleColor.Red;
+                _missedConnections++;
+                if(_missedConnections >= _maxMissingConnection)
+                {
+                    _missedConnections = 0;
+                    _client.Reconnect();
+                    Core.LOG(new LogMessage(LogSeverity.Warning, PLUGINNAME, "Connectionstatus failed. Reconnecting."));
+                }
+            }
+            Console.Write("*");
+            Console.SetCursorPosition(top, left);
+            Console.ResetColor(); Console.BackgroundColor = ConsoleColor.Black;
+        }
+
+        private async void TwitchOnReSubscriber(object sender, OnReSubscriberArgs e)
+        {
+            await Core.LOG(new LogMessage(LogSeverity.Info, "TwitchService", $"{e.ReSubscriber.DisplayName} resubscribed to channel {e.Channel}."));
+        }
+
+        #region Connection related events
+        private async void TwitchOnConnectionError(object sender, OnConnectionErrorArgs e)
+        {
+            await Core.LOG(new LogMessage(LogSeverity.Error, "TwitchService", $"Connection Error!! {e.Error.Message}."));
+        }
+        private async void TwitchOnConnected(object sender, OnConnectedArgs e)
+        {
+            await Core.LOG(new LogMessage(LogSeverity.Info, "TwitchService", "Twitch Connected"));
+            while (Core.Channels == null) { }
+            await Core.Channels.JoinAutojoinChannels();
+        }
+        private async void TwitchOnDisconnected(object sender, TwitchLib.Communication.Events.OnDisconnectedEventArgs e)
+        {
+            await Core.LOG(new LogMessage(LogSeverity.Error, "TwitchService", $"Disconnected from Twitch. Reconnecting... :: {e}"));
+            _client.Reconnect();
+        }
+        #endregion
+
+        /// <summary>
+        /// UNTESTED!!!!! TODO TEST THIS YOU LUMP OF SHIT
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void TwitchOnExistingUsersDetected(object sender, OnExistingUsersDetectedArgs e)
+        {
+            TwitchLib.Api.V5.Models.Users.Users users = await _api.V5.Users.GetUsersByNameAsync(e.Users);
+            foreach (TwitchLib.Api.V5.Models.Users.User user in users.Matches)
+            {
+                string twitchID = user.Id;
+                _twitchUsers.TouchUser(e.Channel, user.Id);
+                await Core.LOG(new LogMessage(LogSeverity.Info, "TwitchService", $"{user.DisplayName} id:{user.Id}"));
+            }
+        }
+
+
+    }
+}
