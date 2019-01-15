@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TwitchLib.PubSub;
 using System.Data.SQLite;
-
+using MisfitBot2.Extensions.ChannelManager;
 namespace MisfitBot2
 {
     public static class Core
@@ -57,8 +57,7 @@ namespace MisfitBot2
         
         public static ulong StringToUlong(string text)
         {
-            ulong key = 0;
-            ulong.TryParse(text, out key);
+            ulong.TryParse(text, out ulong key);
             return key;
         }
         #endregion

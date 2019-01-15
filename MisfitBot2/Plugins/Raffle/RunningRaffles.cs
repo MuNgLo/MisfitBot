@@ -62,14 +62,14 @@ namespace MisfitBot2.Plugins.Raffle
                 if(user._discordUID != 0)
                 {
                     if(await Core.Treasury.MakePayment(user, bChan, raffle._ticketprice)){
-                        raffle.RandomTicketNoOwner().SetOwner(user._discordUID);
+                         (await raffle.RandomTicketNoOwner()).SetOwner(user._discordUID);
                     }
                 }
                 else
                 {
                     if (await Core.Treasury.MakePayment(user, bChan, raffle._ticketprice))
                     {
-                        raffle.RandomTicketNoOwner().SetOwner(user._twitchUID);
+                        (await raffle.RandomTicketNoOwner()).SetOwner(user._twitchUID);
                     }
                 }
 
@@ -77,14 +77,14 @@ namespace MisfitBot2.Plugins.Raffle
             {
                 if (await Core.Treasury.MakePayment(user, bChan, raffle._ticketprice))
                 {
-                    raffle.RandomTicketNoOwner().SetOwner(user._twitchUID);
+                    (await raffle.RandomTicketNoOwner()).SetOwner(user._twitchUID);
                 }
             }
             else if(raffle._range== RaffleRange.DISCORDONLY)
             {
                 if (await Core.Treasury.MakePayment(user, bChan, raffle._ticketprice))
                 {
-                    raffle.RandomTicketNoOwner().SetOwner(user._discordUID);
+                    (await raffle.RandomTicketNoOwner()).SetOwner(user._discordUID);
                 }
             }
         }

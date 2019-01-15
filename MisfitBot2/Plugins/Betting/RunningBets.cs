@@ -62,13 +62,11 @@ namespace MisfitBot2.Plugins.Betting
             }
             return !CurrentlyRunning.ContainsKey(twitchChannel);
         }
-        public bool FinishBRBetting(string twitchChannel, string winningOption)
+        public async Task<bool> FinishBRBetting(string twitchChannel, string winningOption)
         {
             if (CurrentlyRunning.ContainsKey(twitchChannel))
             {
-                CurrentlyRunning[twitchChannel].FinishBR(winningOption);
-
-
+                await CurrentlyRunning[twitchChannel].FinishBR(winningOption);
                 CurrentlyRunning.Remove(twitchChannel);
             }
             return !CurrentlyRunning.ContainsKey(twitchChannel);

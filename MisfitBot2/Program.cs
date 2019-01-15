@@ -8,6 +8,7 @@ using System;
 using System.Data.SQLite;
 using System.Reflection;
 using System.Threading.Tasks;
+using MisfitBot2.Extensions.ChannelManager;
 
 namespace MisfitBot2
 {

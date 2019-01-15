@@ -563,7 +563,7 @@ namespace MisfitBot2.Services
         public async void OnUserEntryMerge(UserEntry discordUser, UserEntry twitchUser)
         {
             await Core.LOG(new LogMessage(LogSeverity.Info, "TreasureService", $"Profile Merge!!! {discordUser._username} <> {twitchUser._twitchUsername}"));
-            foreach (BotChannel bChan in Core.Channels._botChannels.GetChannels())
+            foreach (BotChannel bChan in await Core.Channels.GetChannels())
             {
                 string table = $"{PLUGINNAME}_Users_{bChan.Key}";
                 if (!TableExists(table))

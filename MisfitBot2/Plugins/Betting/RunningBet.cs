@@ -56,7 +56,7 @@ namespace MisfitBot2.Plugins.Betting
 
         public async void CancelBets()
         {
-            BotChannel bChan = Core.Channels._botChannels.GetTwitchChannelByID(_twitchChannelID);
+            BotChannel bChan = await Core.Channels.GetTwitchChannelByID(_twitchChannelID);
             foreach(IndividualBet bet in _bets)
             {
                 await Core.Treasury.GiveGold(bChan, bet._user, bet._amount);
@@ -148,7 +148,7 @@ namespace MisfitBot2.Plugins.Betting
             return result;
         }
 
-        public void Finish(string winningOption)
+        public async Task Finish(string winningOption)
         {
             IsRunning = false;
             int pool = CurrentPool;
@@ -160,7 +160,7 @@ namespace MisfitBot2.Plugins.Betting
                     winningPool += bet._amount;
                 }
             }
-            BotChannel bChan = Core.Channels._botChannels.GetTwitchChannelByID(_twitchChannelID);
+            BotChannel bChan = await Core.Channels.GetTwitchChannelByID(_twitchChannelID);
 
             if (pool < 1)
             {
@@ -190,7 +190,7 @@ namespace MisfitBot2.Plugins.Betting
                 {
                     // DO PAYOUTS!!!
                     bet._winnings = (int)Math.Floor(bet._amount * odds);
-                    Core.Treasury.GiveGold(
+                    await Core.Treasury.GiveGold(
                         bChan, 
                         bet._user,
                         bet._winnings);
@@ -205,7 +205,7 @@ namespace MisfitBot2.Plugins.Betting
 
 
 
-            Core.Twitch._client.SendMessage(Core.Channels._botChannels.GetTwitchChannelByID(_twitchChannelID).TwitchChannelName, 
+            Core.Twitch._client.SendMessage((await Core.Channels.GetTwitchChannelByID(_twitchChannelID)).TwitchChannelName, 
                 $"The bets ended as {OptionWithGold()}. {winningOption} was the winning option and  {biggestWinner} won most with {biggestWin}g.");
         }
 
@@ -214,11 +214,11 @@ namespace MisfitBot2.Plugins.Betting
             return _bets.FindAll(p => p._user._twitchUID == twitchUID).Count;
         }
 
-        public void FinishBR(string winningOption)
+        public async Task FinishBR(string winningOption)
         {
             IsRunning = false;
             int pool = CurrentPool;
-            BotChannel bChan = Core.Channels._botChannels.GetTwitchChannelByID(_twitchChannelID);
+            BotChannel bChan = await Core.Channels.GetTwitchChannelByID(_twitchChannelID);
             if (pool < 1)
             {
                 Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"FINISH! No bets where placed.");
@@ -248,7 +248,7 @@ namespace MisfitBot2.Plugins.Betting
                 {
                     // DO PAYOUTS!!!
                     bet._winnings = pool / winners.Count;
-                    Core.Treasury.GiveGold(bChan, bet._user, bet._winnings);
+                    await Core.Treasury.GiveGold(bChan, bet._user, bet._winnings);
                     if (index < 5)
                     {
                         msg += $" {bet._user._twitchUsername}({bet._winnings})";
@@ -262,7 +262,7 @@ namespace MisfitBot2.Plugins.Betting
                 {
                     // DO PAYOUTS!!!
                     bet._winnings = pool / winners.Count;
-                    Core.Treasury.GiveGold(bChan, bet._user, bet._winnings);
+                    await Core.Treasury.GiveGold(bChan, bet._user, bet._winnings);
                     msg += $" {bet._user._twitchUsername}({bet._winnings})";
                 }
             }
@@ -270,7 +270,7 @@ namespace MisfitBot2.Plugins.Betting
 
 
 
-            Core.Twitch._client.SendMessage(Core.Channels._botChannels.GetTwitchChannelByID(_twitchChannelID).TwitchChannelName, $"Winners: {msg}");
+            Core.Twitch._client.SendMessage((await Core.Channels.GetTwitchChannelByID(_twitchChannelID)).TwitchChannelName, $"Winners: {msg}");
             return;
         }
 

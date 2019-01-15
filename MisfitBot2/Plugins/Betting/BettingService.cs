@@ -85,7 +85,7 @@ namespace MisfitBot2.Services
 
                             if ((await Bets.GrabBet(e.Command.ChatMessage.Channel))._variant != BETVARIANT.NORMAL)
                             {
-                                FinishBRBet(e.Command.ChatMessage.Channel, e.Command.ArgumentsAsList[0].ToLower());
+                                await FinishBRBet(e.Command.ChatMessage.Channel, e.Command.ArgumentsAsList[0].ToLower());
                                 return;
                             }
 
@@ -205,7 +205,7 @@ namespace MisfitBot2.Services
                 }
                 if ((await Bets.GrabBet(bChan.TwitchChannelName))._variant != BETVARIANT.NORMAL)
                 {
-                    FinishBRBet(bChan.TwitchChannelName, arg.ToLower());
+                    await FinishBRBet(bChan.TwitchChannelName, arg.ToLower());
                     return;
                 }
                 if (FinishBet(bChan.TwitchChannelName, arg.ToLower()))
@@ -239,9 +239,9 @@ namespace MisfitBot2.Services
         {
             return Bets.FinishBetting(twitchChannel, winningOption);
         }
-        private bool FinishBRBet(string twitchChannel, string winningOption)
+        private async Task<bool> FinishBRBet(string twitchChannel, string winningOption)
         {
-            return Bets.FinishBRBetting(twitchChannel, winningOption);
+            return await Bets.FinishBRBetting(twitchChannel, winningOption);
         }
         private async Task OpenBet(BotChannel bChan, List<string> args, BETVARIANT variant, ulong discordChannelID=0)
         {

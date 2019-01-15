@@ -9,7 +9,6 @@ using Discord.WebSocket;
 using Newtonsoft.Json;
 using TwitchLib.Api.V5.Models.Users;
 using MisfitBot2.Extensions.UserManager;
-using MisfitBot2.Extensions.ChannelManager;
 
 namespace MisfitBot2.Services
 {

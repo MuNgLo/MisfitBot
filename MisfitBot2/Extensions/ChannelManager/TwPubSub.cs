@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using TwitchLib.PubSub;
 using TwitchLib.PubSub.Events;
 
-namespace MisfitBot2.Services
+namespace MisfitBot2.Extensions.ChannelManager
 {
     public class TwPubSub
     {

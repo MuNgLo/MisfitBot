@@ -47,7 +47,7 @@ namespace MisfitBot2.Plugins.Raffle
             return _tickets.FindAll(p => p._owner == string.Empty).Count;
         }
 
-        public RaffleTicket RandomTicketNoOwner()
+        public async Task<RaffleTicket> RandomTicketNoOwner()
         {
             List<RaffleTicket> possible = _tickets.FindAll(p => p._owner == string.Empty);
             if(possible.Count == 1)
@@ -58,21 +58,21 @@ namespace MisfitBot2.Plugins.Raffle
                 }
                 else if (_range == RaffleRange.DISCORDONLY)
                 {
-                    BotChannel bChan = Core.Channels._botChannels.GetBotchannelByKey(_raffleIdentifier);
+                    BotChannel bChan = await Core.Channels.GetBotchannelByKey(_raffleIdentifier);
                     if (bChan.discordDefaultBotChannel != 0)
                     {
-                        (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(
+                        await (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(
                             $"Last ticket in the raffle is now sold."
                             );
                     }
                 }
                 else if (_range == RaffleRange.BOTH)
                 {
-                    BotChannel bChan = Core.Channels._botChannels.GetBotchannelByKey(_raffleIdentifier);
+                    BotChannel bChan = await Core.Channels.GetBotchannelByKey(_raffleIdentifier);
                     Core.Twitch._client.SendMessage(_twitchChannel, $"Last ticket in the raffle is now sold.");
                     if (bChan.discordDefaultBotChannel != 0)
                     {
-                        (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(
+                        await (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(
                             $"Last ticket in the raffle is now sold."
                             );
                     }
@@ -83,10 +83,10 @@ namespace MisfitBot2.Plugins.Raffle
             return _tickets.Find(p => p._ticketNumber == possible[index]._ticketNumber);
         }
 
-        public void SellingTickets(bool flag)
+        public async Task SellingTickets(bool flag)
         {
             if (isSelling == flag) { return; }
-            BotChannel bChan = Core.Channels._botChannels.GetBotchannelByKey(_raffleIdentifier);
+            BotChannel bChan = await Core.Channels.GetBotchannelByKey(_raffleIdentifier);
             isSelling = flag;
             int ticketsLeft = _tickets.FindAll(p => p._owner == string.Empty).Count;
             if (isSelling)
@@ -99,7 +99,7 @@ namespace MisfitBot2.Plugins.Raffle
                 {
                     if (bChan.discordDefaultBotChannel != 0)
                     {
-                        (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(
+                        await (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(
                             $"Sale of raffle tickets are now open. There are {ticketsLeft} tickets left unsold."
                             );
                     }
@@ -109,7 +109,7 @@ namespace MisfitBot2.Plugins.Raffle
                     Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Sale of raffle tickets are now open. There are {ticketsLeft} tickets left unsold.");
                     if (bChan.discordDefaultBotChannel != 0)
                     {
-                        (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(
+                        await (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(
                             $"Sale of raffle tickets are now open. There are {ticketsLeft} tickets left unsold."
                             );
                     }
@@ -145,10 +145,10 @@ namespace MisfitBot2.Plugins.Raffle
             }
         }
 
-        public void Reminder(bool force=false)
+        public async Task Reminder(bool force=false)
         {
             if (!isSelling && !force) { return; }
-            BotChannel bChan = Core.Channels._botChannels.GetBotchannelByKey(_raffleIdentifier);
+            BotChannel bChan = await Core.Channels.GetBotchannelByKey(_raffleIdentifier);
 
             if (force || Core.CurrentTime > _reminderTimestamp + _reminderInterval && _msgSinceLast >= 8)
             {
@@ -165,7 +165,7 @@ namespace MisfitBot2.Plugins.Raffle
                 {
                     if (bChan.discordDefaultBotChannel != 0)
                     {
-                        (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(
+                        await (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(
                             $"There is a raffle going. Tickets cost {_ticketprice}g each and there are {ticketsLeft} left."
                             );
                     }
@@ -175,7 +175,7 @@ namespace MisfitBot2.Plugins.Raffle
                     Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"There is a raffle going. Tickets cost {_ticketprice}g each and there are {ticketsLeft} left.");
                     if (bChan.discordDefaultBotChannel != 0)
                     {
-                        (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(
+                        await (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(
                             $"There is a raffle going. Tickets cost {_ticketprice}g each and tere are {ticketsLeft} left."
                             );
                     }
@@ -185,7 +185,7 @@ namespace MisfitBot2.Plugins.Raffle
 
         public async void RefundTickets()
         {
-            BotChannel bChan = Core.Channels._botChannels.GetBotchannelByKey(_raffleIdentifier);
+            BotChannel bChan = await Core.Channels.GetBotchannelByKey(_raffleIdentifier);
             isSelling = false;
             foreach(RaffleTicket ticket in _tickets)
             {
@@ -221,7 +221,7 @@ namespace MisfitBot2.Plugins.Raffle
             int pick = rng.Next(0, ownedTickets.Count);
 
             RaffleTicket winningTicket = _tickets.Find(p=>p._ticketNumber == ownedTickets[pick]._ticketNumber);
-            BotChannel bChan = Core.Channels._botChannels.GetBotchannelByKey(_raffleIdentifier);
+            BotChannel bChan = await Core.Channels.GetBotchannelByKey(_raffleIdentifier);
             UserEntry user;
             if (winningTicket.IsDicordUser())
             {

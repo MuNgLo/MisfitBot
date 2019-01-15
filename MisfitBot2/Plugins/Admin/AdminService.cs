@@ -37,7 +37,8 @@ namespace MisfitBot2.Services
         #region Discord Command Methods
         public async Task DiscordLinkChannelCommand(ICommandContext context, string twitchChannelName)
         {
-            if (!Core.Channels._botChannels.GetChannels().Exists(p => p.GuildID == context.Guild.Id) && !Core.Channels._botChannels.GetChannels().Exists(p => p.TwitchChannelName == twitchChannelName))
+            List<BotChannel> channels = await Core.Channels.GetChannels();
+            if (!channels.Exists(p => p.GuildID == context.Guild.Id) && !channels.Exists(p => p.TwitchChannelName == twitchChannelName))
             {
                 return;
             }
@@ -54,7 +55,7 @@ namespace MisfitBot2.Services
             linkedProfile.TwitchAutojoin = twitchProfile.TwitchAutojoin;
             linkedProfile.isTwitch = twitchProfile.isTwitch;
             linkedProfile.isLive = twitchProfile.isLive;
-            bool result = await Core.Channels.SaveAsLinked(linkedProfile); // TODO channelman. link clean up 
+            bool result = await Core.Channels.SaveAsLinked(linkedProfile);
             // Trigger OnLinkingChannel event if channel was added
             if (result)
             {

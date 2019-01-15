@@ -12,11 +12,10 @@ using MisfitBot2;
 using MisfitBot2.Extensions.ChannelManager;
 using TwitchLib.Client.Models;
 
-namespace MisfitBot2.Services
+namespace MisfitBot2.Extensions.ChannelManager
 {
     public class ChannelManager
     {
-        public BotChannels _botChannels { get; private set; }
         private readonly string PLUGINNAME = "ChannelManager";
         //private readonly string FILENAME = "ChannelManager/BotChannels.json";
         public BotChannelMergeEvent OnBotChannelMerge;
@@ -25,20 +24,11 @@ namespace MisfitBot2.Services
         /// CONSTRUCTOR
         public ChannelManager()
         {
-            _botChannels = new BotChannels();
-
             // Setup the database table if needed
             if (!TableExists(PLUGINNAME))
             {
                 TableCreate(PLUGINNAME);
             }
-
-
-            //if (!Load())
-            //{
-            //Save();// Creates a new file if we had none
-            //}
-            //Save(); // This makes sure we save the cleaned file. On start we clean old entries left over after linkning channels
             Core.Discord.GuildAvailable += DiscordGuildAvailable;
             Core.Channels = this;
             TimerStuff.OnMinuteTick += OnMinuteTick;
@@ -46,12 +36,15 @@ namespace MisfitBot2.Services
 
         public async Task<bool> SaveAsLinked(BotChannel channel)
         {
-            // make sure to delete twitch botchannel from DB
-            return false;
+            if(await ChannelDataDeleteTwitchID(channel.TwitchChannelID))
+            {
+                await ChannelSave(channel);
+            }
+            return (await GetDiscordGuildbyID(channel.GuildID)).isLinked;
         }
 
-            #region Database stuff
-            private async Task<bool> ChannelDataExists(ulong GuildID)
+        #region Database stuff
+        private async Task<bool> ChannelDataExists(ulong GuildID)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
@@ -91,6 +84,26 @@ namespace MisfitBot2.Services
             }
 
         }
+        private async Task<bool> ChannelDataExistsTwitchID(string TwitchID)
+        {
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = $"SELECT * FROM {PLUGINNAME} WHERE TwitchChannelID IS @TwitchChannelID";
+                cmd.Parameters.AddWithValue("@TwitchChannelID", TwitchID);
+
+                if (await cmd.ExecuteScalarAsync() == null)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+
+        }
         private async Task<BotChannel> ChannelDataRead(ulong GuildID)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
@@ -110,18 +123,21 @@ namespace MisfitBot2.Services
                     throw;
                 }
                 result.Read();
-                BotChannel bChan = new BotChannel(GuildID);
-                bChan.isLinked = result.GetBoolean(0);
-                bChan.GuildID = (ulong)result.GetInt64(1);
-                bChan.GuildName = result.GetString(2);
-                bChan.discordDefaultBotChannel = (ulong)result.GetInt64(3);
-                bChan.discordAdminChannel = (ulong)result.GetInt64(4);
-                bChan.TwitchChannelID = result.GetString(5);
-                bChan.TwitchChannelName = result.GetString(6);
-                bChan.isTwitch = result.GetBoolean(7);
-                bChan.isLive = result.GetBoolean(8);
-                bChan.TwitchAutojoin = result.GetBoolean(9);
-                bChan.pubsubOauth = result.GetString(10);
+                BotChannel bChan = new BotChannel(GuildID)
+                {
+                    isLinked = result.GetBoolean(0),
+                    Key = result.GetString(1),
+                    GuildID = (ulong)result.GetInt64(2),
+                    GuildName = result.GetString(3),
+                    discordDefaultBotChannel = (ulong)result.GetInt64(4),
+                    discordAdminChannel = (ulong)result.GetInt64(5),
+                    TwitchChannelID = result.GetString(6),
+                    TwitchChannelName = result.GetString(7),
+                    isTwitch = result.GetBoolean(8),
+                    isLive = result.GetBoolean(9),
+                    TwitchAutojoin = result.GetBoolean(10),
+                    pubsubOauth = result.GetString(11)
+                };
                 return bChan;
             }
         }
@@ -144,35 +160,142 @@ namespace MisfitBot2.Services
                     throw;
                 }
                 result.Read();
-                BotChannel bChan = new BotChannel(TwitchChannelName);
-                bChan.isLinked = result.GetBoolean(0);
-                bChan.GuildID = (ulong)result.GetInt64(1);
-                bChan.GuildName = result.GetString(2);
-                bChan.discordDefaultBotChannel = (ulong)result.GetInt64(3);
-                bChan.discordAdminChannel = (ulong)result.GetInt64(4);
-                bChan.TwitchChannelID = result.GetString(5);
-                bChan.TwitchChannelName = result.GetString(6);
-                bChan.isTwitch = result.GetBoolean(7);
-                bChan.isLive = result.GetBoolean(8);
-                bChan.TwitchAutojoin = result.GetBoolean(9);
-                bChan.pubsubOauth = result.GetString(10);
+                BotChannel bChan = new BotChannel(TwitchChannelName, "")
+                {
+                    isLinked = result.GetBoolean(0),
+                    Key = result.GetString(1),
+                    GuildID = (ulong)result.GetInt64(2),
+                    GuildName = result.GetString(3),
+                    discordDefaultBotChannel = (ulong)result.GetInt64(4),
+                    discordAdminChannel = (ulong)result.GetInt64(5),
+                    TwitchChannelID = result.GetString(6),
+                    TwitchChannelName = result.GetString(7),
+                    isTwitch = result.GetBoolean(8),
+                    isLive = result.GetBoolean(9),
+                    TwitchAutojoin = result.GetBoolean(10),
+                    pubsubOauth = result.GetString(11)
+                };
                 return bChan;
+            }
+        }
+        private async Task<BotChannel> ChannelDataReadTwitchID(string TwitchID)
+        {
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = $"SELECT * FROM {PLUGINNAME} WHERE TwitchChannelID IS @TwitchChannelID";
+                cmd.Parameters.AddWithValue("@TwitchChannelID", TwitchID);
+                SQLiteDataReader result;
+                try
+                {
+                    result = cmd.ExecuteReader();
+                }
+                catch (Exception)
+                {
+                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
+                    throw;
+                }
+                result.Read();
+                BotChannel bChan = new BotChannel(TwitchID, "")
+                {
+                    isLinked = result.GetBoolean(0),
+                    Key = result.GetString(1),
+                    GuildID = (ulong)result.GetInt64(2),
+                    GuildName = result.GetString(3),
+                    discordDefaultBotChannel = (ulong)result.GetInt64(4),
+                    discordAdminChannel = (ulong)result.GetInt64(5),
+                    TwitchChannelID = result.GetString(6),
+                    TwitchChannelName = result.GetString(7),
+                    isTwitch = result.GetBoolean(8),
+                    isLive = result.GetBoolean(9),
+                    TwitchAutojoin = result.GetBoolean(10),
+                    pubsubOauth = result.GetString(11)
+                };
+                return bChan;
+            }
+        }
+        private async Task<bool> ChannelDataDeleteTwitchID(string TwitchID)
+        {
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = $"DELETE FROM {PLUGINNAME} WHERE TwitchChannelID IS @TwitchChannelID";
+                cmd.Parameters.AddWithValue("@TwitchChannelID", TwitchID);
+                SQLiteDataReader result;
+                try
+                {
+                    result = cmd.ExecuteReader();
+                }
+                catch (Exception)
+                {
+                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
+                    throw;
+                }
+                result.Read();
+
+            }
+                return !(await ChannelDataExistsTwitchID(TwitchID));
+        }
+        private async Task<List<BotChannel>> ChannelsReadAll()
+        {
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                List<BotChannel> botChannels = new List<BotChannel>();
+
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = $"SELECT * FROM {PLUGINNAME}";
+                SQLiteDataReader result;
+                try
+                {
+                    result = cmd.ExecuteReader();
+                }
+                catch (Exception)
+                {
+                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
+                    throw;
+                }
+                while (result.Read())
+                {
+                    BotChannel bChan = new BotChannel("", "")
+                    {
+                        isLinked = result.GetBoolean(0),
+                        Key = result.GetString(1),
+                        GuildID = (ulong)result.GetInt64(2),
+                        GuildName = result.GetString(3),
+                        discordDefaultBotChannel = (ulong)result.GetInt64(4),
+                        discordAdminChannel = (ulong)result.GetInt64(5),
+                        TwitchChannelID = result.GetString(6),
+                        TwitchChannelName = result.GetString(7),
+                        isTwitch = result.GetBoolean(8),
+                        isLive = result.GetBoolean(9),
+                        TwitchAutojoin = result.GetBoolean(10),
+                        pubsubOauth = result.GetString(11)
+                    };
+                    botChannels.Add(bChan);
+                }
+                return botChannels;
             }
         }
         public async Task ChannelSave(BotChannel bChan)
         {
-                using (SQLiteCommand cmd = new SQLiteCommand())
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.Connection = Core.Data;
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                bChan.UpdateKey();
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
                 if (bChan.isLinked || bChan.GuildID != 0)
                 {
                     cmd.CommandText = $"UPDATE {PLUGINNAME} SET " +
                             $"isLinked = @isLinked, " +
+                            $"Key = @Key, " + 
                             $"GuildName = @GuildName, " +
                             $"discordDefaultBotChannel = @discordDefaultBotChannel, " +
                             $"discordAdminChannel = @discordAdminChannel, " +
                             $"TwitchChannelID = @TwitchChannelID, " +
+                            $"TwitchChannelName = @TwitchChannelName, " + 
                             $"isTwitch = @isTwitch, " +
                             $"isLive = @isLive, " +
                             $"TwitchAutojoin = @TwitchAutojoin, " +
@@ -184,10 +307,12 @@ namespace MisfitBot2.Services
                 {
                     cmd.CommandText = $"UPDATE {PLUGINNAME} SET " +
                             $"isLinked = @isLinked, " +
+                            $"Key = @Key, " +
                             $"GuildName = @GuildName, " +
                             $"discordDefaultBotChannel = @discordDefaultBotChannel, " +
                             $"discordAdminChannel = @discordAdminChannel, " +
                             $"TwitchChannelID = @TwitchChannelID, " +
+                            $"TwitchChannelName = @TwitchChannelName, " +
                             $"isTwitch = @isTwitch, " +
                             $"isLive = @isLive, " +
                             $"TwitchAutojoin = @TwitchAutojoin, " +
@@ -195,40 +320,45 @@ namespace MisfitBot2.Services
                             $" WHERE TwitchChannelName is @TwitchChannelName";
                     cmd.Parameters.AddWithValue("@TwitchChannelName", bChan.TwitchChannelName);
                 }
-                    cmd.Parameters.AddWithValue("@isLinked", bChan.isLinked);
-                    cmd.Parameters.AddWithValue("@GuildName", bChan.GuildName);
-                    cmd.Parameters.AddWithValue("@discordDefaultBotChannel", bChan.discordDefaultBotChannel);
-                    cmd.Parameters.AddWithValue("@discordAdminChannel", bChan.discordAdminChannel);
-                    cmd.Parameters.AddWithValue("@TwitchChannelID", bChan.TwitchChannelID);
-                    cmd.Parameters.AddWithValue("@isTwitch", bChan.isTwitch);
-                    cmd.Parameters.AddWithValue("@isLive", bChan.isLive);
-                    cmd.Parameters.AddWithValue("@TwitchAutojoin", bChan.TwitchAutojoin);
-                    cmd.Parameters.AddWithValue("@pubsubOauth", bChan.pubsubOauth);
-                    cmd.ExecuteNonQuery();
-                }
-            
+                cmd.Parameters.AddWithValue("@isLinked", bChan.isLinked);
+                cmd.Parameters.AddWithValue("@Key", bChan.Key);
+                cmd.Parameters.AddWithValue("@GuildName", bChan.GuildName);
+                cmd.Parameters.AddWithValue("@discordDefaultBotChannel", bChan.discordDefaultBotChannel);
+                cmd.Parameters.AddWithValue("@discordAdminChannel", bChan.discordAdminChannel);
+                cmd.Parameters.AddWithValue("@TwitchChannelID", bChan.TwitchChannelID);
+                cmd.Parameters.AddWithValue("@TwitchChannelName", bChan.TwitchChannelName);
+                cmd.Parameters.AddWithValue("@isTwitch", bChan.isTwitch);
+                cmd.Parameters.AddWithValue("@isLive", bChan.isLive);
+                cmd.Parameters.AddWithValue("@TwitchAutojoin", bChan.TwitchAutojoin);
+                cmd.Parameters.AddWithValue("@pubsubOauth", bChan.pubsubOauth);
+                cmd.ExecuteNonQuery();
+            }
+
             await Core.LOG(new LogMessage(LogSeverity.Warning, PLUGINNAME, $"Saving updated channeldata"));
         }
         private void ChannelDataWrite(BotChannel bChan)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
+                bChan.UpdateKey();
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                    cmd.CommandText = $"INSERT INTO {PLUGINNAME} VALUES (" +
-                        $"@isLinked, " +
-                        $"@GuildID, " +
-                        $"@GuildName, " +
-                        $"@discordDefaultBotChannel, " +
-                        $"@discordAdminChannel, " +
-                        $"@TwitchChannelID, " +
-                        $"@TwitchChannelName, " +
-                        $"@isTwitch, " +
-                        $"@isLive, " +
-                        $"@TwitchAutojoin, " +
-                        $"@pubsubOauth " +
-                        $")";
+                cmd.CommandText = $"INSERT INTO {PLUGINNAME} VALUES (" +
+                    $"@isLinked, " +
+                    $"@Key, " + 
+                    $"@GuildID, " +
+                    $"@GuildName, " +
+                    $"@discordDefaultBotChannel, " +
+                    $"@discordAdminChannel, " +
+                    $"@TwitchChannelID, " +
+                    $"@TwitchChannelName, " +
+                    $"@isTwitch, " +
+                    $"@isLive, " +
+                    $"@TwitchAutojoin, " +
+                    $"@pubsubOauth " +
+                    $")";
                 cmd.Parameters.AddWithValue("@isLinked", bChan.isLinked);
+                cmd.Parameters.AddWithValue("@Key", bChan.Key);
                 cmd.Parameters.AddWithValue("@GuildID", bChan.GuildID);
                 cmd.Parameters.AddWithValue("@GuildName", bChan.GuildName);
                 cmd.Parameters.AddWithValue("@discordDefaultBotChannel", bChan.discordDefaultBotChannel);
@@ -251,6 +381,7 @@ namespace MisfitBot2.Services
                 cmd.Connection = Core.Data;
                 cmd.CommandText = $"CREATE TABLE {plugin} (" +
                     $"isLinked BOOL, " +
+                    $"Key VACHAR(30), " +
                     $"GuildID INTEGER," +
                     $"GuildName VACHAR(30), " +
                     $"discordDefaultBotChannel INTEGER, " +
@@ -304,12 +435,65 @@ namespace MisfitBot2.Services
         {
             if (!await ChannelDataExists(TwitchName))
             {
-                JoinedChannel twitchChannel = Core.Twitch._client.GetJoinedChannel(TwitchName);
-                ChannelDataWrite(new BotChannel(twitchChannel.Channel));
+                TwitchLib.Api.V5.Models.Users.Users channelEntry = await Core.Twitch._api.V5.Users.GetUserByNameAsync(TwitchName);
+                if (channelEntry.Matches.Length < 1)
+                {
+                    return null;
+                }
+                ChannelDataWrite(new BotChannel(TwitchName, channelEntry.Matches[0].Id));
             }
             return await ChannelDataRead(TwitchName);
         }
+        public async Task<BotChannel> GetTwitchChannelByID(string TwitchID)
+        {
+            if (!await ChannelDataExists(TwitchID))
+            {
+                TwitchLib.Api.V5.Models.Users.User channel = await Core.Twitch._api.V5.Users.GetUserByIDAsync(TwitchID);
+                if (channel == null)
+                {
+                    return null;
+                }
+                ChannelDataWrite(new BotChannel(channel.Name, channel.Id));
+            }
+            return await ChannelDataReadTwitchID(TwitchID);
+        }
+        public async Task<List<BotChannel>> GetChannels()
+        {
+            return await ChannelsReadAll();
+        }
 
+        public async Task JoinAllAutoJoinTwitchChannels()
+        {
+            List<string> chansToLookup = new List<string>();
+            foreach (BotChannel chan in await Core.Channels.GetChannels())
+            {
+                if (chan.TwitchChannelName != string.Empty && chan.TwitchAutojoin)
+                {
+                    chansToLookup.Add(chan.TwitchChannelName);
+                }
+            }
+            if (chansToLookup.Count < 1)
+            {
+                return;
+            }
+            TwitchLib.Api.V5.Models.Users.Users channelEntry = await Core.Twitch._api.V5.Users.GetUsersByNameAsync(chansToLookup);
+            if (channelEntry.Matches.Length < 1)
+            {
+                return;
+            }
+
+            foreach (TwitchLib.Api.V5.Models.Users.User usr in channelEntry.Matches)
+            {
+
+                var channel = Core.Twitch._client.GetJoinedChannel(usr.Name);
+                if (channel == null)
+                {
+
+                    Core.Twitch._client.JoinChannel(usr.Name);
+                }
+
+            }
+        }
 
         public async Task RestartPubSub(BotChannel bChan)
         {
@@ -404,11 +588,11 @@ namespace MisfitBot2.Services
                 ChannelDataWrite(new BotChannel(arg.Id, arg.Name));
             }
 
-           /* if (_botChannels.GetDiscordGuildbyID(arg.Id) == null)
-            {
-                await _botChannels.AddChannel(new BotChannel(arg.Id, arg.Name));
-            }
-            */
+            /* if (_botChannels.GetDiscordGuildbyID(arg.Id) == null)
+             {
+                 await _botChannels.AddChannel(new BotChannel(arg.Id, arg.Name));
+             }
+             */
 
         }
 
@@ -435,6 +619,20 @@ namespace MisfitBot2.Services
             return true;
         }
 
+        public async Task<BotChannel> GetBotchannelByKey(string key)
+        {
+            // This could be rewritten for moke exclusive hits directly from DB (once key is added to DB)
+            List<BotChannel> Channels = await GetChannels();
+            if (Channels.FindAll(p => p.Key == key).Count == 1)
+            {
+                return Channels.Find(p => p.Key == key);
+            }
+            else if (Channels.FindAll(p => p.Key == key).Count > 1)
+            {
+                return Channels.FindAll(p => p.Key == key).Find(p => p.isLinked == true);
+            }
+            return null;
+        }
 
         public async Task JoinAutojoinChannels()
         {
@@ -447,11 +645,12 @@ namespace MisfitBot2.Services
                     TwitchLib.Api.V5.Models.Channels.Channel c = await Core.Twitch._api.V5.Channels.GetChannelByIDAsync(channelEntry.Matches[0].Id);
                     if (!await ChannelDataExists(c.Name))
                     {
-                        BotChannel newChannel = new BotChannel(c.Name);
-                        newChannel.TwitchChannelID = c.Id;
-                        newChannel.isTwitch = true;
-                        newChannel.TwitchAutojoin = true;
-                        //await _botChannels.AddChannel(newChannel);
+                        BotChannel newChannel = new BotChannel(c.Name, c.Id)
+                        {
+                            TwitchChannelID = c.Id,
+                            isTwitch = true,
+                            TwitchAutojoin = true
+                        };
                         await ChannelSave(newChannel);
                     }
 
@@ -459,9 +658,9 @@ namespace MisfitBot2.Services
             }
 
 
-            await _botChannels.JoinAllAutoJoinTwitchChannels();
+            await JoinAllAutoJoinTwitchChannels();
 
-            foreach (BotChannel bChan in _botChannels.GetChannels())
+            foreach (BotChannel bChan in await GetChannels())
             {
                 // Debug end
                 if (bChan.pubsubOauth != string.Empty)
@@ -474,6 +673,6 @@ namespace MisfitBot2.Services
             }
         }
 
-        
+
     }
 }

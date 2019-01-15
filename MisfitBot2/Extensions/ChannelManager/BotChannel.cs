@@ -1,63 +1,51 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Newtonsoft.Json;
-
-namespace MisfitBot2
+﻿namespace MisfitBot2
 {
     public class BotChannel
     {
-        public volatile bool isLinked = false;
+        public bool isLinked = false;
         public ulong GuildID = 0;
-        public volatile string GuildName = string.Empty;
+        public string GuildName = string.Empty;
         public ulong discordDefaultBotChannel = 0;
         public ulong discordAdminChannel = 0;
-        public volatile string TwitchChannelID = string.Empty;
-        // NOT DisplayName!!
-        public volatile string TwitchChannelName = string.Empty;
-        public volatile bool isTwitch = true;
-        public volatile bool isLive = false;
-        public volatile bool TwitchAutojoin = false;
-
-        public volatile string pubsubOauth = string.Empty;
-        [JsonIgnore]
-        public string Key { get { return DataKey(); } }
-
-        [JsonConstructor]
-        BotChannel()
-        {
-
-        }
-
+        public string TwitchChannelID = string.Empty;
+        public string TwitchChannelName = string.Empty; // NOT DisplayName!!
+        public bool isTwitch = true; // Phase this one out
+        public bool isLive = false;
+        public bool TwitchAutojoin = false;
+        public string pubsubOauth = string.Empty;
+        public string Key = string.Empty;
+        // CONSTRUCTORS
         public BotChannel(ulong guildID, string guildName="")
         {
             GuildID = guildID;
             GuildName = guildName;
             isTwitch = false;
+            Key = DataKey();
         }
-
-        public BotChannel(string channelName)
+        public BotChannel(string twitchChannelName, string twitchChannelID)
         {
-            TwitchChannelID = "";
-            TwitchChannelName = channelName;
+            TwitchChannelID = twitchChannelID;
+            TwitchChannelName = twitchChannelName;
             TwitchAutojoin = true;
-        }
+            Key = DataKey();
 
+        }
+        public void UpdateKey()
+        {
+            Key = DataKey();
+        }
         private string DataKey()
         {
             string key = GuildID.ToString();
-
             if (!isLinked && GuildID == 0)
             {
                 key = "tw" + TwitchChannelID;
             }
-
             if (isLinked)
             {
                 key = GuildID.ToString();
             }
             return key;
         }
-        
     }
 }
