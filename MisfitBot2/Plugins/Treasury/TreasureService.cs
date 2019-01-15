@@ -63,7 +63,7 @@ namespace MisfitBot2.Services
             }
             return await UserRowRead(table, user.Key);
         }
-        public async Task<bool> UserRowExists(String table, String userkey)
+        new public async Task<bool> UserRowExists(String table, String userkey)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
@@ -71,7 +71,6 @@ namespace MisfitBot2.Services
                 cmd.Connection = Core.Data;
                 cmd.CommandText = $"SELECT * FROM {table} WHERE userkey IS @userkey";
                 cmd.Parameters.AddWithValue("@userkey", userkey);
-
                 if (await cmd.ExecuteScalarAsync() == null)
                 {
                     return false;
@@ -82,7 +81,7 @@ namespace MisfitBot2.Services
                 }
             }
         }
-        public void UserTableCreate(string plugin)
+        new public void UserTableCreate(string plugin)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
@@ -105,7 +104,7 @@ namespace MisfitBot2.Services
         /// <param name="table"></param>
         /// <param name="key"></param>
         /// <returns></returns>
-        public async Task<TreasureUserDefinition> UserRowRead(string table, string userkey)
+        new public async Task<TreasureUserDefinition> UserRowRead(string table, string userkey)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
@@ -124,12 +123,14 @@ namespace MisfitBot2.Services
                     throw;
                 }
                 result.Read();
-                TreasureUserDefinition userGold = new TreasureUserDefinition(Core.CurrentTime);
-                userGold._created = result.GetInt32(1);
-                userGold._gold = result.GetInt32(2);
-                userGold._TS_LastMessage = result.GetInt32(3);
-                userGold._TS_LastReaction = result.GetInt32(4);
-                userGold._TS_LastTick = result.GetInt32(5);
+                TreasureUserDefinition userGold = new TreasureUserDefinition(Core.CurrentTime)
+                {
+                    _created = result.GetInt32(1),
+                    _gold = result.GetInt32(2),
+                    _TS_LastMessage = result.GetInt32(3),
+                    _TS_LastReaction = result.GetInt32(4),
+                    _TS_LastTick = result.GetInt32(5)
+                };
                 return userGold;
             }
         }
@@ -139,7 +140,7 @@ namespace MisfitBot2.Services
         /// <param name="table"></param>
         /// <param name="key"></param>
         /// <param name="userGold"></param>
-        public async void UserRowCreate(String table, String userkey, TreasureUserDefinition userGold)
+        public void UserRowCreate(String table, String userkey, TreasureUserDefinition userGold)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
@@ -182,11 +183,7 @@ namespace MisfitBot2.Services
             }
 
         }
-        /// <summary>
-        /// This overrides the base table creation so we can do some magic stuff
-        /// </summary>
-        /// <param name="plugin"></param>
-        public async void SaveUserGold(BotChannel bChan, UserEntry user, TreasureUserDefinition userGold)
+        public void SaveUserGold(BotChannel bChan, UserEntry user, TreasureUserDefinition userGold)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
@@ -282,7 +279,7 @@ namespace MisfitBot2.Services
 
             }
         }
-        private async void TwitchGoldCMDBufferedAnswer(BotChannel channel, string msg)
+        private void TwitchGoldCMDBufferedAnswer(BotChannel channel, string msg)
         {
             //TreasureSettings settings = await Settings(channel);
             if (!_goldResponseBuffer.ContainsKey(channel.TwitchChannelName))

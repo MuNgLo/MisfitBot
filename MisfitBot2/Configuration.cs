@@ -80,10 +80,12 @@ namespace MisfitBot2
                 return;
             }
             _configs[bChan.Key][plugin] = data;
-            SQLiteCommand cmd = new SQLiteCommand();
-            cmd.CommandType = CommandType.Text;
-            cmd.Connection = Core.Data;
-            cmd.CommandText = $"UPDATE {plugin} SET config = @data WHERE configKey is @key";
+            SQLiteCommand cmd = new SQLiteCommand
+            {
+                CommandType = CommandType.Text,
+                Connection = Core.Data,
+                CommandText = $"UPDATE {plugin} SET config = @data WHERE configKey is @key"
+            };
             cmd.Parameters.AddWithValue("@data", JsonConvert.SerializeObject(data));
             cmd.Parameters.AddWithValue("@key", bChan.Key);
             cmd.ExecuteNonQuery();
@@ -91,7 +93,7 @@ namespace MisfitBot2
         }
 
 
-        public async Task<bool> TableExists(String tableName, SQLiteConnection connection)
+        public bool TableExists(String tableName, SQLiteConnection connection)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
@@ -111,7 +113,7 @@ namespace MisfitBot2
 
         private async Task Load(BotChannel bChan, string plugin, Object type)
         {
-            if (!await TableExists(plugin, Core.Data))
+            if (!TableExists(plugin, Core.Data))
             {
                 using (SQLiteCommand cmd = new SQLiteCommand())
                 {

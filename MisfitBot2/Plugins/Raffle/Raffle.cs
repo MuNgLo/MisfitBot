@@ -83,7 +83,7 @@ namespace MisfitBot2.Plugins.Raffle
             return _tickets.Find(p => p._ticketNumber == possible[index]._ticketNumber);
         }
 
-        public async Task SellingTickets(bool flag)
+        public async void SellingTickets(bool flag)
         {
             if (isSelling == flag) { return; }
             BotChannel bChan = await Core.Channels.GetBotchannelByKey(_raffleIdentifier);
@@ -127,7 +127,7 @@ namespace MisfitBot2.Plugins.Raffle
                 {
                     if (bChan.discordDefaultBotChannel != 0)
                     {
-                        (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(
+                        await (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(
                             $"Sale of raffle tickets are now closed. There are {ticketsLeft} tickets left unsold."
                             );
                     }
@@ -137,7 +137,7 @@ namespace MisfitBot2.Plugins.Raffle
                     Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Sale of raffle tickets are now closed. There are {ticketsLeft} tickets left unsold.");
                     if (bChan.discordDefaultBotChannel != 0)
                     {
-                        (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(
+                        await (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(
                             $"Sale of raffle tickets are now closed. There are {ticketsLeft} tickets left unsold."
                             );
                     }
@@ -145,7 +145,7 @@ namespace MisfitBot2.Plugins.Raffle
             }
         }
 
-        public async Task Reminder(bool force=false)
+        public async void Reminder(bool force=false)
         {
             if (!isSelling && !force) { return; }
             BotChannel bChan = await Core.Channels.GetBotchannelByKey(_raffleIdentifier);

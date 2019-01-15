@@ -33,7 +33,7 @@ namespace MisfitBot2.Services
                     {
                         if (Bets.ValidateBetting(e.Command.ChatMessage.Channel))
                         {
-                            CancelBets(e.Command.ChatMessage.Channel);
+                            CancelBets(bChan);
                         }
                     }
                         break;
@@ -83,7 +83,7 @@ namespace MisfitBot2.Services
                                 return;
                             }
 
-                            if ((await Bets.GrabBet(e.Command.ChatMessage.Channel))._variant != BETVARIANT.NORMAL)
+                            if (Bets.GrabBet(e.Command.ChatMessage.Channel)._variant != BETVARIANT.NORMAL)
                             {
                                 await FinishBRBet(e.Command.ChatMessage.Channel, e.Command.ArgumentsAsList[0].ToLower());
                                 return;
@@ -92,7 +92,7 @@ namespace MisfitBot2.Services
 
 
 
-                            if (FinishBet(e.Command.ChatMessage.Channel, e.Command.ArgumentsAsList[0].ToLower()))
+                            if (await FinishBet(e.Command.ChatMessage.Channel, e.Command.ArgumentsAsList[0].ToLower()))
                             {
                                 Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel, "Betting closed!");
                                 return;
@@ -122,12 +122,12 @@ namespace MisfitBot2.Services
                     break;
             }
         }
-        private async void TwitchOnMessageReceived(object sender, TwitchLib.Client.Events.OnMessageReceivedArgs e)
+        private void TwitchOnMessageReceived(object sender, TwitchLib.Client.Events.OnMessageReceivedArgs e)
         {
 
                 if (Bets.HasABetRunning(e.ChatMessage.Channel))
                 {
-                    (await Bets.GrabBet(e.ChatMessage.Channel))._msgSinceLast++;
+                    Bets.GrabBet(e.ChatMessage.Channel)._msgSinceLast++;
                 }
         }
         #endregion
@@ -203,12 +203,12 @@ namespace MisfitBot2.Services
                     await context.Message.Channel.SendMessageAsync("That was never an option! Get better mods....");
                     return;
                 }
-                if ((await Bets.GrabBet(bChan.TwitchChannelName))._variant != BETVARIANT.NORMAL)
+                if (Bets.GrabBet(bChan.TwitchChannelName)._variant != BETVARIANT.NORMAL)
                 {
                     await FinishBRBet(bChan.TwitchChannelName, arg.ToLower());
                     return;
                 }
-                if (FinishBet(bChan.TwitchChannelName, arg.ToLower()))
+                if (await FinishBet(bChan.TwitchChannelName, arg.ToLower()))
                 {
                     Core.Twitch._client.SendMessage(bChan.TwitchChannelName, "Betting closed!");
                     return;
@@ -219,11 +219,21 @@ namespace MisfitBot2.Services
         public async Task DiscordBet(ICommandContext context, List<string> arguments)
         {
             if (arguments.Count != 2) { return; }
-            int i = 0;
-            int.TryParse(arguments[0], out i);
+            int.TryParse(arguments[0], out int i);
             if (i < 1) { return; }
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
             await PlaceBet(bChan, context.User.Id, arguments[1].ToLower(), i);
+        }
+        public async Task DiscordCancelBets(ICommandContext Context)
+        {
+            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);
+            if(bChan != null)
+            {
+                if(bChan.TwitchChannelName != null && bChan.TwitchChannelName != string.Empty)
+                {
+                    CancelBets(bChan);
+                }
+            }
         }
         #endregion
         #region internal methods
@@ -231,13 +241,13 @@ namespace MisfitBot2.Services
         {
             Bets.CloseBetting(twitchChannel);
         }
-        private void CancelBets(string twitchChannel)
+        private void CancelBets(BotChannel bChan)
         {
-            Bets.CancelAllBets(twitchChannel);
+            Bets.CancelAllBets(bChan);
         }
-        private bool FinishBet(string twitchChannel, string winningOption)
+        private async Task<bool> FinishBet(string twitchChannel, string winningOption)
         {
-            return Bets.FinishBetting(twitchChannel, winningOption);
+            return await Bets.FinishBetting(twitchChannel, winningOption);
         }
         private async Task<bool> FinishBRBet(string twitchChannel, string winningOption)
         {
@@ -249,15 +259,17 @@ namespace MisfitBot2.Services
         }
         private async Task PlaceBet(BotChannel bChan, ulong discordUserID, string option, int value)
         {
-
+            UserEntry user = await Core.UserMan.GetUserByDiscordID(discordUserID);
+            if (user != null)
+            {
+                await Bets.AddBet(bChan,
+                    user,
+                    option,
+                    value);
+            }
         }
         private async Task PlaceBet(BotChannel bChan, string twitchUsername,  string option, int value)
         {
-
-
-
-
-
                 UserEntry user = await Core.UserMan.GetUserByTwitchUserName(twitchUsername);
                 if (user != null)
                 {
@@ -266,8 +278,6 @@ namespace MisfitBot2.Services
                         option,
                         value);
                 }
-            
-           
         }
         private void Reminder(int minimumDelay)
         {

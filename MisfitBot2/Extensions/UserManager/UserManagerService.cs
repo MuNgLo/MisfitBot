@@ -15,9 +15,9 @@ namespace MisfitBot2.Services
     public class UserManagerService
     {
         private readonly string PLUGINNAME = "UserManager";
-        private static int LASTSAVE;
-        private static int SAVEINTERVAL = 60;
-        private static int FLUSHINTERVAL = 10; // in minutes
+        //private static int LASTSAVE;
+        //private static int SAVEINTERVAL = 60;
+        //private static int FLUSHINTERVAL = 10; // in minutes
         private BotUsers UserList = new BotUsers();
         private Userlinking userlinking = new Userlinking();
         public UserEntryMerge OnUserEntryMerge;
@@ -129,56 +129,6 @@ namespace MisfitBot2.Services
         {
             //if (minute % FLUSHINTERVAL == 0) FlushUsers();
         }
-
-        /*private async void FlushUsers()
-        {
-            //Core.LOG(new LogMessage(LogSeverity.Info, PLUGINNAME, "Trying to flush inactive users from memory...."));
-            //int before = UserList.Count;
-            // See if we should flush the user from memory
-            List<UserEntry> userList = UserList.GetAllUsers();
-            List<ulong> discordUsersToFlush = new List<ulong>();
-            List<string> twitchUsersToFlush = new List<string>();
-            foreach (UserEntry user in userList)
-            {   // Check Discord only users
-                if (user._discordUID != 0 && user.linked == false && user._discordStatus != UserStatus.Online)
-                {
-                    discordUsersToFlush.Add(user._discordUID);
-                }
-                // Check Twitch only users
-                else if (user._twitchUID != String.Empty && user.linked == false)
-                {
-                    if(user._lastseenOnTwitch < Core.CurrentTime - 300)
-                    {
-                        twitchUsersToFlush.Add(user._twitchUID);
-                    }
-                }
-
-            }
-            foreach (ulong id in discordUsersToFlush)
-            {
-                SaveDiscordUser(userList.Find(P => P._discordUID == id));
-                UserList.RemoveUserByID(id);
-            }
-            foreach (string id in twitchUsersToFlush)
-            {
-                SaveTwitchUser(userList.Find(p => p._twitchUID == id));
-                UserList.RemoveUserByID(id);
-            }
-
-            // TODO Flush the god damn linked users to you monggrel
-
-            /*if(before - UserList.Count > 0)
-            {
-                await Core.LOG(new LogMessage(
-                    LogSeverity.Info, 
-                    PLUGINNAME, 
-                    $"Flushed {before - UserList.Count} users. " +
-                    $"[D]{discordUsersToFlush.Count} " +
-                    $"[T]{twitchUsersToFlush.Count}"
-                    ));
-            }*
-        }*/
-
         #region User Join/Left
         /// <summary>
         /// New user joins a guild

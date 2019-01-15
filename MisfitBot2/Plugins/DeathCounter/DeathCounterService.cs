@@ -19,8 +19,8 @@ namespace MisfitBot2.Services
     {
         public readonly string PLUGINNAME = "DeathCounter";
         private Dictionary<string, DeathCount> _deathCounters = new Dictionary<string, DeathCount>();
-        private float _ts_twitch_lastResponse = -10.0f;
-        private float _ts_discord_lastResponse = -10.0f;
+        //private float _ts_twitch_lastResponse = -10.0f;
+        //private float _ts_discord_lastResponse = -10.0f;
         public DeathCounterService()
         {
             Core.Twitch._client.OnChatCommandReceived += TWITCH_OnChatCommandReceived;

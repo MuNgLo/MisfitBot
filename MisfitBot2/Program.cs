@@ -14,7 +14,7 @@ namespace MisfitBot2
 {
     public class Program
     {
-        public static readonly char _commandCharacter = '?';
+        public static readonly char _commandCharacter = '!';
 
         private static IServiceProvider _services;
         // Keep the CommandService and IServiceCollection around for use with commands.
@@ -41,8 +41,10 @@ namespace MisfitBot2
             //createTable();
             //fillTable();
 
-            DiscordSocketConfig disConfig = new DiscordSocketConfig();
-            disConfig.LogLevel = LogSeverity.Info;
+            DiscordSocketConfig disConfig = new DiscordSocketConfig
+            {
+                LogLevel = LogSeverity.Info
+            };
 
             _DiscordClient = new DiscordSocketClient(disConfig);
             _DiscordClient.Log += Core.LOGGER.LogThis;
@@ -81,7 +83,7 @@ namespace MisfitBot2
         }
         #endregion
 
-        public static async Task DiscordReconnect()
+        public static async void DiscordReconnect()
         {
             await _DiscordClient.StartAsync();
         }

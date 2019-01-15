@@ -108,7 +108,7 @@ namespace MisfitBot2.Modules
         public async Task ReconnectCMD()
         {
             await Core.LOG(new LogMessage(LogSeverity.Info, "AdminModule", "Reconnecting"));
-            await Program.DiscordReconnect();
+            Program.DiscordReconnect();
         }
 
 

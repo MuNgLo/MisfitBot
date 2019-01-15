@@ -40,7 +40,7 @@ namespace MisfitBot2.Services
                         {
                             if(!_activeVotes.Exists(p=>p.twitchChannelName == e.Command.ChatMessage.Channel))
                             {
-                               TwitchStartVote(e.Command.ChatMessage.Channel, e.Command.ArgumentsAsList);
+                               await TwitchStartVote(e.Command.ChatMessage.Channel, e.Command.ArgumentsAsList);
                             }
                         }
                     }
@@ -51,7 +51,7 @@ namespace MisfitBot2.Services
                     {
                         if(_activeVotes.Exists(p => p.twitchChannelName == e.Command.ChatMessage.Channel))
                         {
-                            TwitchStopVote(e.Command.ChatMessage.Channel);
+                            await TwitchStopVote(e.Command.ChatMessage.Channel);
                         }
                     }
                     break;
@@ -76,7 +76,7 @@ namespace MisfitBot2.Services
         }
         private async Task TwitchCastVote(string userID, string twitchChannelName, string option)
         {
-            await CastVote(
+            CastVote(
                 await Core.Channels.GetTwitchChannelByName(twitchChannelName), 
                 await Core.UserMan.GetUserByTwitchID(userID), 
                 option);
@@ -115,7 +115,7 @@ namespace MisfitBot2.Services
             if (_activeVotes.Exists(p => p.discordguild == context.Guild.Id))
             {
                 BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
-                await CastVote(
+                CastVote(
                     bChan, 
                     await Core.UserMan.GetUserByDiscordID(context.User.Id), 
                     option);
@@ -178,7 +178,7 @@ namespace MisfitBot2.Services
             await SayOnDiscord(bChan, msg);
             Core.Twitch._client.SendMessage(bChan.TwitchChannelName, msg);
         }
-        private async Task CastVote(BotChannel bChan, UserEntry user, string option)
+        private void CastVote(BotChannel bChan, UserEntry user, string option)
         {
             if (user == null) { return; }
             RunningVote vote;

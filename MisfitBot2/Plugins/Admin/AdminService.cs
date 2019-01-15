@@ -117,6 +117,10 @@ namespace MisfitBot2.Services
         #endregion
 
         #region AdminService specific methods
+        public async Task JoindDiscordGuild()
+        {
+            //Core.Discord.CurrentUser.Id
+        }
         public async Task DiscordAdminInfo(ICommandContext context)
         {
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
@@ -252,6 +256,7 @@ namespace MisfitBot2.Services
                 }
             }
         }
+
 
         #region DATA minapulation stuff
         /// <summary>

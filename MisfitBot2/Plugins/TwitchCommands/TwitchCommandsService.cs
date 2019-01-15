@@ -56,7 +56,7 @@ namespace MisfitBot2.Services
                     }
                     break;
                 case "coin":
-                    Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info,
+                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info,
                         PLUGINNAME,
                         $"{e.Command.ChatMessage.Username} used !Coin in {e.Command.ChatMessage.Channel}."));
                     toss = rng.Next(0, 20);

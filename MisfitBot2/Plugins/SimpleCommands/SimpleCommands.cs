@@ -14,6 +14,8 @@ namespace MisfitBot2.Modules
 {
     public class SimpleCommands : ModuleBase
     {
+        //https://discordapp.com/api/oauth2/authorize?client_id=295257486708047882&scope=bot&permissions=1
+
         // You *MUST* mark these commands with 'RunMode.Async'
         // otherwise the bot will not respond until the Task times out.
 
@@ -34,6 +36,14 @@ namespace MisfitBot2.Modules
             await Context.Channel.SendMessageAsync(msg);
         }
 
+        [Command("invitejuan", RunMode = RunMode.Async)]
+        [Summary("Gives you the link to invite Juan yo your own Discord Guild")]
+        public async Task JuanInviteCMD()
+        {
+            string msg = "Make sure you are logged in on this link for your server to show up https://discordapp.com/api/oauth2/authorize?client_id=295257486708047882&scope=bot&permissions=1";
+            SocketUser u = Core.Discord.GetUser(Context.User.Id);
+            await Discord.UserExtensions.SendMessageAsync(u, msg );
+        }
 
         [Command("setup", RunMode = RunMode.Async)]
         [Summary("Link your Discord user with a Twitch username. Note Twitch username is all lowercase and visible in the address to your channel page.")]

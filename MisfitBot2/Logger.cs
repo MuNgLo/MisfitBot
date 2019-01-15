@@ -18,16 +18,10 @@ namespace MisfitBot2
         // that ask for a Func<LogMessage, Task>.
         public async Task LogThis(LogMessage message)
         {
-
-            
                 lock (_logLines)
                 {
                     _logLines.Add(new JuanMessage(message, $"{DateTime.Now,-19}"));
-                    //int top = Console.CursorTop;
-                    //int left = Console.CursorLeft;
-                    //Console.SetCursorPosition(left, top);
                 }
-                
         }
 
         public void UpdateScreen(int seconds)
@@ -135,9 +129,9 @@ namespace MisfitBot2
             Console.ResetColor(); Console.BackgroundColor = ConsoleColor.Black;
         }
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        public async void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
-            LogThis(new LogMessage(LogSeverity.Info, "JUANSLOG", $"state:{state} e:{exception}"));
+            await LogThis(new LogMessage(LogSeverity.Info, "JUANSLOG", $"state:{state} e:{exception}"));
         }
 
         public bool IsEnabled(LogLevel logLevel)

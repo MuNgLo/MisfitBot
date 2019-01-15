@@ -55,7 +55,7 @@ namespace MisfitBot2.Services
         {
             return _incident[rng.Next(_incident.Count)];
         }
-        private async Task<string> GetRNGSitter(BotChannel bChan, CouchSettings settings)
+        private string GetRNGSitter(BotChannel bChan, CouchSettings settings)
         {
             int i = rng.Next(settings._couches[bChan.Key].TwitchUsernames.Count);
             if (i < settings._couches[bChan.Key].TwitchUsernames.Count && i >= 0)
@@ -177,7 +177,7 @@ namespace MisfitBot2.Services
                     {
                         if (RollIncident())
                         {
-                            string mark = await GetRNGSitter(bChan, settings);
+                            string mark = GetRNGSitter(bChan, settings);
                             if (mark != null)
                             {
                                 Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,

@@ -54,6 +54,14 @@ namespace MisfitBot2.Modules
             List<string> arguments = new List<string>(args);
             await _service.DiscordStartBetting(Context, arguments);
         }
+        [Command("cancelbets", RunMode = RunMode.Async)]
+        [Summary("Cancels the current betting and returns all the bets.")]
+        [RequireUserPermission(GuildPermission.ManageMessages)]
+        public async Task StopBetCMD()
+        {
+            if (Context.User.IsBot) { return; }
+            await _service.DiscordCancelBets(Context);
+        }
         [Command("closebets", RunMode = RunMode.Async)]
         [Summary("Ends the current betting with the given option as winner.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]

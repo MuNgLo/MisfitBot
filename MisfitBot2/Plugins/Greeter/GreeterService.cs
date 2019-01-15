@@ -20,24 +20,17 @@ namespace MisfitBot2.Services
 
         private async Task DiscordUserJoined(Discord.WebSocket.SocketGuildUser arg)
         {
-   
                 BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(arg.Guild.Id);
                 if (bChan == null)
                 {
                     return;
                 }
                 GreeterSettings settings = await Settings(bChan);
-
-
-
-
                 ulong chanID = settings._greetChannel;
-
                 if(chanID != 0)
                 {
-                    (Core.Discord.GetChannel(chanID) as ISocketMessageChannel).SendMessageAsync($"{arg.Username} {settings._greetMessage}");
+                    await (Core.Discord.GetChannel(chanID) as ISocketMessageChannel).SendMessageAsync($"{arg.Username} {settings._greetMessage}");
                 }
-
         }
 
         internal Task DebugAssignGreetChannel(ICommandContext context)

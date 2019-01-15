@@ -17,10 +17,9 @@ namespace MisfitBot2.Plugins.Betting
         /// </summary>
         /// <param name="twitchChannel"></param>
         /// <returns></returns>
-        public async Task<RunningBet> GrabBet(string twitchChannel)
+        public RunningBet GrabBet(string twitchChannel)
         {
             RunningBet result = CurrentlyRunning[twitchChannel];
-
             return result;
         }
 
@@ -36,14 +35,18 @@ namespace MisfitBot2.Plugins.Betting
                 Core.Twitch._client.SendMessage(twitchChannel, CurrentlyRunning[twitchChannel].CloseBetting());
             }
         }
-        public void CancelAllBets(string twitchChannel)
+        public async void CancelAllBets(BotChannel bChan)
         {
-            if (CurrentlyRunning.ContainsKey(twitchChannel))
+            if (CurrentlyRunning.ContainsKey(bChan.TwitchChannelName))
             {
-                CurrentlyRunning[twitchChannel].CancelBets();
-                Core.Twitch._client.SendMessage(twitchChannel, 
-                    $"All bets are off. Bets returned."
-                    );
+                string message = $"All bets are off. Bets returned.";
+                CurrentlyRunning[bChan.TwitchChannelName].CancelBets();
+                Core.Twitch._client.SendMessage(bChan.TwitchChannelName, message);
+                if (bChan.discordDefaultBotChannel != 0)
+                {
+                    await (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(message);
+                }
+                CurrentlyRunning.Remove(bChan.TwitchChannelName);
             }
         }
         /// <summary>
@@ -51,13 +54,11 @@ namespace MisfitBot2.Plugins.Betting
         /// </summary>
         /// <param name="twitchChannel"></param>
         /// <returns></returns>
-        public bool FinishBetting(string twitchChannel, string winningOption)
+        public async Task<bool> FinishBetting(string twitchChannel, string winningOption)
         {
             if (CurrentlyRunning.ContainsKey(twitchChannel))
             {
-                CurrentlyRunning[twitchChannel].Finish(winningOption);
-
-
+                await CurrentlyRunning[twitchChannel].Finish(winningOption);
                 CurrentlyRunning.Remove(twitchChannel);
             }
             return !CurrentlyRunning.ContainsKey(twitchChannel);
@@ -117,11 +118,13 @@ namespace MisfitBot2.Plugins.Betting
             {
                 channelForBet = channel;
             }
-          
 
 
-            CurrentlyRunning[bChan.TwitchChannelName] = new RunningBet(bChan.TwitchChannelID, options);
-            CurrentlyRunning[bChan.TwitchChannelName]._variant = variant;
+
+            CurrentlyRunning[bChan.TwitchChannelName] = new RunningBet(bChan.TwitchChannelID, options)
+            {
+                _variant = variant
+            };
 
             switch (variant)
             {

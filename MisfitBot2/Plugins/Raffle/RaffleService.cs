@@ -19,7 +19,7 @@ namespace MisfitBot2.Services
             Core.Twitch._client.OnChatCommandReceived += TwitchOnChatCommandReceived;
             Core.Twitch._client.OnMessageReceived += TwitchOnMessageReceived;
             _raffles = new RunningRaffles();
-            TimerStuff.OnSecondTick += FireReminders; // TODO go through OnSecond with a 30s checker or so
+            TimerStuff.OnSecondTick += OnSecondTick;
         }// END of Constructor
         #region Twitch command methods
         private async void TwitchOnChatCommandReceived(object sender, TwitchLib.Client.Events.OnChatCommandReceivedArgs e)
@@ -230,9 +230,8 @@ namespace MisfitBot2.Services
         }
         private void StartRaffle(BotChannel bChan, List<string> arguments)
         {
-            int number = 0, price = 0;
-            int.TryParse(arguments[0], out number);
-            int.TryParse(arguments[1], out price);
+            int.TryParse(arguments[0], out int number);
+            int.TryParse(arguments[1], out int price);
             if (number < 1 || price < 1) { return; }
             _raffles.StartRaffle(bChan, number, price);
         }
@@ -257,10 +256,7 @@ namespace MisfitBot2.Services
             }
             return false;
         }
-        private void FireReminders(int seconds)
-        {
-            _raffles.FireReminders();
-        }
+
         #endregion
 
         #region Important base methods that can't be inherited
@@ -273,7 +269,10 @@ namespace MisfitBot2.Services
         #region Interface base methods
         public void OnSecondTick(int seconds)
         {
-            throw new NotImplementedException();
+            if(seconds % 10 == 0)
+            {
+                _raffles.FireReminders();
+            }
         }
         public void OnMinuteTick(int minutes)
         {
