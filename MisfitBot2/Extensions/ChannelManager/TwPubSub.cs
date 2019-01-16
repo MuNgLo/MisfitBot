@@ -85,16 +85,6 @@ namespace MisfitBot2.Extensions.ChannelManager
                 $"{_twitchChannelName} :: OnR9kBeta."
                 ));
         }
-        private async void OnPubSubServiceError(object sender, OnPubSubServiceErrorArgs e)
-        {
-            BotChannel bChan = await Core.Channels.GetTwitchChannelByName(_twitchChannelName);
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, EXTENSIONNAME,
-                $"{_twitchChannelName} :: OnPubSubServiceError."
-                ));
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, EXTENSIONNAME,
-                $"{e?.Exception.Message}"
-                ));
-        }
         private async void OnPubSubServiceClosed(object sender, EventArgs e)
         {
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(_twitchChannelName);
@@ -217,6 +207,22 @@ namespace MisfitBot2.Extensions.ChannelManager
             Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
                 $"{_twitchChannelName} :: OnClear."
                 ));
+        }
+        private async void OnPubSubServiceError(object sender, OnPubSubServiceErrorArgs e)
+        {
+            BotChannel bChan = await Core.Channels.GetTwitchChannelByName(_twitchChannelName);
+            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, EXTENSIONNAME,
+                $"{_twitchChannelName} :: OnPubSubServiceError."
+                ));
+            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, EXTENSIONNAME,
+                $"{e?.Exception.Message}"
+                ));
+            if(bChan.discordAdminChannel != 0)
+            {
+                await (Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
+                    $"PubSub ERROR: Channel({_twitchChannelName}) {e?.Exception.Message}"
+                    );
+            }
         }
         private void OnViewCount(object sender, OnViewCountArgs e)
         {

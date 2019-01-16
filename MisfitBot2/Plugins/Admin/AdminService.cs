@@ -70,6 +70,9 @@ namespace MisfitBot2.Services
             }
             return;
         }
+
+        
+
         public async Task SetAdminChannel(ICommandContext context)
         {
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
@@ -120,6 +123,13 @@ namespace MisfitBot2.Services
         public async Task JoindDiscordGuild()
         {
             //Core.Discord.CurrentUser.Id
+        }
+        public async Task DiscordSetPubSubOauth(ICommandContext Context, string encryptedoauth)
+        {
+            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);
+            bChan.pubsubOauth = encryptedoauth;
+            await Core.Channels.ChannelSave(bChan);
+            await Context.Channel.SendMessageAsync("PubSub OAUTH key has been updated. Use \"!pubsub start\" to launch it.");
         }
         public async Task DiscordAdminInfo(ICommandContext context)
         {

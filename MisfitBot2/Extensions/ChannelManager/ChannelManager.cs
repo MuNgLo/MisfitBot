@@ -662,17 +662,20 @@ namespace MisfitBot2.Extensions.ChannelManager
 
             foreach (BotChannel bChan in await GetChannels())
             {
-                // Debug end
-                if (bChan.pubsubOauth != string.Empty)
-                {
-                    if (!PubSubClients.ContainsKey(bChan.TwitchChannelID))
-                    {
-                        PubSubClients[bChan.TwitchChannelID] = new TwPubSub(bChan.pubsubOauth, bChan.TwitchChannelID, bChan.TwitchChannelName);
-                    }
-                }
+                StartPubSub(bChan);
             }
         }
 
-
+        public void StartPubSub(BotChannel bChan)
+        {
+            // Debug end
+            if (bChan.pubsubOauth != string.Empty)
+            {
+                if (!PubSubClients.ContainsKey(bChan.TwitchChannelID))
+                {
+                    PubSubClients[bChan.TwitchChannelID] = new TwPubSub(bChan.pubsubOauth, bChan.TwitchChannelID, bChan.TwitchChannelName);
+                }
+            }
+        }
     }
 }

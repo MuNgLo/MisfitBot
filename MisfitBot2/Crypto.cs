@@ -9,21 +9,22 @@ namespace MisfitBot2.Crypto
 
     public static class Cipher
     {
+        static readonly string key = "aodisjoaiksjdlqwelkj";
         /// <summary>
         /// Encrypt a string.
         /// </summary>
         /// <param name="plainText">String to be encrypted</param>
         /// <param name="password">Password</param>
-        public static string Encrypt(string plainText, string password)
+        public static string Encrypt(string plainText, string password="")
         {
             if (plainText == null)
             {
                 return null;
             }
 
-            if (password == null)
+            if (password == null || password == string.Empty)
             {
-                password = String.Empty;
+                password = key;
             }
 
             // Get the bytes of the string

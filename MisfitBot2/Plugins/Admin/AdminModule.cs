@@ -21,13 +21,39 @@ namespace MisfitBot2.Modules
         [Command("pubsub", RunMode = RunMode.Async)]
         [Summary("restart > Kills and relaunches the Twitch PubSub for the channel.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task PubSubCMD(string arg)
+        public async Task PubSubCMD([Remainder]string text)
         {
             if (Context.User.IsBot) { return; }
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);
-            if (arg.ToLower() == "restart" && bChan != null)
+            if (bChan == null) { return; }
+            string[] args = text.Split(" ");
+            List<string> arguments = new List<string>(args);
+            if (arguments.Count < 1) { return; }
+            switch (arguments[0].ToLower())
             {
-                await Core.Channels.RestartPubSub(bChan);
+                case "clear":
+                    bChan.pubsubOauth = string.Empty;
+                    await Core.Channels.ChannelSave(bChan);
+                    await Context.Channel.SendMessageAsync("Current PubSub Token cleared.");
+                    break;
+                case "restart":
+                    await Core.Channels.RestartPubSub(bChan);
+                    break;
+                case "setup":
+                    // https://twitchtokengenerator.com/quick/sRgrU5bimJ
+                    await Context.Channel.SendMessageAsync("To start your PubSub setup you need a token from this link https://twitchtokengenerator.com/quick/sRgrU5bimJ It is to generate a token specific for your Twitch channel. To later remove access through this token you remove it on Twitch under settings>Connections. It will be called \"Twitch Token Generator by swiftyspiffy\". Then run !pubsub set <TOKEN>");
+                    break;
+                case "set":
+                    if (arguments.Count < 2) { return; }
+                    arguments[1] = Crypto.Cipher.Encrypt(arguments[1]);
+                    await Context.Message.DeleteAsync();
+                    await _service.DiscordSetPubSubOauth(Context, arguments[1]);
+                    break;
+                case "start":
+                    Core.Channels.StartPubSub(bChan);
+                    break;
+                default:
+                    break;
             }
         }
         [Command("adminchan", RunMode = RunMode.Async)]

@@ -14,7 +14,7 @@ namespace MisfitBot2
 {
     public class Program
     {
-        public static readonly char _commandCharacter = '!';
+        public static readonly char _commandCharacter = '?';
 
         private static IServiceProvider _services;
         // Keep the CommandService and IServiceCollection around for use with commands.
