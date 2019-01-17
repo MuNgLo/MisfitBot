@@ -18,7 +18,7 @@ namespace MisfitBot2.Services
         public PoorLifeChoicesService()
         {
             _rng = new Random();
-            Core.UserMan.OnUserEntryMerge += OnUserEntryMerge;
+            Core.OnUserEntryMerge += OnUserEntryMerge;
             Core.Channels.OnBotChannelMerge += OnBotChannelEntryMerge;
             TimerStuff.OnSecondTick += OnSecondTick;
             TimerStuff.OnMinuteTick += OnMinuteTick;

@@ -10,6 +10,9 @@ using Newtonsoft.Json;
 
 namespace MisfitBot2
 {
+    /// <summary>
+    /// This provides basic config support for servicebase class.
+    /// </summary>
     public class ServiceBaseDB
     {
         #region Service Settings Data

@@ -7,7 +7,9 @@ namespace MisfitBot2
 {
     public delegate void SecondTick(int second);
     public delegate void MinuteTick(int minute);
-
+    /// <summary>
+    /// This class creates and fires events on every second and minute.
+    /// </summary>
     public class TimerStuff
     {
         static private System.Threading.Timer seconds;

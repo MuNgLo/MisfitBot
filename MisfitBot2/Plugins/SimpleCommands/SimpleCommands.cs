@@ -12,6 +12,9 @@ using TwitchLib.Client.Interfaces;
 
 namespace MisfitBot2.Modules
 {
+    /// <summary>
+    /// This is simple Discord commands that can be resolved without a service
+    /// </summary>
     public class SimpleCommands : ModuleBase
     {
         //https://discordapp.com/api/oauth2/authorize?client_id=295257486708047882&scope=bot&permissions=1
@@ -45,12 +48,7 @@ namespace MisfitBot2.Modules
             await Discord.UserExtensions.SendMessageAsync(u, msg );
         }
 
-        [Command("setup", RunMode = RunMode.Async)]
-        [Summary("Link your Discord user with a Twitch username. Note Twitch username is all lowercase and visible in the address to your channel page.")]
-        public async Task IsMeCMD()
-        {
-            await Core.UserMan.LinkTokenRequest(Context.User.Id, Context.Channel);
-        }
+        
 
 
         

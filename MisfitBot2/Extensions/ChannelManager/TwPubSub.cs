@@ -8,6 +8,9 @@ using TwitchLib.PubSub.Events;
 
 namespace MisfitBot2.Extensions.ChannelManager
 {
+    /// <summary>
+    /// TwitchLib PubSub wrapper. Connects on creation.
+    /// </summary>
     public class TwPubSub
     {
         private TwitchPubSub Client;

@@ -1,15 +1,15 @@
 ﻿using System;
-using MisfitBot2.Crypto;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 
 namespace MisfitBot2.Extensions.UserManager
 {
+    /// <summary>
+    /// This handles userlinking and the tokens used for it.
+    /// </summary>
     class Userlinking
     {
-        private readonly string KEY = "asdasd";
         private List<LinkToken> Tokens = new List<LinkToken>();
         public Userlinking()
         {
@@ -111,7 +111,6 @@ namespace MisfitBot2.Extensions.UserManager
             {
                 return;
             }
-            string msg = Cipher.Encrypt(args[0], KEY);
             await arg.Channel.SendMessageAsync("Fail");
         }
     }

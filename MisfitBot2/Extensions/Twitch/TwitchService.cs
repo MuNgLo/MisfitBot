@@ -18,13 +18,13 @@ namespace MisfitBot2.Services
     public class TwitchService
     {
         private readonly string PLUGINNAME = "TwitchService";
-        private int _maxMissingConnection = 60, _missedConnections = 0;
-        public string _channel = "munglo";
+        //private int _maxMissingConnection = 60, _missedConnections = 0;
+        public string _channel = "munglo"; // TODO make this first launch parameter I guess
         public readonly ITwitchAPI _api;
         public readonly ITwitchClient _client;
-        public TwitchCredentials _credentials;
+        public TwitchCredentials _credentials; // TODO make this into adminservice stuff
         public TwitchUsers _twitchUsers;
-
+        // CONSTRUCTOR
         public TwitchService()
         {
             _credentials = new TwitchCredentials();
@@ -40,31 +40,25 @@ namespace MisfitBot2.Services
             _client.AddChatCommandIdentifier(Program._commandCharacter);
             _client.OnConnected += TwitchOnConnected;
             _client.OnDisconnected += TwitchOnDisconnected;
-
             _client.OnReSubscriber += TwitchOnReSubscriber;
             _client.OnConnectionError += TwitchOnConnectionError;
-
             //_client.OnLog += TwitchOnLog;
-
             _client.OnUserBanned += TwitchOnUserBanned;
-
             _client.OnUserJoined += TwitchOnUserJoined;
             _client.OnMessageReceived += TwitchOnMessageReceived;
             _client.OnExistingUsersDetected += TwitchOnExistingUsersDetected;
             _client.Connect();
             Core.Twitch = this;
-        }
+        }// EO CONSTRUCTOR
 
         private void TwitchOnMessageReceived(object sender, OnMessageReceivedArgs e)
         {
             _twitchUsers.TouchUser(e.ChatMessage.Channel, e.ChatMessage.Username);
         }
-
         private void TwitchOnUserJoined(object sender, OnUserJoinedArgs e)
         {
             _twitchUsers.TouchUser(e.Channel, e.Username);
         }
-
         private async void TwitchOnUserBanned(object sender, OnUserBannedArgs e)
         {
             UserEntry BannedUser = await Core.UserMan.GetUserByTwitchUserName(e.UserBan.Username);
@@ -80,41 +74,10 @@ namespace MisfitBot2.Services
                 );
             Core.RaiseBanEvent(banEvent);
         }
-
-        
-
         private async void TwitchOnLog(object sender, OnLogArgs e)
         {
             await Core.LOG(new LogMessage(LogSeverity.Info, PLUGINNAME, $"LOG:{e.Data}"));
         }
-
-        public void ConnectionStatus()
-        {
-            int top = Console.CursorTop;
-            int left = Console.CursorLeft;
-
-            Console.SetCursorPosition(20, 1);
-
-            if (_client.IsConnected)
-            {
-                Console.BackgroundColor = ConsoleColor.Green;
-            }
-            else
-            {
-                Console.BackgroundColor = ConsoleColor.Red;
-                _missedConnections++;
-                if(_missedConnections >= _maxMissingConnection)
-                {
-                    _missedConnections = 0;
-                    _client.Reconnect();
-                    Core.LOG(new LogMessage(LogSeverity.Warning, PLUGINNAME, "Connectionstatus failed. Reconnecting."));
-                }
-            }
-            Console.Write("*");
-            Console.SetCursorPosition(top, left);
-            Console.ResetColor(); Console.BackgroundColor = ConsoleColor.Black;
-        }
-
         private async void TwitchOnReSubscriber(object sender, OnReSubscriberArgs e)
         {
             await Core.LOG(new LogMessage(LogSeverity.Info, "TwitchService", $"{e.ReSubscriber.DisplayName} resubscribed to channel {e.Channel}."));
@@ -150,7 +113,7 @@ namespace MisfitBot2.Services
             {
                 string twitchID = user.Id;
                 _twitchUsers.TouchUser(e.Channel, user.Id);
-                await Core.LOG(new LogMessage(LogSeverity.Info, "TwitchService", $"{user.DisplayName} id:{user.Id}"));
+                await Core.LOG(new LogMessage(LogSeverity.Info, "TwitchService", $"TwitchOnExistingUsersDetected :: {user.DisplayName} id:{user.Id}"));
             }
         }
 

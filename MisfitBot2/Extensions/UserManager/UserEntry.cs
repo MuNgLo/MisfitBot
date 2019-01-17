@@ -4,9 +4,11 @@ using System.Collections.Generic;
 
 namespace MisfitBot2
 {
+    /// <summary>
+    /// This represents a Discord or Twitch User. A linked user represents both.
+    /// </summary>
     public class UserEntry
     {
-
         public bool linked = false;
         public string _username = string.Empty;
         public int _lastseen = 0;
@@ -22,15 +24,11 @@ namespace MisfitBot2
         public UserStatus _discordStatus = UserStatus.Offline;
         public int lastChange = -1;
         public int lastSave = -1;
-
-        
         public string Key { get { return DataKey(); } }
-
         public UserEntry()
         {
 
         }
-
         public UserEntry(string name, int lastseen, ulong discordID)
         {
             _username = name;

@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using Discord.WebSocket;
-using MisfitBot2.Services;
-using Newtonsoft.Json;
-using TwitchLib.Client.Events;
+﻿using Discord;
+using System;
+
 namespace MisfitBot2
 {
     public delegate void UserEntryMerge(UserEntry discordUser, UserEntry twitchUser);
@@ -16,7 +11,9 @@ namespace MisfitBot2
     public delegate void BanEvent(BanEventArguments e);
     public delegate void UnBanEvent(UnBanEventArguments e);
     public delegate void NewDiscordMember(BotChannel bChan, UserEntry user);
-
+    /// <summary>
+    /// Default uservalues class. Only contains a simple timestamp so far
+    /// </summary>
     public class UserValues
     {
         public int _timestamp = 0;
@@ -25,7 +22,9 @@ namespace MisfitBot2
             _timestamp = time;
         }
     }
-
+    /// <summary>
+    /// Botwide event argument class
+    /// </summary>
     public class BitEventArguments
     {
         public BotChannel bChan;
@@ -40,6 +39,9 @@ namespace MisfitBot2
             bChan = chan;user = usr;timestamp = time;bitsGiven = bits;bitsTotal = total;context = con;chatmessage = chatmsg;
         }
     }
+    /// <summary>
+    /// Botwide event argument class
+    /// </summary>
     public class BanEventArguments
     {
         public BotChannel bChan;
@@ -54,6 +56,9 @@ namespace MisfitBot2
             bChan = chan; enforcingUser = mod; bannedUser = vic; timestamp = time; duration = dur; reason = cause; isDiscord = !isTwitch;
         }
     }
+    /// <summary>
+    /// Botwide event argument class
+    /// </summary>
     public class UnBanEventArguments
     {
         public BotChannel bChan;
@@ -71,16 +76,43 @@ namespace MisfitBot2
     /// </summary>
     public class PluginSettingsBase
     {
-        [JsonProperty]
-        public volatile bool _active = true;
-        [JsonProperty]
-        public volatile int _defaultCooldown = 30;
-        [JsonProperty]
+        public bool _active = true;
+        public int _defaultCooldown = 30;
         public ulong _defaultDiscordChannel = 0;
-        [JsonProperty]
-        public volatile string _defaultTwitchRoom = string.Empty;
+        public string _defaultTwitchRoom = string.Empty;
     }
-}
+    /// <summary>
+    /// The format we remember the log entries as.
+    /// </summary>
+    public struct JuanMessage
+    {
+        public LogSeverity Severity { get; }
+        public string Source { get; }
+        public string Message { get; }
+        public string Timestamp { get; }
+        public Exception Exception { get; }
+        public JuanMessage(Discord.LogMessage msg, string timestamp)
+        {
+            Severity = msg.Severity; Source = msg.Source; Message = msg.Message; Exception = msg.Exception; Timestamp = timestamp;
+        }
+        public JuanMessage(LogSeverity severity, string source, string message, string timestamp, Exception exception = null)
+        {
+            Severity = severity; Source = source; Message = message; Exception = exception; Timestamp = timestamp;
+        }
+        public override string ToString()
+        {
+            if (Exception == null)
+            {
+                return $"{Timestamp} | {Source}: {Message}";
+            }
+            else
+            {
+                return $"{Timestamp} | {Source}: {Message} {Exception}";
+            }
+        }
+    }
+
+}// EO Namespace
 
 
 namespace MisfitBot2.Services

@@ -12,50 +12,41 @@ using MisfitBot2.Extensions.UserManager;
 
 namespace MisfitBot2.Services
 {
+    /// <summary>
+    /// Handles the Userentries that represnets the users.
+    /// </summary>
     public class UserManagerService
     {
         private readonly string PLUGINNAME = "UserManager";
-        //private static int LASTSAVE;
-        //private static int SAVEINTERVAL = 60;
-        //private static int FLUSHINTERVAL = 10; // in minutes
         private BotUsers UserList = new BotUsers();
         private Userlinking userlinking = new Userlinking();
-        public UserEntryMerge OnUserEntryMerge;
         
-
+        // CONSTRUCTOR
         public UserManagerService()
         {
             Core.Discord.UserJoined += DiscordUserJoined;
             Core.Twitch._client.OnUserJoined += TwitchUserJoined;
-
             Core.Discord.UserLeft += DiscordUserLeft;
             Core.Twitch._client.OnUserLeft += TwitchUserLeft;
-
             Core.Twitch._client.OnMessageReceived += TwitchOnMessageReceived;
-
             Core.Discord.GuildMemberUpdated += GuildMemberUpdated;
             //Core.Discord._client.UserUpdated += ClientUserUpdated;
-
             //Core.Discord._client.CurrentUserUpdated += _client_CurrentUserUpdated;
-
             Core.Discord.GuildMembersDownloaded += GuildMembersDownloaded;
             Core.Discord.Ready += Ready;
             Core.UserMan = this;
             TimerStuff.OnMinuteTick += OnMinuteTick;
-        }
+        }// EO CONSTRUCTOR
 
-
-        
         private async void TwitchOnMessageReceived(object sender, TwitchLib.Client.Events.OnMessageReceivedArgs e)
         {
             try
             {
-                await UserList.UpdateTwitchUserColour(e);
+                await UserList.UpdateTwitchUserColour(e); // TODO don't do this all the time
             }
             catch (Exception error)
             {
                 await Core.LOG(new LogMessage(LogSeverity.Error, PLUGINNAME, error.Message));
-                //throw;
             }
         }
 
@@ -64,7 +55,12 @@ namespace MisfitBot2.Services
             UserEntry user = await GetUserByDiscordID(discordID);
             await userlinking.SetupAndInformLinkToken(user);
         }
-
+        /// <summary>
+        /// Links a Discord UserEnty and a Twitch UserEntry. Also raises the Core.OnUserEntryMerge event.
+        /// </summary>
+        /// <param name="discordProfile"></param>
+        /// <param name="twitchProfile"></param>
+        /// <returns></returns>
         public async Task LinkAccounts(UserEntry discordProfile, UserEntry twitchProfile)
         {
             // Null check the profiles
@@ -72,22 +68,17 @@ namespace MisfitBot2.Services
             {
                 return;
             }
+            // Raise the link event so modules can listen and do whatever they need to do
+            Core.RaiseUserLinkEvent(discordProfile, twitchProfile);
             // merge twitch user into discord user then elevate discord user to linked status
-            if(OnUserEntryMerge != null)
-            {
-                OnUserEntryMerge.Invoke(discordProfile, twitchProfile);
-            }
-
             discordProfile._twitchUID = twitchProfile._twitchUID;
             discordProfile._twitchUsername = twitchProfile._twitchUsername;
             discordProfile._twitchDisplayname = twitchProfile._twitchDisplayname;
             discordProfile._twitchLogo = twitchProfile._twitchLogo;
             discordProfile._twitchColour = twitchProfile._twitchColour;
-
             discordProfile.linked = true;
             discordProfile.lastSave = 0;
             UserList.SaveUser(discordProfile);
-
             SocketUser u = Core.Discord.GetUser(discordProfile._discordUID);
             await u.SendMessageAsync("Your userprofile is now the same one for both Twitch and Discord.");
             Core.Twitch._client.SendWhisper(discordProfile._twitchUsername, "Your userprofile is now the same one for both Twitch and Discord.");    

@@ -6,7 +6,7 @@ using MisfitBot2.Modules;
 using MisfitBot2.Services;
 using System;
 using System.Data.SQLite;
-using System.Reflection;
+//using System.Reflection;
 using System.Threading.Tasks;
 using MisfitBot2.Extensions.ChannelManager;
 
@@ -15,13 +15,11 @@ namespace MisfitBot2
     public class Program
     {
         public static readonly char _commandCharacter = '?';
-
         private static IServiceProvider _services;
         // Keep the CommandService and IServiceCollection around for use with commands.
         // These two types require you install the Discord.Net.Commands package.
         private static IServiceCollection _map = new ServiceCollection();
         public static CommandService _commands = new CommandService();
-
         private static DiscordSocketClient _DiscordClient;
         public static void Main(string[] args=null)
             => new Program().MainAsync().GetAwaiter().GetResult();
@@ -35,30 +33,20 @@ namespace MisfitBot2
             Core.LOG = Core.LOGGER.LogThis;
             TimerStuff.OnSecondTick += Core.LOGGER.UpdateScreen;
             Core.serializer.Formatting = Newtonsoft.Json.Formatting.Indented;
-
             CreateNewDatabase();
             ConnectToDatabase();
-            //createTable();
-            //fillTable();
-
             DiscordSocketConfig disConfig = new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Info
             };
-
             _DiscordClient = new DiscordSocketClient(disConfig);
             _DiscordClient.Log += Core.LOGGER.LogThis;
-
             _DiscordClient.Ready += () => { Core.LOG(new LogMessage(LogSeverity.Info, "Misfitbot", "Connected and ready to be used.")); return Task.CompletedTask; };
             Core.Discord = _DiscordClient;
             string token = DiscordSettings.TOKEN; // Remember to keep this private!
-
-            // Centralize the logic for commands into a seperate method.
             await InitCommands();
-
             await _DiscordClient.LoginAsync(TokenType.Bot, token);
             await _DiscordClient.StartAsync();
-
             // Block this task until the program is closed.
             await Task.Delay(-1);
         }
@@ -135,10 +123,7 @@ namespace MisfitBot2
 
             // Subscribe a handler to see if a message invokes a command.
             _DiscordClient.MessageReceived += HandleCommandAsync;
-
             _DiscordClient.Disconnected += ClientDisconnected;
-
-
         }
 
         private static async Task ClientDisconnected(Exception arg)

@@ -4,6 +4,9 @@ using System.Collections.Generic;
 
 namespace MisfitBot2.Twitch
 {
+    /// <summary>
+    /// Keeps a list of users per channel that we know about. Each user has a timestamp of lastseen.
+    /// </summary>
     public class TwitchUsers
     {
         private Dictionary<string, List<TwitchChannelUser>> _users = new Dictionary<string, List<TwitchChannelUser>>();
@@ -47,7 +50,6 @@ namespace MisfitBot2.Twitch
             return result;
         }
     }
-    [System.Serializable]
     struct TwitchChannelUser
     {
         public string _twitchUsername;

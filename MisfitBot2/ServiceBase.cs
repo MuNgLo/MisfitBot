@@ -1,14 +1,11 @@
 ﻿using Discord.WebSocket;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Data.SQLite;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace MisfitBot2
 {
+    /// <summary>
+    /// Any service class should inherit from this class
+    /// </summary>
     public class ServiceBase : ServiceBaseDB
     {
         public async Task SayOnDiscord(BotChannel bChan, string message)
@@ -31,6 +28,5 @@ namespace MisfitBot2
                 return;
             }
         }
-
     }
 }

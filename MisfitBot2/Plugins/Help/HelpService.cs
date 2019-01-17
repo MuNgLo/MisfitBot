@@ -10,6 +10,11 @@ namespace MisfitBot2.Services
 {
     class HelpService : ServiceBase, IService
     {
+        /// <summary>
+        /// The basic response to the help command without any arguments given.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
         public async Task DiscordHelp(ICommandContext context)
         {
             string cmdIdent = $"{Program._commandCharacter}";
@@ -31,6 +36,12 @@ namespace MisfitBot2.Services
             Embed obj = builder.Build();
             await context.Channel.SendMessageAsync("", false, obj);
         }
+        /// <summary>
+        /// Outputs the given page to the Discord channel.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="page"></param>
+        /// <returns></returns>
         public async Task DiscordHelpPage(ICommandContext context, int page)
         {
             //string msg = string.Empty;
@@ -69,6 +80,12 @@ namespace MisfitBot2.Services
             Embed obj = builder.Build();
             await context.Channel.SendMessageAsync("", false, obj);
         }
+        /// <summary>
+        /// Outputs hits for the search into the Discord channel. 
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="search"></param>
+        /// <returns></returns>
         public async Task DiscordHelpSearch(ICommandContext context, string search)
         {
             // Make the embedded stuff
@@ -90,7 +107,6 @@ namespace MisfitBot2.Services
                     builder.AddField(cmd.Name, cmd.Summary);
                 }
             }
-
             await context.Channel.SendMessageAsync("wooop woop!");
             Embed obj = builder.Build();
             await context.Channel.SendMessageAsync("", false, obj);

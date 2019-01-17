@@ -17,7 +17,7 @@ namespace MisfitBot2.Services
         // CONSTRUCTOR
         public MatchMakingService()
         {
-            Core.UserMan.OnUserEntryMerge += OnUserEntryMerge;
+            Core.OnUserEntryMerge += OnUserEntryMerge;
             Core.Channels.OnBotChannelMerge += OnBotChannelEntryMerge;
             TimerStuff.OnSecondTick += OnSecondTick;
             TimerStuff.OnMinuteTick += OnMinuteTick;

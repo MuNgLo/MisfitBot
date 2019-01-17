@@ -1,5 +1,8 @@
 ﻿namespace MisfitBot2
 {
+    /// <summary>
+    /// This represents a channel for the bot. Can be Discord guild, Twitchchannel or both as a linked entry.
+    /// </summary>
     public class BotChannel
     {
         public bool isLinked = false;

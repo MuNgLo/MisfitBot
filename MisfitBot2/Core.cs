@@ -20,6 +20,7 @@ namespace MisfitBot2
         public static NewDiscordMember OnNewDiscordMember;
         public static BotChannelGoesLive OnBotChannelGoesLive;
         public static BotChannelGoesOffline OnBotChannelGoesOffline;
+        public static UserEntryMerge OnUserEntryMerge;
 
         public static SQLiteConnection Data;
 
@@ -32,13 +33,12 @@ namespace MisfitBot2
         public static DiscordSocketClient Discord;
         public static ChannelManager Channels;
         public static int CurrentTime { private set { } get { return UnixTime(); } }
-        public static int LastLaunchTime;
+        public static int LastLaunchTime; // To keep track of how long the bot has been running
         public static int UpTime { private set { } get { return UnixTime() - LastLaunchTime; } }
-
         public static JuansLog LOGGER;
-
         public static Func<LogMessage, Task> LOG;
         public static JsonSerializer serializer = new JsonSerializer();
+        // TODO Incorperate this into Admin module
         public static List<String> IgnoredTwitchUsers = new List<string> {
             "juanthebot",
             "nightbot",
@@ -61,42 +61,42 @@ namespace MisfitBot2
             return key;
         }
         #endregion
-
+        #region Botwide Events gets raised here
+        public static void RaiseUserLinkEvent(UserEntry discordProfile, UserEntry twitchProfile)
+        {
+            OnUserEntryMerge?.Invoke(discordProfile, twitchProfile);
+        }
         public static void RaiseBitEvent(BitEventArguments e)
         {
             OnBitEvent?.Invoke(e);
         }
-
         public static void RaiseBanEvent(BanEventArguments e)
         {
             OnBanEvent?.Invoke(e);
         }
-
         public static void RaiseUnBanEvent(UnBanEventArguments e)
         {
             OnUnBanEvent?.Invoke(e);
         }
-
         public static void RaiseOnNewDiscordMember(BotChannel bChan, UserEntry user)
         {
             if (bChan == null) { return; }
             if (user == null) { return; }
             OnNewDiscordMember?.Invoke(bChan, user);
         }
-
         public static void RaiseOnBotChannelGoesLive(BotChannel bChan)
         {
             if (bChan == null) { return; }
             bChan.isLive = true;
             OnBotChannelGoesLive?.Invoke(bChan);
         }
-
         public static void RaiseOnBotChannelGoesOffline(BotChannel bChan)
         {
             if (bChan == null) { return; }
             bChan.isLive = false;
             OnBotChannelGoesOffline?.Invoke(bChan);
         }
+        #endregion
     }
 
 }

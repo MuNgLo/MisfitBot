@@ -10,6 +10,9 @@ using MisfitBot2.Extensions.ChannelManager;
 
 namespace MisfitBot2.Services
 {
+    /// <summary>
+    /// Simple Twitch only commands that don't need any other outside information.
+    /// </summary>
     public class TwitchCommandsService
     {
         private readonly string PLUGINNAME = "TwitchCommandsService";

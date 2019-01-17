@@ -13,24 +13,37 @@ namespace MisfitBot2
     public class JuansLog : ILogger, ILogger<TwitchLib.PubSub.TwitchPubSub>
     {
         private List<JuanMessage> _logLines = new List<JuanMessage>();
-        private int _maxMissingConnection = 60, _missedConnections = 0, _visibleLines = 30;
-        // Example of a logging handler. This can be re-used by addons
-        // that ask for a Func<LogMessage, Task>.
+        private int _maxMissingConnection = 60, _missedConnections = 0, _visibleLines = 25;
+        /// <summary>
+        /// Example of a logging handler. This can be re-used by addons that ask for a Func<LogMessage, Task>.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
         public async Task LogThis(LogMessage message)
         {
-                lock (_logLines)
-                {
-                    _logLines.Add(new JuanMessage(message, $"{DateTime.Now,-19}"));
-                }
+            await AddLogLine(message);
+        }
+        public async void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        {
+            await AddLogLine(new LogMessage(LogSeverity.Info, "JUANSLOG", $"state:{state} e:{exception}"));
+        }
+        private async Task AddLogLine(LogMessage message)
+        {
+            lock (_logLines)
+            {
+                _logLines.Add(new JuanMessage(message, $"{DateTime.Now,-19}"));
+            }
         }
 
+        /// <summary>
+        /// This is where we draw the console output
+        /// </summary>
+        /// <param name="seconds"></param>
         public void UpdateScreen(int seconds)
         {
             Console.CursorVisible = false;
             Console.Clear();
-
             Console.SetCursorPosition(0, 0);
-
             Console.WriteLine("============================= Juan! The Misfit Bot =============================");
             if (Core.UserMan != null)
             {
@@ -54,17 +67,19 @@ namespace MisfitBot2
                     Console.ResetColor();
                 }
             }
-
             if (Core.Discord != null)
             {
-                ConnectionStatus();
+                DiscordConnectionStatus();
             }
             if (Core.Twitch != null)
             {
-                Core.Twitch.ConnectionStatus();
+                TwitchConnectionStatus();
             }
         }
-
+        /// <summary>
+        /// Matches log severity to a consol colour.
+        /// </summary>
+        /// <param name="severity"></param>
         private void SetConsoleColour(LogSeverity severity)
         {
             switch (severity)
@@ -84,10 +99,11 @@ namespace MisfitBot2
                     Console.ForegroundColor = ConsoleColor.DarkGray;
                     break;
             }
-
         }
-
-        private void ConnectionStatus()
+        /// <summary>
+        /// Checks and updates indicators for the Discord connection.
+        /// </summary>
+        private void DiscordConnectionStatus()
         {
             int top = Console.CursorTop;
             int left = Console.CursorLeft;
@@ -128,20 +144,47 @@ namespace MisfitBot2
             Console.SetCursorPosition(top, left);
             Console.ResetColor(); Console.BackgroundColor = ConsoleColor.Black;
         }
-
-        public async void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        /// <summary>
+        /// Checks and updates indicators for the Twitch connection.
+        /// </summary>
+        public void TwitchConnectionStatus()
         {
-            await LogThis(new LogMessage(LogSeverity.Info, "JUANSLOG", $"state:{state} e:{exception}"));
+            int top = Console.CursorTop;
+            int left = Console.CursorLeft;
+
+            Console.SetCursorPosition(20, 1);
+
+            if (Core.Twitch._client.IsConnected)
+            {
+                Console.BackgroundColor = ConsoleColor.Green;
+            }
+            else
+            {
+                Console.BackgroundColor = ConsoleColor.Red;
+                _missedConnections++;
+                if (_missedConnections >= _maxMissingConnection)
+                {
+                    _missedConnections = 0;
+                    Core.Twitch._client.Reconnect();
+                    Core.LOG(new LogMessage(LogSeverity.Warning, "Logger", "Connectionstatus failed. Reconnecting."));
+                }
+            }
+            Console.Write("*");
+            Console.SetCursorPosition(top, left);
+            Console.ResetColor(); Console.BackgroundColor = ConsoleColor.Black;
         }
 
+        
+
+        #region ILogger compliance
         public bool IsEnabled(LogLevel logLevel)
         {
             throw new NotImplementedException();
         }
-
         public IDisposable BeginScope<TState>(TState state)
         {
             throw new NotImplementedException();
         }
+        #endregion
     }
 }

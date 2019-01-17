@@ -23,7 +23,7 @@ namespace MisfitBot2.Services
         public TreasureService()
         {
             _goldResponseBuffer = new Dictionary<string, List<string>>();
-            Core.UserMan.OnUserEntryMerge += OnUserEntryMerge;
+            Core.OnUserEntryMerge += OnUserEntryMerge;
             Core.Channels.OnBotChannelMerge += OnBotChannelEntryMerge;
             Core.Discord.GuildAvailable += OnGuildAvailable;
             Core.Twitch._client.OnChatCommandReceived += TWITCH_OnChatCommandReceived;

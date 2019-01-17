@@ -1,5 +1,4 @@
 ﻿using System;
-//using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,30 +23,23 @@ using MisfitBot2.Plugins.MatchMaking;
 
 namespace MisfitBot2
 {
-    public class Configuration
-    {
-        public ulong GuildID { get; set; }
-        public Configuration(ulong guildID)
-        {
-            GuildID = guildID;
-        }
-        
-    }
-
+    /// <summary>
+    /// Handles the creation and loading of the modules settings in the DB.
+    /// </summary>
     public class ConfigurationHandler
     {
         private readonly string PLUGINNAME = "Configuration";
-        private Dictionary<string, Dictionary<string, Object>> _configs = new Dictionary<string, Dictionary<string, Object>>();
-        private JsonSerializer serializer = new JsonSerializer();
-
+        //private Dictionary<string, Dictionary<string, Object>> _configs = new Dictionary<string, Dictionary<string, Object>>();
+        //private JsonSerializer serializer = new JsonSerializer();
+        // CONSTRUCTOR
         public ConfigurationHandler()
         {
             //Console.WriteLine("ConfigurationHandler::ConfigurationHandler()");
-            serializer.Formatting = Formatting.Indented;
+            //Core.serializer.Formatting = Formatting.Indented;
         }
-
         /// <summary>
         /// Returns the saved config or creates a new entry with the object passed then save it to file and return it.
+        /// Remember to use the result in an AS statement.
         /// </summary>
         /// <param name="uid"></param>
         /// <param name="plugin"></param>
@@ -56,30 +48,35 @@ namespace MisfitBot2
         /// <returns></returns>
         public async Task<dynamic> GetConfig(BotChannel bChan, string plugin, Object objectType)
         {
-            if (!_configs.ContainsKey(bChan.Key))
+            /*if (!_configs.ContainsKey(bChan.Key))
             {
                 _configs[bChan.Key] = new Dictionary<string, object>();
             }
             if (!_configs[bChan.Key].ContainsKey(plugin))
             {
                 _configs[bChan.Key][plugin] = objectType;
-            }
-            await Load(bChan, plugin, objectType);
-            return _configs[bChan.Key][plugin];
+            }*/
+            return await Load(bChan, plugin, objectType);
+            //return _configs[bChan.Key][plugin];
         }
-
+        /// <summary>
+        /// Takes the passed Object, serialize the object and store it as a string under the plugin's DB Table using the Botchannel Key as identifier.
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <param name="plugin"></param>
+        /// <param name="data"></param>
         public async void UpdateConfig(BotChannel bChan, string plugin, Object data)
         {
-            if (!_configs.ContainsKey(bChan.Key))
+            /*if (!_configs.ContainsKey(bChan.Key))
             {
                 _configs[bChan.Key] = new Dictionary<string, object>();
-            }
-            if (!_configs[bChan.Key].ContainsKey(plugin))
-            {
+            }*/
+            //if (!_configs[bChan.Key].ContainsKey(plugin))
+            //{
                 await Load(bChan, plugin, data);
-                return;
-            }
-            _configs[bChan.Key][plugin] = data;
+                //return;
+            //}
+            //_configs[bChan.Key][plugin] = data;
             SQLiteCommand cmd = new SQLiteCommand
             {
                 CommandType = CommandType.Text,
@@ -89,11 +86,15 @@ namespace MisfitBot2
             cmd.Parameters.AddWithValue("@data", JsonConvert.SerializeObject(data));
             cmd.Parameters.AddWithValue("@key", bChan.Key);
             cmd.ExecuteNonQuery();
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Saved updated config for ({plugin}::{bChan.Key}) in DB."));
+            //await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Saved updated config for ({plugin}::{bChan.Key}) in DB."));
         }
-
-
-        public bool TableExists(String tableName, SQLiteConnection connection)
+        /// <summary>
+        /// USed to check if the given table exists in the DB.
+        /// </summary>
+        /// <param name="tableName"></param>
+        /// <param name="connection"></param>
+        /// <returns></returns>
+        private bool TableExists(String tableName, SQLiteConnection connection)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
@@ -111,7 +112,7 @@ namespace MisfitBot2
             }
         }
 
-        private async Task Load(BotChannel bChan, string plugin, Object type)
+        private async Task<dynamic> Load(BotChannel bChan, string plugin, Object type)
         {
             if (!TableExists(plugin, Core.Data))
             {
@@ -162,66 +163,66 @@ namespace MisfitBot2
 
                 result.Read();
                 // Make room for the config in memory
-                if (!_configs.ContainsKey(bChan.Key))
+               /* if (!_configs.ContainsKey(bChan.Key))
                 {
                     _configs[bChan.Key] = new Dictionary<string, object>();
-                }
+                }*/
                 // Deserialize the data and remember it
                 string debugfield = result.GetString(1);
                 switch (plugin)
                 {
                     case "Admin":
                         AdminSettings admin = JsonConvert.DeserializeObject<AdminSettings>(result.GetString(1));
-                        _configs[bChan.Key][plugin] = admin;
-                        break;
+                        //_configs[bChan.Key][plugin] = admin;
+                        return admin;
                     case "Betting":
                         BettingSettings betting = JsonConvert.DeserializeObject<BettingSettings>(result.GetString(1));
-                        _configs[bChan.Key][plugin] = betting;
-                        break;
+                        //_configs[bChan.Key][plugin] = betting;
+                        return betting;
                     case "Couch":
                         CouchSettings couch = JsonConvert.DeserializeObject<CouchSettings>(result.GetString(1));
-                        _configs[bChan.Key][plugin] = couch;
-                        break;
+                        //_configs[bChan.Key][plugin] = couch;
+                        return couch;
                     case "DeathCounter":
                         DeathCounterSettings deaths = JsonConvert.DeserializeObject<DeathCounterSettings>(result.GetString(1));
-                        _configs[bChan.Key][plugin] = deaths;
-                        break;
+                        //_configs[bChan.Key][plugin] = deaths;
+                        return deaths;
                     case "Greeter":
                         GreeterSettings greet = JsonConvert.DeserializeObject<GreeterSettings>(result.GetString(1));
-                        _configs[bChan.Key][plugin] = greet;
-                        break;
-                    case "MyPick":
-                        MyPickSettings result2 = JsonConvert.DeserializeObject<MyPickSettings>(result.GetString(1));
-                        _configs[bChan.Key][plugin] = result2;
-                        break;
-                    case "PluginTemplateService":
-                        PluginTemplateSettings temp = JsonConvert.DeserializeObject<PluginTemplateSettings>(result.GetString(1));
-                        _configs[bChan.Key][plugin] = temp;
-                        break;
-                    case "PoorLifeChoicesService":
-                        PoorLifeChoicesSettings plc = JsonConvert.DeserializeObject<PoorLifeChoicesSettings>(result.GetString(1));
-                        _configs[bChan.Key][plugin] = plc;
-                        break;
-                    case "Raffle":
-                        RaffleSettings raff = JsonConvert.DeserializeObject<RaffleSettings>(result.GetString(1));
-                        _configs[bChan.Key][plugin] = raff;
-                        break;
-                    case "Treasure":
-                        TreasureSettings result4 = JsonConvert.DeserializeObject<TreasureSettings>(result.GetString(1));
-                        _configs[bChan.Key][plugin] = result4;
-                        break;
-                    case "Voting":
-                        VotingSettings vote = JsonConvert.DeserializeObject<VotingSettings>(result.GetString(1));
-                        _configs[bChan.Key][plugin] = vote;
-                        break;
+                        //_configs[bChan.Key][plugin] = greet;
+                        return greet;
                     case "MatchMaking":
                         MatchMakingSettings mms = JsonConvert.DeserializeObject<MatchMakingSettings>(result.GetString(1));
-                        _configs[bChan.Key][plugin] = mms;
-                        break;
+                        //_configs[bChan.Key][plugin] = mms;
+                        return mms;
+                    case "MyPick":
+                        MyPickSettings result2 = JsonConvert.DeserializeObject<MyPickSettings>(result.GetString(1));
+                        //_configs[bChan.Key][plugin] = result2;
+                        return result2;
+                    case "PluginTemplateService":
+                        PluginTemplateSettings temp = JsonConvert.DeserializeObject<PluginTemplateSettings>(result.GetString(1));
+                        //_configs[bChan.Key][plugin] = temp;
+                        return temp;
+                    case "PoorLifeChoicesService":
+                        PoorLifeChoicesSettings plc = JsonConvert.DeserializeObject<PoorLifeChoicesSettings>(result.GetString(1));
+                        //_configs[bChan.Key][plugin] = plc;
+                        return plc;
+                    case "Raffle":
+                        RaffleSettings raff = JsonConvert.DeserializeObject<RaffleSettings>(result.GetString(1));
+                        //_configs[bChan.Key][plugin] = raff;
+                        return raff;
+                    case "Treasure":
+                        TreasureSettings result4 = JsonConvert.DeserializeObject<TreasureSettings>(result.GetString(1));
+                        //_configs[bChan.Key][plugin] = result4;
+                        return result4;
+                    case "Voting":
+                        VotingSettings vote = JsonConvert.DeserializeObject<VotingSettings>(result.GetString(1));
+                        //_configs[bChan.Key][plugin] = vote;
+                        return vote;
                     default:
-                        Configuration result3 = JsonConvert.DeserializeObject<Configuration>(result.GetString(1));
-                        _configs[bChan.Key][plugin] = result3;
-                        break;
+                        PluginSettingsBase result3 = JsonConvert.DeserializeObject<PluginSettingsBase>(result.GetString(1));
+                        //_configs[bChan.Key][plugin] = result3;
+                        return result3;
                 }
             }
 

@@ -9,7 +9,7 @@ namespace MisfitBot2.Crypto
 
     public static class Cipher
     {
-        static readonly string key = "aodisjoaiksjdlqwelkj";
+        static readonly string key = "aodisjoaiksjdlqwelkj"; // TODO make this a first time launch parameter
         /// <summary>
         /// Encrypt a string.
         /// </summary>

@@ -14,10 +14,12 @@ using TwitchLib.Client.Models;
 
 namespace MisfitBot2.Extensions.ChannelManager
 {
+    /// <summary>
+    /// Keeps track of botchannels and handles realtime functionality stuff.
+    /// </summary>
     public class ChannelManager
     {
         private readonly string PLUGINNAME = "ChannelManager";
-        //private readonly string FILENAME = "ChannelManager/BotChannels.json";
         public BotChannelMergeEvent OnBotChannelMerge;
         public BotChannelGoesOffline OnBotChannelGoesOffline;
         public Dictionary<string, TwPubSub> PubSubClients = new Dictionary<string, TwPubSub>();
@@ -29,11 +31,15 @@ namespace MisfitBot2.Extensions.ChannelManager
             {
                 TableCreate(PLUGINNAME);
             }
-            Core.Discord.GuildAvailable += DiscordGuildAvailable;
+            Core.Discord.GuildAvailable += OnDiscordGuildAvailable;
             Core.Channels = this;
             TimerStuff.OnMinuteTick += OnMinuteTick;
         }// EO Constructor
-
+        /// <summary>
+        /// Removes 1 botchannel with twitchID from DB and saves the passed botchannel to DB.
+        /// </summary>
+        /// <param name="channel"></param>
+        /// <returns></returns>
         public async Task<bool> SaveAsLinked(BotChannel channel)
         {
             if(await ChannelDataDeleteTwitchID(channel.TwitchChannelID))
@@ -42,7 +48,288 @@ namespace MisfitBot2.Extensions.ChannelManager
             }
             return (await GetDiscordGuildbyID(channel.GuildID)).isLinked;
         }
+        /// <summary>
+        /// Tries to connect to the channel after validation through Twitch.API.
+        /// </summary>
+        /// <param name="channelName"></param>
+        /// <returns></returns>
+        public async Task<bool> JoinTwitchChannel(string channelName)
+        {
+            try
+            {
+                TwitchLib.Api.V5.Models.Users.Users channelEntry = await Core.Twitch._api.V5.Users.GetUserByNameAsync(channelName);
+                if (channelEntry.Matches.Length < 1)
+                {
+                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Error, PLUGINNAME, $"Twitch channel lookup failed! Couldn't find channel. Not connecting to \"{channelName}\""));
+                    return false;
+                }
+            }
+            catch (Exception)
+            {
+                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Error, PLUGINNAME, $"Twitch channel lookup failed! Couldn't find channel. Not connecting to \"{channelName}\""));
+                return false;
+            }
+            Core.Twitch._client.JoinChannel(channelName);
+            return true;
+        }
 
+        public void OnMinuteTick(int minutes)
+        {
+            UpdateChannelStatuses();
+        }
+        /// <summary>
+        /// Checks all connected Twitch channels and Discord Guilds so we have valid entries for them and updates the isLive flag on Twitch channels.
+        /// </summary>
+        private async void UpdateChannelStatuses()
+        {
+            if (Core.Twitch == null)
+            {
+                return;
+            }
+            for (int i = 0; i < Core.Twitch._client.JoinedChannels.Count; i++)
+            {
+                TwitchLib.Api.V5.Models.Users.Users channels;
+                try
+                {
+                    channels = await Core.Twitch._api.V5.Users.GetUserByNameAsync(Core.Twitch._client.JoinedChannels[i].Channel);// Maybe rewrite to bulk get channels
+                }
+                catch (Exception)
+                {
+                    return;
+                }
+                if (channels.Matches.Length > 0)
+                {
+                    bool isLive = false;
+                    try
+                    {
+                        isLive = await Core.Twitch._api.V5.Streams.BroadcasterOnlineAsync(channels.Matches[0].Id);
+                    }
+                    catch (Exception)
+                    {
+                        return;
+                    }
+                    BotChannel bChan = await GetTwitchChannelByName(channels.Matches[0].Name);
+                    if (bChan == null)
+                    {
+                        continue;
+                    }
+                    if (bChan.isLive != isLive)
+                    {
+                        if (isLive)
+                        {
+                            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, PLUGINNAME, $"Twitch channel \"{channels.Matches[0].Name}\" went live!!"));
+                            bChan.isLive = true;
+                            await ChannelSave(bChan);
+                        }
+                        else
+                        {
+                            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, PLUGINNAME, $"Twitch channel \"{channels.Matches[0].Name}\" is now offline."));
+                            bChan.isLive = false;
+                            await ChannelSave(bChan);
+                        }
+                    }
+                }
+            }
+            foreach (SocketGuild guild in Core.Discord.Guilds)
+            {
+                await GetDiscordGuildbyID(guild.Id);
+            }
+        }// END of UpdateChannelStatuses
+        /// <summary>
+        /// Listens for when a Discord Guild is available so we can make sure we have a valid entry for it.
+        /// </summary>
+        /// <param name="arg"></param>
+        /// <returns></returns>
+        private async Task OnDiscordGuildAvailable(SocketGuild arg)
+        {
+            if (!await ChannelDataExists(arg.Id))
+            {
+                ChannelDataWrite(new BotChannel(arg.Id, arg.Name));
+            }
+        }
+
+        #region GetChannel methods
+        /// <summary>
+        /// Returns the BotChannel for the Discord Guild. Creates one if it doesn't exists.
+        /// </summary>
+        /// <param name="guildID"></param>
+        /// <returns></returns>
+        public async Task<BotChannel> GetDiscordGuildbyID(ulong guildID)
+        {
+            if (!await ChannelDataExists(guildID))
+            {
+                SocketGuild guild = Core.Discord.GetGuild(guildID);
+                ChannelDataWrite(new BotChannel(guild.Id, guild.Name));
+            }
+            return await ChannelDataRead(guildID);
+        }
+        /// <summary>
+        /// Returns 1 match from DB. Creates one if needed and then resolves the Twitchname against Twitch.API to get the Twitch.ID
+        /// </summary>
+        /// <param name="TwitchName"></param>
+        /// <returns></returns>
+        public async Task<BotChannel> GetTwitchChannelByName(string TwitchName)
+        {
+            if (!await ChannelDataExists(TwitchName))
+            {
+                TwitchLib.Api.V5.Models.Users.Users channelEntry = await Core.Twitch._api.V5.Users.GetUserByNameAsync(TwitchName);
+                if (channelEntry.Matches.Length < 1)
+                {
+                    return null;
+                }
+                ChannelDataWrite(new BotChannel(TwitchName, channelEntry.Matches[0].Id));
+            }
+            return await ChannelDataRead(TwitchName);
+        }
+        /// <summary>
+        /// Returns 1 match from DB. Creates one if needed and then resolves the TwitchID against Twitch.API to get the Twitch name.
+        /// </summary>
+        /// <param name="TwitchName"></param>
+        /// <returns></returns>
+        public async Task<BotChannel> GetTwitchChannelByID(string TwitchID)
+        {
+            if (!await ChannelDataExists(TwitchID))
+            {
+                TwitchLib.Api.V5.Models.Users.User channel = await Core.Twitch._api.V5.Users.GetUserByIDAsync(TwitchID);
+                if (channel == null)
+                {
+                    return null;
+                }
+                ChannelDataWrite(new BotChannel(channel.Name, channel.Id));
+            }
+            return await ChannelDataReadTwitchID(TwitchID);
+        }
+        /// <summary>
+        /// Returns 1 match from DB. If no match can be found NULL is returned.
+        /// </summary>
+        /// <param name="TwitchName"></param>
+        /// <returns></returns>
+        public async Task<BotChannel> GetBotchannelByKey(string key)
+        {
+            // This could be rewritten for moke exclusive hits directly from DB (once key is added to DB)
+            List<BotChannel> Channels = await GetChannels();
+            if (Channels.FindAll(p => p.Key == key).Count == 1)
+            {
+                return Channels.Find(p => p.Key == key);
+            }
+            else if (Channels.FindAll(p => p.Key == key).Count > 1)
+            {
+                return Channels.FindAll(p => p.Key == key).Find(p => p.isLinked == true);
+            }
+            return null;
+        }
+        #endregion
+
+
+        /// <summary>
+        /// Makes sure we create a valid botchannel entry for the autojoin channel we gave when connecting to Twitch. Then calls JoinAllAutoJoinTwitchChannels().
+        /// </summary>
+        /// <returns></returns>
+        public async Task JoinAutojoinChannels()
+        {
+            foreach (JoinedChannel chan in Core.Twitch._client.JoinedChannels)
+            {
+                TwitchLib.Api.V5.Models.Users.Users channelEntry = await Core.Twitch._api.V5.Users.GetUserByNameAsync(chan.Channel);
+                if (channelEntry.Matches.Length > 0)
+                {
+                    TwitchLib.Api.V5.Models.Channels.Channel c = await Core.Twitch._api.V5.Channels.GetChannelByIDAsync(channelEntry.Matches[0].Id);
+                    if (!await ChannelDataExists(c.Name))
+                    {
+                        BotChannel newChannel = new BotChannel(c.Name, c.Id)
+                        {
+                            TwitchChannelID = c.Id,
+                            isTwitch = true,
+                            TwitchAutojoin = true
+                        };
+                        await ChannelSave(newChannel);
+                    }
+                }
+            }
+            await JoinAllAutoJoinTwitchChannels();
+        }
+        /// <summary>
+        /// Gets all channels from DB. Looksup all flagged as autojoin channels against Twitch.API. Then checks if we are in the valid channels. If not we join them.
+        /// </summary>
+        /// <returns></returns>
+        public async Task JoinAllAutoJoinTwitchChannels()
+        {
+            List<string> chansToLookup = new List<string>();
+            foreach (BotChannel chan in await Core.Channels.GetChannels())
+            {
+                if (chan.TwitchChannelName != string.Empty && chan.TwitchAutojoin)
+                {
+                    chansToLookup.Add(chan.TwitchChannelName);
+                }
+            }
+            if (chansToLookup.Count < 1)
+            {
+                return;
+            }
+            TwitchLib.Api.V5.Models.Users.Users channelEntries = await Core.Twitch._api.V5.Users.GetUsersByNameAsync(chansToLookup);
+            if (channelEntries.Matches.Length < 1)
+            {
+                return;
+            }
+            foreach (TwitchLib.Api.V5.Models.Users.User usr in channelEntries.Matches)
+            {
+                var channel = Core.Twitch._client.GetJoinedChannel(usr.Name);
+                if (channel == null)
+                {
+                    Core.Twitch._client.JoinChannel(usr.Name);
+                }
+            }
+            await LaunchAllPubSubs();
+        }
+        #region pubsub stuff
+        /// <summary>
+        /// Tries to restart PubSub listener for given Botchannel if there is one.
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <returns></returns>
+        public async Task RestartPubSub(BotChannel bChan)
+        {
+            await Core.LOG(new LogMessage(LogSeverity.Warning, PLUGINNAME, "RestartPubSub"));
+            if (bChan.TwitchChannelID == null || bChan.TwitchChannelID == string.Empty)
+            {
+                return;
+            }
+            if (PubSubClients.ContainsKey(bChan.TwitchChannelID))
+            {
+                PubSubClients[bChan.TwitchChannelID].Close();
+                PubSubClients[bChan.TwitchChannelID].Connect();
+            }
+            else
+            {
+                await Core.LOG(new LogMessage(LogSeverity.Warning, PLUGINNAME, "RestartPubSub::Not a valid TwitchID."));
+            }
+        }
+        /// <summary>
+        /// Tries to start a PubSub listener for every botchannel in DB.
+        /// </summary>
+        /// <returns></returns>
+        private async Task LaunchAllPubSubs()
+        {
+            foreach (BotChannel bChan in await GetChannels())
+            {
+                StartPubSub(bChan);
+            }
+        }
+        /// <summary>
+        /// Launches individual PubSub for given Botchannel if it has a token.
+        /// </summary>
+        /// <param name="bChan"></param>
+        public void StartPubSub(BotChannel bChan)
+        {
+            // Debug end
+            if (bChan.pubsubOauth != string.Empty)
+            {
+                if (!PubSubClients.ContainsKey(bChan.TwitchChannelID))
+                {
+                    PubSubClients[bChan.TwitchChannelID] = new TwPubSub(bChan.pubsubOauth, bChan.TwitchChannelID, bChan.TwitchChannelName);
+                }
+            }
+        }
+        #endregion
         #region Database stuff
         private async Task<bool> ChannelDataExists(ulong GuildID)
         {
@@ -238,7 +525,7 @@ namespace MisfitBot2.Extensions.ChannelManager
             }
                 return !(await ChannelDataExistsTwitchID(TwitchID));
         }
-        private async Task<List<BotChannel>> ChannelsReadAll()
+        public async Task<List<BotChannel>> GetChannels()
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
@@ -415,267 +702,5 @@ namespace MisfitBot2.Extensions.ChannelManager
             }
         }
         #endregion
-
-        /// <summary>
-        /// Returns the BotChannel for the Discord Guild. Proritizes linked if more then one is found. Can return NULL
-        /// </summary>
-        /// <param name="guildID"></param>
-        /// <returns></returns>
-        public async Task<BotChannel> GetDiscordGuildbyID(ulong guildID)
-        {
-            if (!await ChannelDataExists(guildID))
-            {
-                SocketGuild guild = Core.Discord.GetGuild(guildID);
-                ChannelDataWrite(new BotChannel(guild.Id, guild.Name));
-            }
-            return await ChannelDataRead(guildID);
-        }
-
-        public async Task<BotChannel> GetTwitchChannelByName(string TwitchName)
-        {
-            if (!await ChannelDataExists(TwitchName))
-            {
-                TwitchLib.Api.V5.Models.Users.Users channelEntry = await Core.Twitch._api.V5.Users.GetUserByNameAsync(TwitchName);
-                if (channelEntry.Matches.Length < 1)
-                {
-                    return null;
-                }
-                ChannelDataWrite(new BotChannel(TwitchName, channelEntry.Matches[0].Id));
-            }
-            return await ChannelDataRead(TwitchName);
-        }
-        public async Task<BotChannel> GetTwitchChannelByID(string TwitchID)
-        {
-            if (!await ChannelDataExists(TwitchID))
-            {
-                TwitchLib.Api.V5.Models.Users.User channel = await Core.Twitch._api.V5.Users.GetUserByIDAsync(TwitchID);
-                if (channel == null)
-                {
-                    return null;
-                }
-                ChannelDataWrite(new BotChannel(channel.Name, channel.Id));
-            }
-            return await ChannelDataReadTwitchID(TwitchID);
-        }
-        public async Task<List<BotChannel>> GetChannels()
-        {
-            return await ChannelsReadAll();
-        }
-
-        public async Task JoinAllAutoJoinTwitchChannels()
-        {
-            List<string> chansToLookup = new List<string>();
-            foreach (BotChannel chan in await Core.Channels.GetChannels())
-            {
-                if (chan.TwitchChannelName != string.Empty && chan.TwitchAutojoin)
-                {
-                    chansToLookup.Add(chan.TwitchChannelName);
-                }
-            }
-            if (chansToLookup.Count < 1)
-            {
-                return;
-            }
-            TwitchLib.Api.V5.Models.Users.Users channelEntry = await Core.Twitch._api.V5.Users.GetUsersByNameAsync(chansToLookup);
-            if (channelEntry.Matches.Length < 1)
-            {
-                return;
-            }
-
-            foreach (TwitchLib.Api.V5.Models.Users.User usr in channelEntry.Matches)
-            {
-
-                var channel = Core.Twitch._client.GetJoinedChannel(usr.Name);
-                if (channel == null)
-                {
-
-                    Core.Twitch._client.JoinChannel(usr.Name);
-                }
-
-            }
-        }
-
-        public async Task RestartPubSub(BotChannel bChan)
-        {
-            await Core.LOG(new LogMessage(LogSeverity.Warning, PLUGINNAME, "RestartPubSub"));
-            if (bChan.TwitchChannelID == null || bChan.TwitchChannelID == string.Empty)
-            {
-                return;
-            }
-            if (PubSubClients.ContainsKey(bChan.TwitchChannelID))
-            {
-                PubSubClients[bChan.TwitchChannelID].Close();
-                PubSubClients[bChan.TwitchChannelID].Connect();
-            }
-            else
-            {
-                await Core.LOG(new LogMessage(LogSeverity.Warning, PLUGINNAME, "RestartPubSub::Not a valid TwitchID."));
-            }
-        }
-
-        public void OnMinuteTick(int minutes)
-        {
-            UpdateChannelStatuses();
-        }
-
-        private async void UpdateChannelStatuses()
-        {
-            if (Core.Twitch == null)
-            {
-                return;
-            }
-
-            for (int i = 0; i < Core.Twitch._client.JoinedChannels.Count; i++)
-            {
-                TwitchLib.Api.V5.Models.Users.Users channels;
-                try
-                {
-                    channels = await Core.Twitch._api.V5.Users.GetUserByNameAsync(Core.Twitch._client.JoinedChannels[i].Channel);
-                }
-                catch (Exception)
-                {
-                    return;
-                }
-
-
-                if (channels.Matches.Length > 0)
-                {
-                    bool isLive = false;
-                    try
-                    {
-                        isLive = await Core.Twitch._api.V5.Streams.BroadcasterOnlineAsync(channels.Matches[0].Id);
-                    }
-                    catch (Exception)
-                    {
-                        return;
-                    }
-
-                    BotChannel bChan = await GetTwitchChannelByName(channels.Matches[0].Name);
-                    if (bChan == null)
-                    {
-                        continue;
-                    }
-                    if (bChan.isLive != isLive)
-                    {
-                        if (isLive)
-                        {
-                            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, PLUGINNAME, $"Twitch channel \"{channels.Matches[0].Name}\" went live!!"));
-                            bChan.isLive = true;
-                            await ChannelSave(bChan);
-                        }
-                        else
-                        {
-                            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, PLUGINNAME, $"Twitch channel \"{channels.Matches[0].Name}\" is now offline."));
-                            bChan.isLive = false;
-                            await ChannelSave(bChan);
-                        }
-                    }
-                }
-            }
-
-            foreach (SocketGuild guild in Core.Discord.Guilds)
-            {
-                await GetDiscordGuildbyID(guild.Id);
-            }
-
-
-        }// END of UpdateChannelStatuses
-
-        private async Task DiscordGuildAvailable(SocketGuild arg)
-        {
-            if (!await ChannelDataExists(arg.Id))
-            {
-                ChannelDataWrite(new BotChannel(arg.Id, arg.Name));
-            }
-
-            /* if (_botChannels.GetDiscordGuildbyID(arg.Id) == null)
-             {
-                 await _botChannels.AddChannel(new BotChannel(arg.Id, arg.Name));
-             }
-             */
-
-        }
-
-        public async Task<bool> JoinTwitchChannel(string channelName)
-        {
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, PLUGINNAME, $"Trying to join twitch channel \"{channelName}\""));
-            try
-            {
-                TwitchLib.Api.V5.Models.Users.Users channelEntry = await Core.Twitch._api.V5.Users.GetUserByNameAsync(channelName);
-                if (channelEntry.Matches.Length < 1)
-                {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Error, PLUGINNAME, $"Twitch channel lookup failed! Couldn't find channel. Not connecting to \"{channelName}\""));
-                    return false;
-                }
-            }
-            catch (Exception)
-            {
-
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Error, PLUGINNAME, $"Twitch channel lookup failed! Couldn't find channel. Not connecting to \"{channelName}\""));
-                return false;
-            }
-
-            Core.Twitch._client.JoinChannel(channelName);
-            return true;
-        }
-
-        public async Task<BotChannel> GetBotchannelByKey(string key)
-        {
-            // This could be rewritten for moke exclusive hits directly from DB (once key is added to DB)
-            List<BotChannel> Channels = await GetChannels();
-            if (Channels.FindAll(p => p.Key == key).Count == 1)
-            {
-                return Channels.Find(p => p.Key == key);
-            }
-            else if (Channels.FindAll(p => p.Key == key).Count > 1)
-            {
-                return Channels.FindAll(p => p.Key == key).Find(p => p.isLinked == true);
-            }
-            return null;
-        }
-
-        public async Task JoinAutojoinChannels()
-        {
-
-            foreach (JoinedChannel chan in Core.Twitch._client.JoinedChannels)
-            {
-                TwitchLib.Api.V5.Models.Users.Users channelEntry = await Core.Twitch._api.V5.Users.GetUserByNameAsync(chan.Channel);
-                if (channelEntry.Matches.Length > 0)
-                {
-                    TwitchLib.Api.V5.Models.Channels.Channel c = await Core.Twitch._api.V5.Channels.GetChannelByIDAsync(channelEntry.Matches[0].Id);
-                    if (!await ChannelDataExists(c.Name))
-                    {
-                        BotChannel newChannel = new BotChannel(c.Name, c.Id)
-                        {
-                            TwitchChannelID = c.Id,
-                            isTwitch = true,
-                            TwitchAutojoin = true
-                        };
-                        await ChannelSave(newChannel);
-                    }
-
-                }
-            }
-
-
-            await JoinAllAutoJoinTwitchChannels();
-
-            foreach (BotChannel bChan in await GetChannels())
-            {
-                StartPubSub(bChan);
-            }
-        }
-
-        public void StartPubSub(BotChannel bChan)
-        {
-            // Debug end
-            if (bChan.pubsubOauth != string.Empty)
-            {
-                if (!PubSubClients.ContainsKey(bChan.TwitchChannelID))
-                {
-                    PubSubClients[bChan.TwitchChannelID] = new TwPubSub(bChan.pubsubOauth, bChan.TwitchChannelID, bChan.TwitchChannelName);
-                }
-            }
-        }
     }
 }

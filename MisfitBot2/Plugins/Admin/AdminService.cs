@@ -120,10 +120,6 @@ namespace MisfitBot2.Services
         #endregion
 
         #region AdminService specific methods
-        public async Task JoindDiscordGuild()
-        {
-            //Core.Discord.CurrentUser.Id
-        }
         public async Task DiscordSetPubSubOauth(ICommandContext Context, string encryptedoauth)
         {
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);

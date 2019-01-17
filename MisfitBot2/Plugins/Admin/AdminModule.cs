@@ -17,7 +17,12 @@ namespace MisfitBot2.Modules
         {
             _service = service;
         }
-
+        [Command("usersetup", RunMode = RunMode.Async)]
+        [Summary("Link your Discord user with a Twitch username. Note Twitch username is all lowercase and visible in the address to your channel page.")]
+        public async Task IsMeCMD()
+        {
+            await Core.UserMan.LinkTokenRequest(Context.User.Id, Context.Channel);
+        }
         [Command("pubsub", RunMode = RunMode.Async)]
         [Summary("restart > Kills and relaunches the Twitch PubSub for the channel.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
