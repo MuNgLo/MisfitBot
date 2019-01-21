@@ -45,16 +45,16 @@ namespace MisfitBot2.Crypto
         /// <param name="encryptedText">String to be decrypted</param>
         /// <param name="password">Password used during encryption</param>
         /// <exception cref="FormatException"></exception>
-        public static string Decrypt(string encryptedText, string password)
+        public static string Decrypt(string encryptedText, string password="")
         {
             if (encryptedText == null)
             {
                 return null;
             }
 
-            if (password == null)
+            if (password == null || password == string.Empty)
             {
-                password = String.Empty;
+                password = key;
             }
 
             // Get the bytes of the string

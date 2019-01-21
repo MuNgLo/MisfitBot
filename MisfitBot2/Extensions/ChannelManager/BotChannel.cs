@@ -18,9 +18,13 @@
         public string pubsubOauth = string.Empty;
         public string Key = string.Empty;
         // CONSTRUCTORS
-        public BotChannel(ulong guildID, string guildName="")
+        public BotChannel(ulong guildID, string guildName)
         {
             GuildID = guildID;
+            if(guildName == null)
+            {
+                guildName = string.Empty;
+            }
             GuildName = guildName;
             isTwitch = false;
             Key = DataKey();

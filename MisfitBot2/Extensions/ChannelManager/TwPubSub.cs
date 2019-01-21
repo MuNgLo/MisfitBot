@@ -19,11 +19,13 @@ namespace MisfitBot2.Extensions.ChannelManager
         private readonly string _oauth;
         private readonly string _twitchID;
         private readonly string _twitchChannelName;
-        public TwPubSub(string OAuth, string twitchID, string twitchChannelName)
+        private bool _verbose = true;
+        public TwPubSub(string OAuth, string twitchID, string twitchChannelName, bool silent)
         {
             _oauth = OAuth;
             _twitchID = twitchID;
             _twitchChannelName = twitchChannelName;
+            _verbose = !silent;
             Client = new TwitchPubSub();
             #region untested
             Client.OnBan += Client_OnBan;
@@ -324,7 +326,7 @@ namespace MisfitBot2.Extensions.ChannelManager
         private async void OnPubSubServiceConnected(object sender, EventArgs e)
         {
             // SendTopics accepts an oauth optionally, which is necessary for some topics
-            Client.SendTopics(_oauth);
+            Client.SendTopics(Crypto.Cipher.Decrypt(_oauth));
             await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
                 $"PubSub connected for {_twitchChannelName}."
                 ));
@@ -341,27 +343,38 @@ namespace MisfitBot2.Extensions.ChannelManager
         }
         private async void OnListenResponse(object sender, OnListenResponseArgs e)
         {
+            BotChannel bChan = await Core.Channels.GetTwitchChannelByName(_twitchChannelName);
             if (!e.Successful)
             {
+
                 await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
                 $"Failed to listen to {e.Topic}! Response: {e.Response.Error}"
                 ));
-                BotChannel bChan = await Core.Channels.GetTwitchChannelByName(_twitchChannelName);
                 if (bChan != null)
                 {
                     if (bChan.discordAdminChannel != 0)
                     {
-                        await(Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
+                        await (Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
                             $"Failed to listen to {e.Topic}. Response: {e.Response.Error}"
                             );
                     }
                 }
+
             }
             else
             {
                 await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
                     $"Listening to {e.Topic} for {_twitchChannelName}."
                     ));
+                if (_verbose)
+                {
+                    if (bChan.discordAdminChannel != 0)
+                    {
+                        await (Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
+                                $"Listening to {e.Topic}."
+                                );
+                    }
+                }
             }
         }
 

@@ -24,7 +24,11 @@ namespace MisfitBot2.Modules
             await Core.UserMan.LinkTokenRequest(Context.User.Id, Context.Channel);
         }
         [Command("pubsub", RunMode = RunMode.Async)]
-        [Summary("restart > Kills and relaunches the Twitch PubSub for the channel.")]
+        [Summary("clear > Removes current token." +
+            "restart > Kills and relaunches the Twitch PubSub for the channel." +
+            "setup > Instructions on how to get and use token." +
+            "set <TOKEN> > Sets the token. Also deletes the message to hide token." +
+            "start > Tries to launch the PubSub listener.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
         public async Task PubSubCMD([Remainder]string text)
         {
@@ -45,8 +49,8 @@ namespace MisfitBot2.Modules
                     await Core.Channels.RestartPubSub(bChan);
                     break;
                 case "setup":
-                    // https://twitchtokengenerator.com/quick/sRgrU5bimJ
-                    await Context.Channel.SendMessageAsync("To start your PubSub setup you need a token from this link https://twitchtokengenerator.com/quick/sRgrU5bimJ It is to generate a token specific for your Twitch channel. To later remove access through this token you remove it on Twitch under settings>Connections. It will be called \"Twitch Token Generator by swiftyspiffy\". Then run !pubsub set <TOKEN>");
+                    // https://twitchtokengenerator.com/quick/BvKsOpiJVv
+                    await Context.Channel.SendMessageAsync("To start your PubSub setup you need a token from this link https://twitchtokengenerator.com/quick/BvKsOpiJVv It is to generate a token specific for your Twitch channel. To later remove access through this token you remove it on Twitch under settings>Connections. It will be called \"Twitch Token Generator by swiftyspiffy\". Then run !pubsub set <TOKEN>");
                     break;
                 case "set":
                     if (arguments.Count < 2) { return; }

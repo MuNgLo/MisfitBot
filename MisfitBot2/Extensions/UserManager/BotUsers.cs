@@ -383,66 +383,77 @@ namespace MisfitBot2.Extensions.UserManager
         }
         private async Task CreateNewTwitchUserFromName(string twitchusername, UserEntry user)
         {
-            Users userinfo = await Core.Twitch._api.V5.Users.GetUserByNameAsync(twitchusername);
-            if (userinfo.Matches.Length > 0)
+            try
             {
-                using (SQLiteCommand cmd = new SQLiteCommand())
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.Connection = Core.Data;
-                    cmd.CommandText = $"INSERT INTO {PLUGINNAME} VALUES (" +
-                        $"@linked, " +
-                        $"@username, " +
-                        $"@lastseen, " +
-                        $"@lastseenOnTwitch, " +
-                        $"@twitchUID, " +
-                        $"@twichUsername, " +
-                        $"@twitchDisplayname, " +
-                        $"@twitchColour, " +
-                        $"@twitchLogo, " +
-                        $"@twitchCreated, " +
-                        $"@twitchLastUpdate, " +
-                        $"@discordUID, " +
-                        $"@discordStatus, " +
-                        $"@lastChange, " +
-                        $"@lastSave" +
-                        $")";
-                    cmd.Parameters.AddWithValue("@linked", user.linked);
-                    cmd.Parameters.AddWithValue("@username", string.Empty);
-                    cmd.Parameters.AddWithValue("@lastseen", Core.CurrentTime);
-                    cmd.Parameters.AddWithValue("@lastseenOnTwitch", Core.CurrentTime);
-                    cmd.Parameters.AddWithValue("@twitchUID", userinfo.Matches[0].Id);
-                    cmd.Parameters.AddWithValue("@twichUsername", userinfo.Matches[0].Name);
-                    cmd.Parameters.AddWithValue("@twitchDisplayname", userinfo.Matches[0].DisplayName);
-                    cmd.Parameters.AddWithValue("@twitchColour", string.Empty);
-                    cmd.Parameters.AddWithValue("@twitchLogo", userinfo.Matches[0].Logo);
-                    cmd.Parameters.AddWithValue("@twitchCreated", userinfo.Matches[0].CreatedAt);
-                    cmd.Parameters.AddWithValue("@twitchLastUpdate", userinfo.Matches[0].UpdatedAt);
-                    cmd.Parameters.AddWithValue("@discordUID", user._discordUID);
-                    cmd.Parameters.AddWithValue("@discordStatus", user._discordStatus);
-                    cmd.Parameters.AddWithValue("@lastChange", Core.CurrentTime);
-                    cmd.Parameters.AddWithValue("@lastSave", Core.CurrentTime);
+                Users users = await Core.Twitch._api.V5.Users.GetUserByNameAsync(twitchusername);
 
-                    user._lastseen = Core.CurrentTime;
-                    user._lastseenOnTwitch = Core.CurrentTime;
-                    user._twitchUID = userinfo.Matches[0].Id;
-                    user._twitchUsername = userinfo.Matches[0].Name;
-                    user._twitchDisplayname = userinfo.Matches[0].DisplayName;
-                    user._twitchLogo = userinfo.Matches[0].Logo;
-                    user._twitchCreated = userinfo.Matches[0].CreatedAt;
-                    user._twitchLastUpdate = userinfo.Matches[0].UpdatedAt;
-                    user.lastChange = Core.CurrentTime;
-                    user.lastSave = Core.CurrentTime;
-                    if (await DBUserExistsTwitchName(twitchusername))
+
+                Users userinfo = users;
+                if (userinfo.Matches.Length > 0)
+                {
+                    using (SQLiteCommand cmd = new SQLiteCommand())
                     {
-                        return;
+                        cmd.CommandType = CommandType.Text;
+                        cmd.Connection = Core.Data;
+                        cmd.CommandText = $"INSERT INTO {PLUGINNAME} VALUES (" +
+                            $"@linked, " +
+                            $"@username, " +
+                            $"@lastseen, " +
+                            $"@lastseenOnTwitch, " +
+                            $"@twitchUID, " +
+                            $"@twichUsername, " +
+                            $"@twitchDisplayname, " +
+                            $"@twitchColour, " +
+                            $"@twitchLogo, " +
+                            $"@twitchCreated, " +
+                            $"@twitchLastUpdate, " +
+                            $"@discordUID, " +
+                            $"@discordStatus, " +
+                            $"@lastChange, " +
+                            $"@lastSave" +
+                            $")";
+                        cmd.Parameters.AddWithValue("@linked", user.linked);
+                        cmd.Parameters.AddWithValue("@username", string.Empty);
+                        cmd.Parameters.AddWithValue("@lastseen", Core.CurrentTime);
+                        cmd.Parameters.AddWithValue("@lastseenOnTwitch", Core.CurrentTime);
+                        cmd.Parameters.AddWithValue("@twitchUID", userinfo.Matches[0].Id);
+                        cmd.Parameters.AddWithValue("@twichUsername", userinfo.Matches[0].Name);
+                        cmd.Parameters.AddWithValue("@twitchDisplayname", userinfo.Matches[0].DisplayName);
+                        cmd.Parameters.AddWithValue("@twitchColour", string.Empty);
+                        cmd.Parameters.AddWithValue("@twitchLogo", userinfo.Matches[0].Logo);
+                        cmd.Parameters.AddWithValue("@twitchCreated", userinfo.Matches[0].CreatedAt);
+                        cmd.Parameters.AddWithValue("@twitchLastUpdate", userinfo.Matches[0].UpdatedAt);
+                        cmd.Parameters.AddWithValue("@discordUID", user._discordUID);
+                        cmd.Parameters.AddWithValue("@discordStatus", user._discordStatus);
+                        cmd.Parameters.AddWithValue("@lastChange", Core.CurrentTime);
+                        cmd.Parameters.AddWithValue("@lastSave", Core.CurrentTime);
+
+                        user._lastseen = Core.CurrentTime;
+                        user._lastseenOnTwitch = Core.CurrentTime;
+                        user._twitchUID = userinfo.Matches[0].Id;
+                        user._twitchUsername = userinfo.Matches[0].Name;
+                        user._twitchDisplayname = userinfo.Matches[0].DisplayName;
+                        user._twitchLogo = userinfo.Matches[0].Logo;
+                        user._twitchCreated = userinfo.Matches[0].CreatedAt;
+                        user._twitchLastUpdate = userinfo.Matches[0].UpdatedAt;
+                        user.lastChange = Core.CurrentTime;
+                        user.lastSave = Core.CurrentTime;
+                        if (await DBUserExistsTwitchName(twitchusername))
+                        {
+                            return;
+                        }
+                        cmd.ExecuteNonQuery();
                     }
-                    cmd.ExecuteNonQuery();
                 }
+                else
+                {
+                    await Core.LOG(new LogMessage(LogSeverity.Warning, "BotUsers", $"Twitch user lookup failed for {twitchusername}!"));
+                }
+
             }
-            else
+            catch (Exception)
             {
-                await Core.LOG(new LogMessage(LogSeverity.Warning, "BotUsers", $"Twitch user lookup failed for {twitchusername}!"));
+                await Core.LOG(new LogMessage(LogSeverity.Warning, "BotUsers", $"Twitch user lookup exception caught ({twitchusername})!"));
             }
         }
 
