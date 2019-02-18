@@ -53,7 +53,7 @@ namespace MisfitBot2.Services
             
             TreasureUserDefinition userGold = new TreasureUserDefinition(Core.CurrentTime);
             string table = $"{PLUGINNAME}_Users_{bChan.Key}";
-            if (!TableExists(table))
+            if (!await TableExists(table))
             {
                 UserTableCreate(table);
             }
@@ -563,7 +563,7 @@ namespace MisfitBot2.Services
             foreach (BotChannel bChan in await Core.Channels.GetChannels())
             {
                 string table = $"{PLUGINNAME}_Users_{bChan.Key}";
-                if (!TableExists(table))
+                if (!await TableExists(table))
                 {
                     continue;
                 }

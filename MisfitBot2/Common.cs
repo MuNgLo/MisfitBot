@@ -5,7 +5,7 @@ namespace MisfitBot2
 {
     public delegate void UserEntryMerge(UserEntry discordUser, UserEntry twitchUser);
     public delegate void BotChannelMergeEvent(BotChannel guildID, BotChannel twitchChannelName);
-    public delegate void BotChannelGoesLive(BotChannel bChan);
+    public delegate void BotChannelGoesLive(BotChannel bChan, int delay);
     public delegate void BotChannelGoesOffline(BotChannel bChan);
     public delegate void BitEvent(BitEventArguments e);
     public delegate void BanEvent(BanEventArguments e);

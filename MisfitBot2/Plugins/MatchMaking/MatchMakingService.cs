@@ -33,7 +33,7 @@ namespace MisfitBot2.Services
         {
             MMQueue queue = new MMQueue(discordChannelID, teamsize);
             string table = $"{PLUGINNAME}_QUEUES";
-            if (!TableExists(table))
+            if (!await TableExists(table))
             {
                 QueueTableCreate(table);
             }

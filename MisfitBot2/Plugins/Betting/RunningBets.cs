@@ -28,11 +28,16 @@ namespace MisfitBot2.Plugins.Betting
             return CurrentlyRunning.ContainsKey(twitchChannel);
         }
 
-        public void CloseBetting(string twitchChannel)
+        public async Task CloseBetting(string twitchChannel)
         {
             if (CurrentlyRunning.ContainsKey(twitchChannel))
             {
-                Core.Twitch._client.SendMessage(twitchChannel, CurrentlyRunning[twitchChannel].CloseBetting());
+                string msg = CurrentlyRunning[twitchChannel].CloseBetting();
+                Core.Twitch._client.SendMessage(twitchChannel, msg);
+                if (CurrentlyRunning[twitchChannel]._discordChannel != 0)
+                {
+                    await SayOnDiscord(CurrentlyRunning[twitchChannel]._discordChannel, msg);
+                }
             }
         }
         public async void CancelAllBets(BotChannel bChan)
@@ -72,20 +77,46 @@ namespace MisfitBot2.Plugins.Betting
             }
             return !CurrentlyRunning.ContainsKey(twitchChannel);
         }
-        internal void Reminder(int minimumDelay)
+        public async Task Reminder(int second)
         {
             foreach (string key in CurrentlyRunning.Keys)
             {
-                if (CurrentlyRunning[key].IsRunning && CurrentlyRunning[key]._msgSinceLast >= 8 && Core.CurrentTime > CurrentlyRunning[key]._lastReminder + minimumDelay)
+                BotChannel bChan = await Core.Channels.GetTwitchChannelByID(CurrentlyRunning[key]._twitchChannelID);
+                BettingSettings settings = await Settings(bChan);
+                if (second % settings._msgCheckInterval == 0)
                 {
-                    string msg = CurrentlyRunning[key].ReminderMessage();
-                    Core.Twitch._client.SendMessage(key, msg);
-                    CurrentlyRunning[key]._msgSinceLast = 0;
-                    CurrentlyRunning[key]._lastReminder = Core.CurrentTime;
+                    if (CurrentlyRunning[key].IsRunning && CurrentlyRunning[key]._msgSinceLast >= settings.reminderMinMessageBetween && Core.CurrentTime > CurrentlyRunning[key]._lastReminder + settings._msgInterval)
+                    {
+                        string msg = CurrentlyRunning[key].ReminderMessage();
+                        Core.Twitch._client.SendMessage(key, msg);
+                        if(CurrentlyRunning[key]._discordChannel != 0)
+                        {
+                            await SayOnDiscord(CurrentlyRunning[key]._discordChannel, msg);
+                        }
+                        CurrentlyRunning[key]._msgSinceLast = 0;
+                        CurrentlyRunning[key]._lastReminder = Core.CurrentTime;
+                    }
                 }
             }
         }
-
+        public async Task ApexCloseCheck(int second)
+        {
+            foreach (string key in CurrentlyRunning.Keys)
+            {
+                if (CurrentlyRunning[key]._variant == BETVARIANT.APEX)
+                {
+                    BotChannel bChan = await Core.Channels.GetTwitchChannelByID(CurrentlyRunning[key]._twitchChannelID);
+                    BettingSettings settings = await Settings(bChan);
+                    if (CurrentlyRunning[key].IsRunning)
+                    {
+                        if (Core.CurrentTime > CurrentlyRunning[key]._timestamp + settings.apexOpenTimer)
+                        {
+                            await CloseBetting(bChan.TwitchChannelName);
+                        }
+                    }
+                }
+            }
+        }
         /// <summary>
         /// Retuns true if a new betting phase is started. False if not.
         /// </summary>
@@ -108,15 +139,17 @@ namespace MisfitBot2.Plugins.Betting
 
             if (settings._defaultDiscordChannel != 0)
             {
-                channelForBet = settings._defaultDiscordChannel;
+                channelForBet = settings._defaultDiscordChannel; // _defaultDiscordChannel is the detting module default channel
             }
-            else if (channelForBet == 0 && bChan.discordDefaultBotChannel != 0)
+
+            if (channelForBet == 0 && bChan.discordDefaultBotChannel != 0)
             {
                 channelForBet = bChan.discordDefaultBotChannel;
             }
-            else if (channel != 0)
+
+            if (channel != 0)
             {
-                channelForBet = channel;
+                channelForBet = channel; // If bet is started from discord it will run in that channel. Otherwise it defaults do default bot channel
             }
 
 
@@ -126,27 +159,39 @@ namespace MisfitBot2.Plugins.Betting
                 _variant = variant
             };
 
+            if(channelForBet != 0)
+            {
+                CurrentlyRunning[bChan.TwitchChannelName]._discordChannel = channelForBet;
+            }
+
             switch (variant)
             {
                 case BETVARIANT.NORMAL:
-                    Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Betting open! Type \"!bet <amount> <placement>\" to place a bet.  Valid options are {OptionListToString(options)}");
+                    Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Betting open! Type \"?bet <amount> <placement>\" to place a bet.  Valid options are {OptionListToString(options)}");
                     if(channelForBet != 0)
                     {
-                        await (Core.Discord.GetChannel(channelForBet) as ISocketMessageChannel).SendMessageAsync($"Betting open! Type \"!bet <amount> <option>\" to place a bet.  Valid options are {OptionListToString(options)}");
+                        await (Core.Discord.GetChannel(channelForBet) as ISocketMessageChannel).SendMessageAsync($"Betting open! Type \"?bet <amount> <option>\" to place a bet.  Valid options are {OptionListToString(options)}");
                     }
                     break;
                 case BETVARIANT.BATTLEROYALE:
-                    Core.Twitch._client.SendMessage(bChan.TwitchChannelName, "Betting open! Type \"!bet <amount> <placement>\" to place a bet. Valid placements are 1 to 100.");
+                    Core.Twitch._client.SendMessage(bChan.TwitchChannelName, "Betting open! Type \"?bet <amount> <placement>\" to place a bet. Valid placements are 1 to 100.");
                     if (channelForBet != 0)
                     {
-                        await (Core.Discord.GetChannel(channelForBet) as ISocketMessageChannel).SendMessageAsync("Betting open! Type \"!bet <amount> <placement>\" to place a bet. Valid placements are 1 to 100.");
+                        await (Core.Discord.GetChannel(channelForBet) as ISocketMessageChannel).SendMessageAsync("Betting open! Type \"?bet <amount> <placement>\" to place a bet. Valid placements are 1 to 100.");
                     }
                     break;
                 case BETVARIANT.DEVILDAGGERS:
-                    Core.Twitch._client.SendMessage(bChan.TwitchChannelName, "Betting open! Type \"!bet <amount> <placement>\" to place a bet.  Valid seconds are 1 to 1300.");
+                    Core.Twitch._client.SendMessage(bChan.TwitchChannelName, "Betting open! Type \"?bet <amount> <second>\" to place a bet.  Valid seconds are 1 to 1300.");
                     if (channelForBet != 0)
                     {
-                        await (Core.Discord.GetChannel(channelForBet) as ISocketMessageChannel).SendMessageAsync("Betting open! Type \"!bet <amount> <placement>\" to place a bet.  Valid seconds are 1 to 1300.");
+                        await (Core.Discord.GetChannel(channelForBet) as ISocketMessageChannel).SendMessageAsync("Betting open! Type \"?bet <amount> <placement>\" to place a bet.  Valid seconds are 1 to 1300.");
+                    }
+                    break;
+                case BETVARIANT.APEX:
+                    Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Betting open! Type \"?bet <amount> <placement>\" to place a bet. Valid placements are 1 to 20. Betting closes in {settings.apexOpenTimer} seconds.");
+                    if (channelForBet != 0)
+                    {
+                        await (Core.Discord.GetChannel(channelForBet) as ISocketMessageChannel).SendMessageAsync($"Betting open! Type \"?bet <amount> <placement>\" to place a bet. Valid placements are 1 to 20. Betting closes in {settings.apexOpenTimer} seconds.");
                     }
                     break;
             }
@@ -158,7 +203,12 @@ namespace MisfitBot2.Plugins.Betting
             {
                 return false;
             }
-            // IF NR/DD betvariant we only accept first bet
+            // Check the gold is enough for the bet
+            if (await Core.Treasury.GetUserGold(user, bChan) < amount)
+            {
+                return false;
+            }
+            // IF BR/DD betvariant we only accept first bet
             if (CurrentlyRunning[bChan.TwitchChannelName]._variant != BETVARIANT.NORMAL)
             {
                 if (CurrentlyRunning[bChan.TwitchChannelName].UserHasBets(user._twitchUID) > 0)
@@ -166,16 +216,8 @@ namespace MisfitBot2.Plugins.Betting
                     return false;
                 }
             }
-            
-            // Check the gold is enough for the bet
-            int userGold = await Core.Treasury.GetUserGold(user, bChan);
-            if (userGold < amount)
-            {
-                return false;
-            }
             Core.Treasury.TakeGold(user, bChan, amount);
             CurrentlyRunning[bChan.TwitchChannelName].AddBet(user, pickedOption, amount);
-
             return true;
         }
         /// <summary>
@@ -198,7 +240,13 @@ namespace MisfitBot2.Plugins.Betting
         {
             return CurrentlyRunning.ContainsKey(twitchChannel);
         }
-
+        private async Task SayOnDiscord(ulong channelID, string message)
+        {
+            if (channelID != 0)
+            {
+                await (Core.Discord.GetChannel(channelID) as ISocketMessageChannel).SendMessageAsync(message);
+            }
+        }
         #region non interface base methods
         private async Task<BettingSettings> Settings(BotChannel bChan)
         {

@@ -37,7 +37,7 @@ namespace MisfitBot2.Services
             _client = new TwitchClient();
             _client.Initialize(cred, _channel);
             _client.RemoveChatCommandIdentifier('!');
-            _client.AddChatCommandIdentifier(Program._commandCharacter);
+            _client.AddChatCommandIdentifier(Core._commandCharacter);
             _client.OnConnected += TwitchOnConnected;
             _client.OnDisconnected += TwitchOnDisconnected;
             _client.OnReSubscriber += TwitchOnReSubscriber;

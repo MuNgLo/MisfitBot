@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using System.Linq;
+using Discord.WebSocket;
 
 namespace MisfitBot2.Plugins.Betting
 {
@@ -10,10 +11,12 @@ namespace MisfitBot2.Plugins.Betting
     {
         NORMAL, 
         BATTLEROYALE, 
-        DEVILDAGGERS
+        DEVILDAGGERS, 
+        APEX
     }
     public class RunningBet
     {
+        private readonly string PLUGINNAME = "Betting";
         public bool IsRunning { get; private set; } = true;
         public BETVARIANT _variant = BETVARIANT.NORMAL;
         public string _twitchChannelID;
@@ -22,11 +25,14 @@ namespace MisfitBot2.Plugins.Betting
         public bool _isFinished { get; private set; } = false;
         public int _lastReminder = 0;
         public int _msgSinceLast = 0;
+        public ulong _discordChannel = 0;
+        public readonly int _timestamp;
         public RunningBet(string twitchChannelID, List<string> opt)
         {
             _twitchChannelID = twitchChannelID;
             _bets = new List<IndividualBet>();
             _options = opt;
+            _timestamp = Core.CurrentTime;
         }
         public int CurrentPool
         {
@@ -87,17 +93,17 @@ namespace MisfitBot2.Plugins.Betting
                 }
             }
 
-                foreach(string option in pickedOptions)
+            foreach(string option in pickedOptions)
+            {
+                if(!optionsWithBets.Exists(p=>p.option == option))
                 {
-                    if(!optionsWithBets.Exists(p=>p.option == option))
-                    {
-                        optionsWithBets.Add(new BetSum(option, 0));
-                    }
+                    optionsWithBets.Add(new BetSum(option, 0));
                 }
-                foreach(IndividualBet bet in _bets)
-                {
-                     optionsWithBets.Find(p => p.option == bet._optionPick).betAmount += bet._amount;
-                }
+            }
+            foreach(IndividualBet bet in _bets)
+            {
+                    optionsWithBets.Find(p => p.option == bet._optionPick).betAmount += bet._amount;
+            }
 
 
 
@@ -118,6 +124,8 @@ namespace MisfitBot2.Plugins.Betting
                     result += $" { SortedList[i].option}({SortedList[i].betAmount})";
                 }
             }
+
+            if(result == string.Empty) { result = $" No bets placed this time."; }
 
             return result;
         }
@@ -153,6 +161,7 @@ namespace MisfitBot2.Plugins.Betting
             IsRunning = false;
             int pool = CurrentPool;
             int winningPool = 0;
+            string message = string.Empty;
             foreach(IndividualBet bet in _bets)
             {
                 if(bet._optionPick == winningOption)
@@ -164,17 +173,16 @@ namespace MisfitBot2.Plugins.Betting
 
             if (pool < 1)
             {
-                
-                Core.Twitch._client.SendMessage(
-                    bChan.TwitchChannelName, 
-                    $"FINISH! No bets where placed.");
+                message = $"FINISH! No bets where placed.";
+                Core.Twitch._client.SendMessage(bChan.TwitchChannelName, message);
+                await SayOnDiscord(_discordChannel, message);
                 return;
             }
             if (winningPool < 1)
             {
-                Core.Twitch._client.SendMessage(
-                    bChan.TwitchChannelName, 
-                    $"FINISH! No Winners.");
+                message = $"FINISH! No Winners.";
+                Core.Twitch._client.SendMessage(bChan.TwitchChannelName, message);
+                await SayOnDiscord(_discordChannel, message);
                 return;
             }
 
@@ -207,21 +215,27 @@ namespace MisfitBot2.Plugins.Betting
 
             Core.Twitch._client.SendMessage((await Core.Channels.GetTwitchChannelByID(_twitchChannelID)).TwitchChannelName, 
                 $"The bets ended as {OptionWithGold()}. {winningOption} was the winning option and  {biggestWinner} won most with {biggestWin}g.");
-        }
-
-        internal int UserHasBets(string twitchUID)
-        {
-            return _bets.FindAll(p => p._user._twitchUID == twitchUID).Count;
+            if (_discordChannel != 0)
+            {
+                await SayOnDiscord(_discordChannel, $"The bets ended as {OptionWithGold()}. {winningOption} was the winning option and  {biggestWinner} won most with {biggestWin}g.");
+            }
         }
 
         public async Task FinishBR(string winningOption)
         {
             IsRunning = false;
             int pool = CurrentPool;
+            string message = string.Empty;
             BotChannel bChan = await Core.Channels.GetTwitchChannelByID(_twitchChannelID);
             if (pool < 1)
             {
-                Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"FINISH! No bets where placed.");
+                message = $"FINISH! No bets where placed.";
+                if(_variant == BETVARIANT.APEX)
+                {
+                    BettingSettings settings = await Settings(bChan);
+                    message += $" A new round of betting will start in {settings.apexRoundPause} seconds.";
+                }
+                Core.Twitch._client.SendMessage(bChan.TwitchChannelName, message);
                 return;
             }
 
@@ -267,18 +281,37 @@ namespace MisfitBot2.Plugins.Betting
                 }
             }
 
+            message = $"Winners: {msg}";
+            if (_variant == BETVARIANT.APEX)
+            {
+                BettingSettings settings = await Settings(bChan);
+                message += $" A new round of betting will start in {settings.apexRoundPause} seconds.";
+            }
 
 
-
-            Core.Twitch._client.SendMessage((await Core.Channels.GetTwitchChannelByID(_twitchChannelID)).TwitchChannelName, $"Winners: {msg}");
+            Core.Twitch._client.SendMessage((await Core.Channels.GetTwitchChannelByID(_twitchChannelID)).TwitchChannelName, message);
+            await SayOnDiscord(_discordChannel, message);
             return;
+        }
+
+        internal int UserHasBets(string twitchUID)
+        {
+            return _bets.FindAll(p => p._user._twitchUID == twitchUID).Count;
+        }
+
+        private async Task SayOnDiscord(ulong channelID, string message)
+        {
+            if(channelID != 0)
+            {
+                await (Core.Discord.GetChannel(channelID) as ISocketMessageChannel).SendMessageAsync(message);
+            }
         }
 
         internal string ReminderMessage()
         {
             if (_variant == BETVARIANT.NORMAL)
             {
-                return "Betting open! Type \"!bet <amount> <option>\" to place a bet. Current options:" + OptionWithGold();
+                return "Betting open! Type \"?bet <amount> <option>\" to place a bet. Current options:" + OptionWithGold();
             }else if (_variant != BETVARIANT.NORMAL)
             {
                 return "Most bet options:" + BRReminderText();
@@ -323,6 +356,12 @@ namespace MisfitBot2.Plugins.Betting
         public bool ValidateOption(string opt)
         {
             return _options.Exists(p => p == opt);
+        }
+
+        private async Task<BettingSettings> Settings(BotChannel bChan)
+        {
+            BettingSettings settings = new BettingSettings();
+            return await Core.Configs.GetConfig(bChan, PLUGINNAME, settings) as BettingSettings;
         }
     }
 

@@ -114,7 +114,7 @@ namespace MisfitBot2
         private async Task<UserValues> UserData(UserEntry user, BotChannel bChan, string table)
         {
             UserValues usrValues = new UserValues(Core.CurrentTime);
-            if (!TableExists(table))
+            if (!await TableExists(table))
             {
                 UserTableCreate(table);
             }
@@ -216,7 +216,7 @@ namespace MisfitBot2
         #endregion
 
         #region Simple queries
-        public bool TableExists(String tableName)
+        public async Task<bool> TableExists(String tableName)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
@@ -226,6 +226,8 @@ namespace MisfitBot2
                 cmd.Parameters.AddWithValue("@name", tableName);
                 if (Convert.ToInt32(cmd.ExecuteScalar()) == 0)
                 {
+                    await Core.LOG(new LogMessage(LogSeverity.Warning, "ServiceBaseDB",
+                        $"Table {tableName} not found."));
                     return false;
                 }
                 else

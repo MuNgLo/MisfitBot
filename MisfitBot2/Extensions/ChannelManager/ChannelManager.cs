@@ -197,7 +197,7 @@ namespace MisfitBot2.Extensions.ChannelManager
         /// <returns></returns>
         public async Task<BotChannel> GetTwitchChannelByID(string TwitchID)
         {
-            if (!await ChannelDataExists(TwitchID))
+            if (!await ChannelDataExistsTwitchID(TwitchID))
             {
                 TwitchLib.Api.V5.Models.Users.User channel = await Core.Twitch._api.V5.Users.GetUserByIDAsync(TwitchID);
                 if (channel == null)

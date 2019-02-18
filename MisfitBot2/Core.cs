@@ -14,6 +14,8 @@ namespace MisfitBot2
 {
     public static class Core
     {
+        public static readonly char _commandCharacter = '?';
+
         public static BitEvent OnBitEvent;
         public static BanEvent OnBanEvent;
         public static UnBanEvent OnUnBanEvent;
@@ -84,11 +86,11 @@ namespace MisfitBot2
             if (user == null) { return; }
             OnNewDiscordMember?.Invoke(bChan, user);
         }
-        public static void RaiseOnBotChannelGoesLive(BotChannel bChan)
+        public static void RaiseOnBotChannelGoesLive(BotChannel bChan, int delay)
         {
             if (bChan == null) { return; }
             bChan.isLive = true;
-            OnBotChannelGoesLive?.Invoke(bChan);
+            OnBotChannelGoesLive?.Invoke(bChan, delay);
         }
         public static void RaiseOnBotChannelGoesOffline(BotChannel bChan)
         {

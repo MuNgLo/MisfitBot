@@ -5,15 +5,22 @@ using System.Threading.Tasks;
 using MisfitBot2.Plugins.Betting;
 using MisfitBot2.Extensions.ChannelManager;
 using Discord.Commands;
+using TwitchLib.Client.Models;
 
 namespace MisfitBot2.Services
 {
+    public struct ApexQueuEntry
+    {
+        public int timeToStart;
+        public string bChanKey;
+    }
+
     public class BettingService : ServiceBase, IService
     {
         private readonly string PLUGINNAME = "Betting";
         private RunningBets Bets = new RunningBets();
-        private int _msgInterval = 60,  _msgCheckInterval = 10;
-        
+        private List<ApexQueuEntry> apexQueue = new List<ApexQueuEntry>();
+
         // CONSTRUCTOR
         public BettingService()
         {
@@ -26,109 +33,106 @@ namespace MisfitBot2.Services
         private async void TwitchOnChatCommandReceived(object sender, TwitchLib.Client.Events.OnChatCommandReceivedArgs e)
         {
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(e.Command.ChatMessage.Channel);
+            BettingSettings settings = await Settings(bChan);
             switch (e.Command.CommandText.ToLower())
             {
-                case "cancelbets":
+                case "bets":
                     if (e.Command.ChatMessage.IsModerator || e.Command.ChatMessage.IsBroadcaster)
                     {
-                        if (Bets.ValidateBetting(e.Command.ChatMessage.Channel))
+                        switch (e.Command.ArgumentsAsList[0].ToLower())
                         {
-                            CancelBets(bChan);
+                            // Cancel bets
+                            case "cancel":
+                                if (Bets.ValidateBetting(e.Command.ChatMessage.Channel))
+                                {
+                                    CancelBets(bChan);
+                                }
+                                apexQueue.RemoveAll(p => p.bChanKey == bChan.Key);
+                                break;
+                            // Close bets
+                            case "close":
+                                if (e.Command.ArgumentsAsList.Count < 2)
+                                {
+                                    if (Bets.ValidateBetting(e.Command.ChatMessage.Channel))
+                                    {
+                                        await CloseBet(e.Command.ChatMessage.Channel);
+                                    }
+                                }
+                                else
+                                {
+                                    // Close and finish bets
+                                    if (!ValidateOption(e.Command.ChatMessage.Channel, e.Command.ArgumentsAsList[1].ToLower()))
+                                    {
+                                        Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel, "That was never an option! Get better mods....");
+                                        return;
+                                    }
+                                    RunningBet bet = Bets.GrabBet(e.Command.ChatMessage.Channel);
+                                    await FinishRunningBet(bChan,bet,settings, e.Command.ArgumentsAsList[1].ToLower());
+                                }
+                                break;
+                            // Open bets
+                            case "open":
+                                if (e.Command.ArgumentsAsList.Count < 1)
+                                {
+                                    return;
+                                }
+                                else if (e.Command.ArgumentsAsList.Count == 2)
+                                {
+                                    if (e.Command.ArgumentsAsList[1].ToLower() == "br")
+                                    {
+                                        List<string> options = new List<string>();
+                                        options.Add("nouse");
+                                        for (int place = 1; place <= 100; place++)
+                                        {
+                                            options.Add(place.ToString());
+                                        }
+                                        await OpenBet(bChan, options, BETVARIANT.BATTLEROYALE);
+                                    }
+                                    if (e.Command.ArgumentsAsList[1].ToLower() == "dd")
+                                    {
+                                        List<string> options = new List<string>();
+                                        options.Add("nouse");
+                                        for (int place = 1; place <= 1300; place++)
+                                        {
+                                            options.Add(place.ToString());
+                                        }
+                                        await OpenBet(bChan, options, BETVARIANT.DEVILDAGGERS);
+                                    }
+                                    if (e.Command.ArgumentsAsList[1].ToLower() == "apex")
+                                    {
+                                        List<string> options = new List<string>();
+                                        options.Add("nouse");
+                                        for (int place = 1; place <= 20; place++)
+                                        {
+                                            options.Add(place.ToString());
+                                        }
+                                        await OpenBet(bChan, options, BETVARIANT.APEX);
+                                    }
+                                }
+                                else if (e.Command.ArgumentsAsList.Count > 1)
+                                {
+                                    await OpenBet(bChan, e.Command.ArgumentsAsList, BETVARIANT.NORMAL);
+                                }
+                                break;
                         }
                     }
-                        break;
-                case "openbets":
-                    if (e.Command.ChatMessage.IsModerator || e.Command.ChatMessage.IsBroadcaster)
-                    {
-
-                        if (e.Command.ArgumentsAsList.Count < 1)
-                        {
-                            return;
-                        }
-                        else if (e.Command.ArgumentsAsList.Count == 1)
-                        {
-                            if (e.Command.ArgumentsAsList[0].ToLower() == "br")
-                            {
-                                List<string> options = new List<string>();
-                                for (int place = 1; place <= 100; place++)
-                                {
-                                    options.Add(place.ToString());
-                                }
-                                await OpenBet(bChan, options, BETVARIANT.BATTLEROYALE);
-                            }
-                            if (e.Command.ArgumentsAsList[0].ToLower() == "dd")
-                            {
-                                List<string> options = new List<string>();
-                                for (int place = 1; place <= 1300; place++)
-                                {
-                                    options.Add(place.ToString());
-                                }
-                                await OpenBet(bChan, options, BETVARIANT.DEVILDAGGERS);
-                            }
-                        }
-                        else if (e.Command.ArgumentsAsList.Count > 1)
-                        {
-                            await OpenBet(bChan, e.Command.ArgumentsAsList, BETVARIANT.NORMAL);
-                        }
-                    }
-                    break;
-                case "closebets":
-                    if (e.Command.ArgumentsAsList.Count != 1) { return; }
-                    if (e.Command.ChatMessage.IsModerator || e.Command.ChatMessage.IsBroadcaster)
-                        if (Bets.ValidateBetting(e.Command.ChatMessage.Channel))
-                        {
-                            if (!ValidateOption(e.Command.ChatMessage.Channel, e.Command.ArgumentsAsList[0].ToLower()))
-                            {
-                                Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel, "That was never an option! Get better mods....");
-                                return;
-                            }
-
-                            if (Bets.GrabBet(e.Command.ChatMessage.Channel)._variant != BETVARIANT.NORMAL)
-                            {
-                                await FinishBRBet(e.Command.ChatMessage.Channel, e.Command.ArgumentsAsList[0].ToLower());
-                                return;
-                            }
-
-
-
-
-                            if (await FinishBet(e.Command.ChatMessage.Channel, e.Command.ArgumentsAsList[0].ToLower()))
-                            {
-                                Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel, "Betting closed!");
-                                return;
-                            }
-
-                        }
                     break;
                 case "bet":
                     if (e.Command.ArgumentsAsList.Count != 2) { return; }
                     int i = 0;
                     int.TryParse(e.Command.ArgumentsAsList[0], out i);
                     if (i < 1) { return; }
-
-                    
                     await PlaceBet(bChan, e.Command.ChatMessage.Username, e.Command.ArgumentsAsList[1].ToLower(), i);
-
-
-                    break;
-                case "close":
-                    if (e.Command.ChatMessage.IsModerator || e.Command.ChatMessage.IsBroadcaster)
-                    {
-                        if (Bets.ValidateBetting(e.Command.ChatMessage.Channel))
-                        {
-                            CloseBet(e.Command.ChatMessage.Channel);
-                        }
-                    }
                     break;
             }
         }
         private void TwitchOnMessageReceived(object sender, TwitchLib.Client.Events.OnMessageReceivedArgs e)
         {
 
-                if (Bets.HasABetRunning(e.ChatMessage.Channel))
-                {
-                    Bets.GrabBet(e.ChatMessage.Channel)._msgSinceLast++;
-                }
+            if (Bets.HasABetRunning(e.ChatMessage.Channel))
+            {
+                Bets.GrabBet(e.ChatMessage.Channel)._msgSinceLast++;
+            }
         }
         #endregion
         #region Discord methods
@@ -188,7 +192,17 @@ namespace MisfitBot2.Services
                     }
                     await OpenBet(bChan, options, BETVARIANT.DEVILDAGGERS);
                 }
-            }else if (arguments.Count > 1)
+                if (arguments[0].ToLower() == "apex")
+                {
+                    List<string> options = new List<string>();
+                    for (int place = 1; place <= 20; place++)
+                    {
+                        options.Add(place.ToString());
+                    }
+                    await OpenBet(bChan, options, BETVARIANT.APEX, context.Channel.Id);
+                }
+            }
+            else if (arguments.Count > 1)
             {
                 await OpenBet(bChan, arguments, BETVARIANT.NORMAL, context.Channel.Id);
             }
@@ -227,9 +241,9 @@ namespace MisfitBot2.Services
         public async Task DiscordCancelBets(ICommandContext Context)
         {
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);
-            if(bChan != null)
+            if (bChan != null)
             {
-                if(bChan.TwitchChannelName != null && bChan.TwitchChannelName != string.Empty)
+                if (bChan.TwitchChannelName != null && bChan.TwitchChannelName != string.Empty)
                 {
                     CancelBets(bChan);
                 }
@@ -237,9 +251,9 @@ namespace MisfitBot2.Services
         }
         #endregion
         #region internal methods
-        private void CloseBet(string twitchChannel)
+        private async Task CloseBet(string twitchChannel)
         {
-            Bets.CloseBetting(twitchChannel);
+            await Bets.CloseBetting(twitchChannel);
         }
         private void CancelBets(BotChannel bChan)
         {
@@ -253,8 +267,13 @@ namespace MisfitBot2.Services
         {
             return await Bets.FinishBRBetting(twitchChannel, winningOption);
         }
-        private async Task OpenBet(BotChannel bChan, List<string> args, BETVARIANT variant, ulong discordChannelID=0)
+        private async Task OpenBet(BotChannel bChan, List<string> args, BETVARIANT variant, ulong discordChannelID = 0)
         {
+            if (discordChannelID == 0 && bChan.discordDefaultBotChannel != 0)
+            {
+                discordChannelID = bChan.discordDefaultBotChannel;
+            }
+            args.RemoveAt(0); // removes the open/close bit before processing
             await Bets.StartBetting(bChan, args, variant, discordChannelID);
         }
         private async Task PlaceBet(BotChannel bChan, ulong discordUserID, string option, int value)
@@ -268,34 +287,87 @@ namespace MisfitBot2.Services
                     value);
             }
         }
-        private async Task PlaceBet(BotChannel bChan, string twitchUsername,  string option, int value)
+        private async Task PlaceBet(BotChannel bChan, string twitchUsername, string option, int value)
         {
-                UserEntry user = await Core.UserMan.GetUserByTwitchUserName(twitchUsername);
-                if (user != null)
-                {
-                    await Bets.AddBet(bChan,
-                        user,
-                        option,
-                        value);
-                }
-        }
-        private void Reminder(int minimumDelay)
-        {
-            Bets.Reminder(minimumDelay);
+            UserEntry user = await Core.UserMan.GetUserByTwitchUserName(twitchUsername);
+            if (user != null)
+            {
+                await Bets.AddBet(bChan,
+                    user,
+                    option,
+                    value);
+            }
         }
         private bool ValidateOption(string twitchChannel, string option)
         {
             return Bets.ValidateOption(twitchChannel, option);
         }
-        
+        private async Task FinishRunningBet(BotChannel bChan, RunningBet bet, BettingSettings settings, string winningOption)
+        {
+            if (bet._variant == BETVARIANT.APEX)
+            {
+                if (await FinishBRBet(bChan.TwitchChannelName, winningOption))
+                {
+                    ApexQueuEntry entry = new ApexQueuEntry()
+                    {
+                        timeToStart = Core.CurrentTime + settings.apexRoundPause,
+                        bChanKey = bChan.Key
+                    };
+                    apexQueue.Add(entry);
+                }
+                return;
+            }
+            else if (bet._variant != BETVARIANT.NORMAL)
+            {
+                await FinishBRBet(bChan.TwitchChannelName, winningOption);
+                return;
+            }
+
+
+            if (await FinishBet(bChan.TwitchChannelName, winningOption))
+            {
+                Core.Twitch._client.SendMessage(bChan.TwitchChannelName, "Betting closed!");
+                return;
+            }
+        }
         #endregion
 
         #region Interface methods
-        public void OnSecondTick(int second)
+        public async void OnSecondTick(int second)
         {
-            if(second % _msgCheckInterval == 0)
+            await Bets.Reminder(second);
+            await Bets.ApexCloseCheck(second);
+            foreach (ApexQueuEntry entry in apexQueue)
             {
-                Reminder(_msgInterval);
+                if (Core.CurrentTime > entry.timeToStart)
+                {
+                    BotChannel bChan = await Core.Channels.GetBotchannelByKey(entry.bChanKey);
+                    if (bChan == null)
+                    {
+                        await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Error, PLUGINNAME, "Could not resolve bChan Key to a botchannel instance."));
+                        return;
+                    }
+                    List<string> options = new List<string>();
+                    for (int place = 1; place <= 20; place++)
+                    {
+                        options.Add(place.ToString());
+                    }
+                    await OpenBet(bChan, options, BETVARIANT.APEX, bChan.discordDefaultBotChannel);
+                }
+            }
+            // Clean queue 
+            foreach (JoinedChannel channel in Core.Twitch._client.JoinedChannels)
+            {
+                BotChannel bChan = await Core.Channels.GetTwitchChannelByName(channel.Channel);
+                if (bChan == null)
+                {
+                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Error, PLUGINNAME, "Could not resolve JoinedChannel.Channel to a botchannel instance."));
+                    return;
+                }
+                if (Bets.ValidateBetting(channel.Channel))
+                {
+                    apexQueue.RemoveAll(p => p.bChanKey == bChan.Key);
+                }
             }
         }
         public void OnMinuteTick(int minutes)

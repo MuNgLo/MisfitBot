@@ -87,8 +87,8 @@ namespace MisfitBot2.Services
                 nominations += $"{game},";
             }
             string help = $"To nominate a game have a word with a moderator.{Environment.NewLine}" +
-                $"To cast your vote type **{Program._commandCharacter}mypick <gametitle>**{Environment.NewLine}" +
-                $"Example: **{Program._commandCharacter}mypick Game1**";
+                $"To cast your vote type **{Core._commandCharacter}mypick <gametitle>**{Environment.NewLine}" +
+                $"Example: **{Core._commandCharacter}mypick Game1**";
             builder.WithDescription(msg);
             builder.WithColor(Color.Purple);
 

@@ -22,7 +22,38 @@ namespace MisfitBot2.Services
             Core.OnUnBanEvent += OnUnBanEvent;
             Core.OnBitEvent += OnBitEvent;
             Core.OnNewDiscordMember += OnNewDiscordMember;
+            Core.OnBotChannelGoesOffline += OnChannelGoesOffline;
+            Core.OnBotChannelGoesLive += OnChannelGoesLive;
         }
+
+        private async void OnChannelGoesLive(BotChannel bChan, int delay)
+        {
+            if (bChan.discordAdminChannel != 0)
+            {
+                await (Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
+                    $"{bChan.TwitchChannelName} went live. {delay}s delay."
+                    );
+            }
+            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, PLUGINNAME,
+               $"{bChan.TwitchChannelName} went live. {delay}s delay."
+                ));
+        }
+
+        private async void OnChannelGoesOffline(BotChannel bChan)
+        {
+            if (bChan.discordAdminChannel != 0)
+            {
+                // This has caused 1 error ???
+                await(Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
+                    $"{bChan.TwitchChannelName} went offline."
+                    );
+                return;
+            }
+            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, PLUGINNAME,
+                $"{bChan.TwitchChannelName} went offline."
+                ));
+        }
+
         private async void OnBitEvent(BitEventArguments e)
         {
             await SayOnDiscordAdmin(e.bChan,
@@ -272,9 +303,8 @@ namespace MisfitBot2.Services
         /// <returns></returns>
         private async Task<AdminSettings> Settings(BotChannel bChan)
         {
-            //Cacheable locally and return cached vertsion here TODO!!!
             AdminSettings settings = new AdminSettings();
-            if (!TableExists(PLUGINNAME))
+            if (!await TableExists(PLUGINNAME))
             {
                 TableCreate(PLUGINNAME);
             }

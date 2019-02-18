@@ -17,7 +17,7 @@ namespace MisfitBot2.Services
         /// <returns></returns>
         public async Task DiscordHelp(ICommandContext context)
         {
-            string cmdIdent = $"{Program._commandCharacter}";
+            string cmdIdent = $"{Core._commandCharacter}";
             int i = 0;
             foreach (CommandInfo cmd in Program._commands.Commands)
             {

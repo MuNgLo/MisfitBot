@@ -21,6 +21,7 @@ namespace MisfitBot2.Services
         {
             Core.Twitch._client.OnChatCommandReceived += TwitchOnChatCommandReceived;
             Core.OnBotChannelGoesLive += OnChannelGoesLive;
+            Core.OnBotChannelGoesOffline += OnChannelGoesOffline;
             // Successes
             _success.Add(" takes a seat on the couch.");
             _success.Add(" backflips onto the couch.");
@@ -29,6 +30,7 @@ namespace MisfitBot2.Services
             _success.Add(" claws their way up from the void between the cushions.");
             _success.Add(" does an impressive herolanding then proceeds to stumble to the couch with intence knee pain.");
             _success.Add(" accepts their fate as a decoration on the couch.");
+            _success.Add(" stridently claims their seat on the couch and act very smug about it.");
 
             // Fails
             _fail.Add(" is left standing.");
@@ -36,12 +38,18 @@ namespace MisfitBot2.Services
             _fail.Add(" creates a tsunami with their tears of despair.");
             _fail.Add(" hair catches fire from rage and others reach for the marshmallows.");
             _fail.Add(" is carried away by a flock of chairs to the land of standing space.");
+            _fail.Add(" lacks the basic understanding of how to couch so they end up on the table.");
+            _fail.Add(" storms in with a cavelry, but misses the couch.");
+            _fail.Add(" eagerly runs towards the couch but trips and slides under it only to come out on the other side covered in dustbunnies.");
 
             // Incidents
             _incident.Add(" got cought suckling a cushion in the couch and had to leave their spot.");
             _incident.Add(" by pure chance ends up quantum entangling with the couch and disappears back into the void.");
             _incident.Add(" gets bumped out of the couch as a new victim takes their seat.");
+            _incident.Add(" becomes the victim of EjectorZeat 3000™. Who is playing with the buttons?");
+            _incident.Add(" leaves the couch mumbling something about bathroom just as a distict smell envelops the whole couch.");
         }
+
 
         private string GetRNGSuccess()
         {
@@ -66,7 +74,13 @@ namespace MisfitBot2.Services
         }
 
 
-        private async void OnChannelGoesLive(BotChannel bChan)
+        private async void OnChannelGoesOffline(BotChannel bChan)
+        {
+            CouchSettings settings = await Settings(bChan);
+            settings.lastOfflineEvent = Core.CurrentTime;
+            SaveBaseSettings(PLUGINNAME, bChan, settings);
+        }
+        private async void OnChannelGoesLive(BotChannel bChan, int delay)
         {
             CouchSettings settings = await Settings(bChan); 
             if (!settings._active)
@@ -78,9 +92,14 @@ namespace MisfitBot2.Services
                 settings._couches[bChan.Key] = new CouchEntry();
             }
 
-            if(Core.CurrentTime > settings._couches[bChan.Key].lastActivationTime + 60)
+            if(Core.CurrentTime > settings.lastOfflineEvent + 180)
             {
                 ResetCouch(bChan, settings);
+            }
+            else
+            {
+                await Core.LOG(new LogMessage(LogSeverity.Info, PLUGINNAME, $"Channel {bChan.TwitchChannelName} went live. Using existing counch."));
+                await SayOnDiscordAdmin(bChan, $"Channel {bChan.TwitchChannelName} went live. Using existing counch.");
             }
         }
 
@@ -101,7 +120,7 @@ namespace MisfitBot2.Services
             settings._couches[bChan.Key].TwitchUsernames = new List<string>();
             settings.failCount = 0;
             SaveBaseSettings(PLUGINNAME, bChan, settings);
-            Core.Twitch._client.SendMessage(bChan.TwitchChannelName, "Couch is now open. Take a !seat.");
+            Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Couch is now open. Take a {Core._commandCharacter}seat.");
         }
 
         #region Twitch methods
@@ -154,6 +173,7 @@ namespace MisfitBot2.Services
                                 $"Couch plugin is inactive in this channel. {settings.couchsize} seats."
                                 );
                         }
+                        SaveBaseSettings(PLUGINNAME, bChan, settings);
                     }
                     break;
                 case "seat":

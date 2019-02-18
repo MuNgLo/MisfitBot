@@ -14,7 +14,7 @@ namespace MisfitBot2
 {
     public class Program
     {
-        public static readonly char _commandCharacter = '?';
+        
         private static IServiceProvider _services;
         // Keep the CommandService and IServiceCollection around for use with commands.
         // These two types require you install the Discord.Net.Commands package.
@@ -149,7 +149,7 @@ namespace MisfitBot2
             // you want to prefix your commands with.
             // Uncomment the second half if you also want
             // commands to be invoked by mentioning the bot instead.
-            if (msg.HasCharPrefix(Program._commandCharacter, ref pos) /* || msg.HasMentionPrefix(_client.CurrentUser, ref pos) */)
+            if (msg.HasCharPrefix(Core._commandCharacter, ref pos) /* || msg.HasMentionPrefix(_client.CurrentUser, ref pos) */)
             {
                 // Create a Command Context.
                 var context = new SocketCommandContext(_DiscordClient, msg);

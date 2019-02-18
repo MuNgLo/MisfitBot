@@ -370,6 +370,7 @@ namespace MisfitBot2.Extensions.ChannelManager
                 {
                     if (bChan.discordAdminChannel != 0)
                     {
+                        // This line crashed once Fuck knows how or why
                         await (Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
                                 $"Listening to {e.Topic}."
                                 );
@@ -400,32 +401,12 @@ namespace MisfitBot2.Extensions.ChannelManager
         private async void Client_OnStreamDown(object sender, OnStreamDownArgs e)
         {
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(_twitchChannelName);
-            if (bChan == null) { return; }
-            if (bChan.discordAdminChannel != 0)
-            {
-                await(Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
-                    $"{_twitchChannelName} went offline."
-                    );
-                return;
-            }
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
-                $"{_twitchChannelName} went offline."
-                ));
+            Core.RaiseOnBotChannelGoesOffline(bChan);
         }
         private async void Client_OnStreamUp(object sender, OnStreamUpArgs e)
         {
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(_twitchChannelName);
-            if (bChan == null) { return; }
-            if (bChan.discordAdminChannel != 0)
-            {
-                await(Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
-                    $"{_twitchChannelName} went live. {e.PlayDelay}s delay."
-                    );
-            }
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
-               $"{_twitchChannelName} went live. {e.PlayDelay}s delay."
-                ));
-            Core.RaiseOnBotChannelGoesLive(bChan);
+            Core.RaiseOnBotChannelGoesLive(bChan,  e.PlayDelay);
         }
         #endregion
     }
