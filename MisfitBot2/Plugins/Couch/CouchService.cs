@@ -5,12 +5,16 @@ using System.Threading.Tasks;
 using Discord;
 using MisfitBot2.Plugins.PluginTemplate;
 using MisfitBot2.Plugins.Couch;
+using System.Data.SQLite;
+using System.Data;
+using TwitchLib.Api.V5.Models.Users;					 							
 
 namespace MisfitBot2.Services
 {
     class CouchService : ServiceBase, IService
     {
         public readonly string PLUGINNAME = "Couch";
+		public readonly string PLUGINSTATS = "Couch_Stats";								   
         private Random rng = new Random();
         private List<string> _success = new List<string>();
         private List<string> _fail = new List<string>();
@@ -20,6 +24,7 @@ namespace MisfitBot2.Services
         public CouchService()
         {
             Core.Twitch._client.OnChatCommandReceived += TwitchOnChatCommandReceived;
+			Core.Twitch._client.OnUserJoined += TwitchInUserJoined;								   
             Core.OnBotChannelGoesLive += OnChannelGoesLive;
             Core.OnBotChannelGoesOffline += OnChannelGoesOffline;
             // Successes
@@ -48,6 +53,8 @@ namespace MisfitBot2.Services
             _incident.Add(" gets bumped out of the couch as a new victim takes their seat.");
             _incident.Add(" becomes the victim of EjectorZeat 3000™. Who is playing with the buttons?");
             _incident.Add(" leaves the couch mumbling something about bathroom just as a distict smell envelops the whole couch.");
+            // Database checks
+            if (!StatsTableExists()) { StatsTableCreate(PLUGINSTATS); }
         }
 
 
@@ -200,6 +207,17 @@ namespace MisfitBot2.Services
                             string mark = GetRNGSitter(bChan, settings);
                             if (mark != null)
                             {
+                                UserEntry failuser = await Core.UserMan.GetUserByTwitchUserName(e.Command.ChatMessage.Username);
+                                if (failuser != null)
+                                {
+                                    if (!await UserStatsExists(failuser.Key))
+                                    {
+                                        UserStatsCreate(failuser.Key);
+                                    }
+                                    CouchUserStats failUserStats = await UserStatsRead(failuser.Key);
+                                    failUserStats.CountSeated++;
+                                    UserStatsSave(failUserStats);
+                                }
                                 Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
                                     $"{mark} {GetRNGIncident()}"
                                     );
@@ -207,11 +225,23 @@ namespace MisfitBot2.Services
                                 SaveBaseSettings(PLUGINNAME, bChan, settings);
                             }
                         }
+                        UserEntry user = await Core.UserMan.GetUserByTwitchUserName(e.Command.ChatMessage.Username);
+                        if (user != null)
+                        {
+                            if (!await UserStatsExists(user.Key))
+                            {
+                                UserStatsCreate(user.Key);
+                            }
+                            CouchUserStats userStats = await UserStatsRead(user.Key);
+                            userStats.CountSeated++;
+                            UserStatsSave(userStats);
+                        }
                         settings._couches[bChan.Key].TwitchUsernames.Add(e.Command.ChatMessage.DisplayName);
-                        Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel, 
+                        Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
                             $"{e.Command.ChatMessage.DisplayName} {GetRNGSuccess()}"
                             );
                         SaveBaseSettings(PLUGINNAME, bChan, settings);
+
                     }
                     else
                     {
@@ -221,7 +251,7 @@ namespace MisfitBot2.Services
                         settings.failCount++;
                         SaveBaseSettings(PLUGINNAME, bChan, settings);
                     }
-
+                    
                     break;
                 case "opencouch":
                     if(!settings._active) { return; }
@@ -232,8 +262,143 @@ namespace MisfitBot2.Services
                     break;
             }
         }
+		private async void TwitchInUserJoined(object sender, TwitchLib.Client.Events.OnUserJoinedArgs e)
+        {
+            UserEntry user = await Core.UserMan.GetUserByTwitchUserName(e.Username);
+            if(user != null)
+            {
+                CouchUserStats uStats = await GetUserCouchStats(user.Key);
+                if(uStats.CountSeated >= 10)
+                {
+                    Core.Twitch._client.SendMessage(e.Channel,
+                            $"Welcome back {user._twitchDisplayname}. You truly are a proper couch potato. BloodTrail"
+                            );
+                }
+            }
+        }
         #endregion
 
+        #region Database stuff
+        public bool StatsTableExists()
+        {
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = "SELECT COUNT(*) AS QtRecords FROM sqlite_master WHERE type = 'table' AND name = @name";
+                cmd.Parameters.AddWithValue("@name", PLUGINSTATS);
+                if (Convert.ToInt32(cmd.ExecuteScalar()) == 0)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+        }
+        private async Task<CouchUserStats> GetUserCouchStats(string uKey)
+        {
+            if (!await UserStatsExists(uKey))
+                {
+                    UserStatsCreate(uKey);
+                }
+                return await UserStatsRead(uKey);
+        }
+        private void StatsTableCreate(string tablename)
+        {
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = $"CREATE TABLE {tablename} (" +
+                    $"UserKey VACHAR(30)," +
+                    $"CountSeated INTEGER, " +
+                    $"CountBooted INTEGER " +
+                    $")";
+                cmd.ExecuteNonQuery();
+            }
+        }
+        private async Task<CouchUserStats> UserStatsRead(string uKey)
+        {
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = $"SELECT * FROM {PLUGINSTATS} WHERE UserKey IS @uKey";
+                cmd.Parameters.AddWithValue("@uKey", uKey);
+                SQLiteDataReader result;
+                try
+                {
+                    result = cmd.ExecuteReader();
+                }
+                catch (Exception)
+                {
+                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
+                    throw;
+                }
+                result.Read();
+                CouchUserStats user = new CouchUserStats(result.GetString(0), result.GetInt32(1), result.GetInt32(2));
+                return user;
+            }
+        }
+        private async void UserStatsCreate(string uKey)
+        {
+            CouchUserStats userStats = new CouchUserStats(uKey, 0, 0);
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = $"INSERT INTO {PLUGINSTATS} VALUES (" +
+                    $"@UserKey, " +
+                    $"@CountSeated, " +
+                    $"@CountBooted " +
+                    $")";
+                cmd.Parameters.AddWithValue("@UserKey", userStats.UserKey);
+                cmd.Parameters.AddWithValue("@CountSeated", userStats.CountSeated);
+                cmd.Parameters.AddWithValue("@CountBooted", userStats.CountBooted);
+                cmd.ExecuteNonQuery();
+                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Created new entry for UserKey {userStats.UserKey}"));
+            }
+        }
+        public async void UserStatsSave(CouchUserStats userStats)
+        {
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+
+                cmd.CommandText = $"UPDATE {PLUGINSTATS} SET " +
+                    $"CountSeated = @CountSeated, " +
+                    $"CountBooted = @CountBooted " +
+                    $" WHERE UserKey is @UserKey";
+                cmd.Parameters.AddWithValue("@UserKey", userStats.UserKey);
+                cmd.Parameters.AddWithValue("@CountSeated", userStats.CountSeated);
+                cmd.Parameters.AddWithValue("@CountBooted", userStats.CountBooted);
+                cmd.ExecuteNonQuery();
+                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, "Saved UserStats in DB."));
+            }
+        }
+        private async Task<bool> UserStatsExists(string uKey)
+        {
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = $"SELECT * FROM {PLUGINSTATS} WHERE UserKey IS @uKey";
+                cmd.Parameters.AddWithValue("@uKey", uKey);
+
+                if (await cmd.ExecuteScalarAsync() == null)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+        }
+        #endregion	  
         #region Interface default discord command methods
         public async Task SetDefaultDiscordChannel(BotChannel bChan, ulong discordChannelID)
         {
