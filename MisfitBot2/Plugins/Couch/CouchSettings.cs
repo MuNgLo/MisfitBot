@@ -7,6 +7,7 @@ namespace MisfitBot2.Plugins.Couch
     class CouchSettings : PluginSettingsBase
     {
         public int couchsize = 8;
+        public int potatoGreeting = 10;
         public int failCount = 0;
         public int lastLiveEvent = Core.CurrentTime - 1000;
         public int lastOfflineEvent = Core.CurrentTime - 1000;

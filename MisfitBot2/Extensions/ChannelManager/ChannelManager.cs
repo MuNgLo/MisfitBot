@@ -20,6 +20,7 @@ namespace MisfitBot2.Extensions.ChannelManager
     public class ChannelManager
     {
         private readonly string PLUGINNAME = "ChannelManager";
+        private List<BotChannel> channelsToSave = new List<BotChannel>(); // Memory cache to avoid race condition when saving new botchannels to DB
         public BotChannelMergeEvent OnBotChannelMerge;
         public BotChannelGoesOffline OnBotChannelGoesOffline;
         public Dictionary<string, TwPubSub> PubSubClients = new Dictionary<string, TwPubSub>();
@@ -186,7 +187,16 @@ namespace MisfitBot2.Extensions.ChannelManager
                 {
                     return null;
                 }
-                await ChannelDataWrite(new BotChannel(TwitchName, channelEntry.Matches[0].Id));
+                if (!channelsToSave.Exists(p => p.TwitchChannelName == TwitchName))
+                {
+                    channelsToSave.Add(new BotChannel(TwitchName, channelEntry.Matches[0].Id));
+                    await ChannelDataWrite(channelsToSave.Find(p => p.TwitchChannelName == TwitchName));
+                    channelsToSave.RemoveAll(p => p.TwitchChannelName == TwitchName);
+                }
+                else
+                {
+                    return channelsToSave.Find(p => p.TwitchChannelName == TwitchName);
+                }
             }
             return await ChannelDataRead(TwitchName);
         }
@@ -204,7 +214,16 @@ namespace MisfitBot2.Extensions.ChannelManager
                 {
                     return null;
                 }
-                await ChannelDataWrite(new BotChannel(channel.Name, channel.Id));
+                if (!channelsToSave.Exists(p => p.TwitchChannelID == TwitchID))
+                {
+                    channelsToSave.Add(new BotChannel(channel.Name, channel.Id));
+                    await ChannelDataWrite(channelsToSave.Find(p => p.TwitchChannelID == TwitchID));
+                    channelsToSave.RemoveAll(p => p.TwitchChannelID == TwitchID);
+                }
+                else
+                {
+                    return channelsToSave.Find(p => p.TwitchChannelID == TwitchID);
+                }
             }
             return await ChannelDataReadTwitchID(TwitchID);
         }
@@ -600,6 +619,11 @@ namespace MisfitBot2.Extensions.ChannelManager
 
             await Core.LOG(new LogMessage(LogSeverity.Warning, PLUGINNAME, $"Saving updated channeldata"));
         }
+        /// <summary>
+        /// This only takes a botchannel instance and write it into the DB. Not for saving or udpating values
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <returns></returns>
         private async Task ChannelDataWrite(BotChannel bChan)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())

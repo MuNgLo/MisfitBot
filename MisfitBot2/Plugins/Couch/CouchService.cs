@@ -27,6 +27,8 @@ namespace MisfitBot2.Services
 			Core.Twitch._client.OnUserJoined += TwitchInUserJoined;								   
             Core.OnBotChannelGoesLive += OnChannelGoesLive;
             Core.OnBotChannelGoesOffline += OnChannelGoesOffline;
+            ///Core.OnUserEntryMerge += OnUserEntryMerge; FIX THIS NEXT
+            Core.Channels.OnBotChannelMerge += OnBotChannelEntryMerge;
             // Successes
             _success.Add(" takes a seat on the couch.");
             _success.Add(" backflips onto the couch.");
@@ -135,6 +137,8 @@ namespace MisfitBot2.Services
         {
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(e.Command.ChatMessage.Channel);
             if (bChan == null) { return; }
+            UserEntry user = await Core.UserMan.GetUserByTwitchID(e.Command.ChatMessage.UserId);
+            if (user == null) { return; }
             CouchSettings settings = await Settings(bChan);
             if (!settings._couches.ContainsKey(bChan.Key))
             {
@@ -143,46 +147,75 @@ namespace MisfitBot2.Services
             switch (e.Command.CommandText.ToLower())
             {
                 case "couch":
+                    // Broadcaster and Moderator commands
                     if (e.Command.ChatMessage.IsModerator || e.Command.ChatMessage.IsBroadcaster)
                     {
-                        if (e.Command.ArgumentsAsList.Count == 1)
+                        if(e.Command.ArgumentsAsList.Count == 0)
                         {
-                            if (e.Command.ArgumentsAsList[0].ToLower() == "on")
-                            {
+                            Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
+                                $"Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}."
+                                );
+                            return;
+                        }
+                        switch (e.Command.ArgumentsAsList[0].ToLower())
+                        {
+                            case "on":
                                 settings._active = true;
-                            }
-                            if (e.Command.ArgumentsAsList[0].ToLower() == "off")
-                            {
+                                SaveBaseSettings(PLUGINNAME, bChan, settings);
+                                Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
+                                $"Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}."
+                                );
+                                break;
+                            case "off":
                                 settings._active = false;
-                            }
-                        }
-                        if (e.Command.ArgumentsAsList.Count == 2)
-                        {
-                            if (e.Command.ArgumentsAsList[0].ToLower() == "seats")
-                            {
-                                int seats = settings.couchsize;
-                                int.TryParse(e.Command.ArgumentsAsList[1], out seats);
-                                if(seats > 0 && seats <= 20 && seats != settings.couchsize)
+                                SaveBaseSettings(PLUGINNAME, bChan, settings);
+                                Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
+                                 $"Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}."
+                                 );
+                                break;
+                            case "size":
+                                if (e.Command.ArgumentsAsList.Count == 2)
                                 {
-                                    settings.couchsize = seats;
+                                    int seats = settings.couchsize;
+                                    int.TryParse(e.Command.ArgumentsAsList[1], out seats);
+                                    if (seats > 0 && seats <= 40 && seats != settings.couchsize)
+                                    {
+                                        settings.couchsize = seats;
+                                        Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
+                                        $"Couch now has {settings.couchsize} seats."
+                                        );
+                                        await SayOnDiscordAdmin(bChan, $"{e.Command.ChatMessage.DisplayName} changed the Couch size to {settings.couchsize}.");
+                                        SaveBaseSettings(PLUGINNAME, bChan, settings);
+                                    }
                                 }
-                            }
+                                break;
+                            case "greet":
+                                if (e.Command.ArgumentsAsList.Count == 2)
+                                {
+                                    int greet = settings.potatoGreeting;
+                                    int.TryParse(e.Command.ArgumentsAsList[1], out greet);
+                                    if (greet > 0 && greet <= 40 && greet != settings.potatoGreeting)
+                                    {
+                                        settings.potatoGreeting = greet;
+                                        Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
+                                        $"Couch greeting limit is now {settings.potatoGreeting}."
+                                        );
+                                        await SayOnDiscordAdmin(bChan, $"{e.Command.ChatMessage.DisplayName} changed the Couch Greetlimit setting to {settings.potatoGreeting}.");
+                                        SaveBaseSettings(PLUGINNAME, bChan, settings);
+                                    }
+                                }
+                                break;
+                            case "open":
+                                if (!settings._active) { return; }
+                                if (e.Command.ChatMessage.IsModerator || e.Command.ChatMessage.IsBroadcaster)
+                                {
+                                    ResetCouch(bChan, settings);
+                                }
+                                break;
                         }
-                        if (settings._active)
-                        {
-                            Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
-                                $"Couch plugin is active in this channel. {settings.couchsize} seats."
-                                );
-                        }
-                        else
-                        {
-                            Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
-                                $"Couch plugin is inactive in this channel. {settings.couchsize} seats."
-                                );
-                        }
-                        SaveBaseSettings(PLUGINNAME, bChan, settings);
                     }
                     break;
+                    // User Commands
                 case "seat":
                     if (!settings._couches[bChan.Key].couchOpen || !settings._active) { return; }
                     if(Core.CurrentTime - settings._couches[bChan.Key].lastActivationTime > 3600 && settings.failCount < 3)
@@ -210,11 +243,11 @@ namespace MisfitBot2.Services
                                 UserEntry failuser = await Core.UserMan.GetUserByTwitchUserName(e.Command.ChatMessage.Username);
                                 if (failuser != null)
                                 {
-                                    if (!await UserStatsExists(failuser.Key))
+                                    if (!await UserStatsExists(bChan.Key, failuser.Key))
                                     {
-                                        UserStatsCreate(failuser.Key);
+                                        UserStatsCreate(bChan.Key, failuser.Key);
                                     }
-                                    CouchUserStats failUserStats = await UserStatsRead(failuser.Key);
+                                    CouchUserStats failUserStats = await UserStatsRead(bChan.Key, failuser.Key);
                                     failUserStats.CountSeated++;
                                     UserStatsSave(failUserStats);
                                 }
@@ -225,17 +258,13 @@ namespace MisfitBot2.Services
                                 SaveBaseSettings(PLUGINNAME, bChan, settings);
                             }
                         }
-                        UserEntry user = await Core.UserMan.GetUserByTwitchUserName(e.Command.ChatMessage.Username);
-                        if (user != null)
+                        if (!await UserStatsExists(bChan.Key, user.Key))
                         {
-                            if (!await UserStatsExists(user.Key))
-                            {
-                                UserStatsCreate(user.Key);
-                            }
-                            CouchUserStats userStats = await UserStatsRead(user.Key);
-                            userStats.CountSeated++;
-                            UserStatsSave(userStats);
+                            UserStatsCreate(bChan.Key, user.Key);
                         }
+                        CouchUserStats userStats = await UserStatsRead(bChan.Key, user.Key);
+                        userStats.CountSeated++;
+                        UserStatsSave(userStats);
                         settings._couches[bChan.Key].TwitchUsernames.Add(e.Command.ChatMessage.DisplayName);
                         Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
                             $"{e.Command.ChatMessage.DisplayName} {GetRNGSuccess()}"
@@ -251,24 +280,28 @@ namespace MisfitBot2.Services
                         settings.failCount++;
                         SaveBaseSettings(PLUGINNAME, bChan, settings);
                     }
-                    
                     break;
-                case "opencouch":
-                    if(!settings._active) { return; }
-                    if (e.Command.ChatMessage.IsModerator || e.Command.ChatMessage.IsBroadcaster)
-                    {
-                        ResetCouch(bChan, settings);
-                    }
+                case "seats":
+                    CouchUserStats cStats = await GetUserCouchStats(bChan.Key, user.Key);
+                    Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
+                                $"{user._twitchDisplayname}, you have sat in couch {cStats.CountSeated} times. {cStats.CountBooted} times you fell off."
+                                );
                     break;
             }
         }
 		private async void TwitchInUserJoined(object sender, TwitchLib.Client.Events.OnUserJoinedArgs e)
         {
             UserEntry user = await Core.UserMan.GetUserByTwitchUserName(e.Username);
-            if(user != null)
+            BotChannel bChan = await Core.Channels.GetTwitchChannelByName(e.Channel);
+            CouchSettings settings = await Settings(bChan);
+            if (!settings._couches.ContainsKey(bChan.Key))
             {
-                CouchUserStats uStats = await GetUserCouchStats(user.Key);
-                if(uStats.CountSeated >= 10)
+                settings._couches[bChan.Key] = new CouchEntry();
+            }
+            if (user != null && bChan != null)
+            {
+                CouchUserStats uStats = await GetUserCouchStats(bChan.Key, user.Key);
+                if(uStats.CountSeated >= settings.potatoGreeting)
                 {
                     Core.Twitch._client.SendMessage(e.Channel,
                             $"Welcome back {user._twitchDisplayname}. You truly are a proper couch potato. BloodTrail"
@@ -297,13 +330,13 @@ namespace MisfitBot2.Services
                 }
             }
         }
-        private async Task<CouchUserStats> GetUserCouchStats(string uKey)
+        private async Task<CouchUserStats> GetUserCouchStats(string bKey, string uKey)
         {
-            if (!await UserStatsExists(uKey))
+            if (!await UserStatsExists(bKey, uKey))
                 {
-                    UserStatsCreate(uKey);
+                    UserStatsCreate(bKey, uKey);
                 }
-                return await UserStatsRead(uKey);
+                return await UserStatsRead(bKey, uKey);
         }
         private void StatsTableCreate(string tablename)
         {
@@ -312,6 +345,7 @@ namespace MisfitBot2.Services
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
                 cmd.CommandText = $"CREATE TABLE {tablename} (" +
+                    $"BotChannelKey VACHAR(30)," +
                     $"UserKey VACHAR(30)," +
                     $"CountSeated INTEGER, " +
                     $"CountBooted INTEGER " +
@@ -319,14 +353,15 @@ namespace MisfitBot2.Services
                 cmd.ExecuteNonQuery();
             }
         }
-        private async Task<CouchUserStats> UserStatsRead(string uKey)
+        private async Task<CouchUserStats> UserStatsRead(string bKey, string uKey)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM {PLUGINSTATS} WHERE UserKey IS @uKey";
+                cmd.CommandText = $"SELECT * FROM {PLUGINSTATS} WHERE UserKey IS @uKey AND BotChannelKey IS @bKey";
                 cmd.Parameters.AddWithValue("@uKey", uKey);
+                cmd.Parameters.AddWithValue("@bKey", bKey);
                 SQLiteDataReader result;
                 try
                 {
@@ -338,27 +373,28 @@ namespace MisfitBot2.Services
                     throw;
                 }
                 result.Read();
-                CouchUserStats user = new CouchUserStats(result.GetString(0), result.GetInt32(1), result.GetInt32(2));
+                CouchUserStats user = new CouchUserStats(result.GetString(0), result.GetString(1), result.GetInt32(2), result.GetInt32(3));
                 return user;
             }
         }
-        private async void UserStatsCreate(string uKey)
+        private void UserStatsCreate(string bKey, string uKey)
         {
-            CouchUserStats userStats = new CouchUserStats(uKey, 0, 0);
+            CouchUserStats userStats = new CouchUserStats(bKey, uKey, 0, 0);
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
                 cmd.CommandText = $"INSERT INTO {PLUGINSTATS} VALUES (" +
+                    $"@BotChannelKey, " +
                     $"@UserKey, " +
                     $"@CountSeated, " +
                     $"@CountBooted " +
                     $")";
+                cmd.Parameters.AddWithValue("@BotChannelKey", bKey);
                 cmd.Parameters.AddWithValue("@UserKey", userStats.UserKey);
                 cmd.Parameters.AddWithValue("@CountSeated", userStats.CountSeated);
                 cmd.Parameters.AddWithValue("@CountBooted", userStats.CountBooted);
                 cmd.ExecuteNonQuery();
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Created new entry for UserKey {userStats.UserKey}"));
             }
         }
         public async void UserStatsSave(CouchUserStats userStats)
@@ -369,9 +405,11 @@ namespace MisfitBot2.Services
                 cmd.Connection = Core.Data;
 
                 cmd.CommandText = $"UPDATE {PLUGINSTATS} SET " +
+                    $"BotChannelKey = @BotChannelKey, " +
                     $"CountSeated = @CountSeated, " +
                     $"CountBooted = @CountBooted " +
-                    $" WHERE UserKey is @UserKey";
+                    $" WHERE BotChannelKey is @BotChannelKey AND UserKey is @UserKey";
+                cmd.Parameters.AddWithValue("@BotChannelKey", userStats.BotChannelKey);
                 cmd.Parameters.AddWithValue("@UserKey", userStats.UserKey);
                 cmd.Parameters.AddWithValue("@CountSeated", userStats.CountSeated);
                 cmd.Parameters.AddWithValue("@CountBooted", userStats.CountBooted);
@@ -379,14 +417,15 @@ namespace MisfitBot2.Services
                 await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, "Saved UserStats in DB."));
             }
         }
-        private async Task<bool> UserStatsExists(string uKey)
+        private async Task<bool> UserStatsExists(string bKey, string uKey)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM {PLUGINSTATS} WHERE UserKey IS @uKey";
+                cmd.CommandText = $"SELECT * FROM {PLUGINSTATS} WHERE UserKey IS @uKey AND BotChannelKey IS @bKey";
                 cmd.Parameters.AddWithValue("@uKey", uKey);
+                cmd.Parameters.AddWithValue("@bKey", bKey);
 
                 if (await cmd.ExecuteScalarAsync() == null)
                 {
@@ -396,6 +435,47 @@ namespace MisfitBot2.Services
                 {
                     return true;
                 }
+            }
+        }
+        private async Task ReplaceChannelKey(string newKey, string oldKey)
+        {
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = $"SELECT * FROM {PLUGINSTATS} WHERE BotChannelKey IS @oldKey";
+                cmd.Parameters.AddWithValue("@oldKey", oldKey);
+                SQLiteDataReader result;
+                try
+                {
+                    result = cmd.ExecuteReader();
+                }
+                catch (Exception)
+                {
+                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
+                    throw;
+                }
+                while (result.Read())
+                {
+                    using (SQLiteCommand cmd2 = new SQLiteCommand())
+                    {
+                        cmd2.CommandType = CommandType.Text;
+                        cmd2.Connection = Core.Data;
+
+                        cmd2.CommandText = $"UPDATE {PLUGINSTATS} SET " +
+                            $"BotChannelKey = @newKey, " +
+                            $"CountSeated = @CountSeated, " +
+                            $"CountBooted = @CountBooted " +
+                            $" WHERE UserKey is @UserKey AND BotChannelKey is @oldKey";
+                        cmd2.Parameters.AddWithValue("@oldKey", oldKey);
+                        cmd2.Parameters.AddWithValue("@newKey", newKey);
+                        cmd2.Parameters.AddWithValue("@UserKey", result.GetString(1));
+                        cmd2.Parameters.AddWithValue("@CountSeated", result.GetInt32(2));
+                        cmd2.Parameters.AddWithValue("@CountBooted", result.GetInt32(3));
+                        cmd2.ExecuteNonQuery();
+                    }
+                }
+                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, "Channelmerge detected. DB updated."));
             }
         }
         #endregion	  
@@ -433,13 +513,14 @@ namespace MisfitBot2.Services
         {
             throw new NotImplementedException();
         }
-        public void OnBotChannelEntryMerge(BotChannel discordGuild, BotChannel twitchChannel)
+        public async void OnBotChannelEntryMerge(BotChannel discordGuild, BotChannel twitchChannel)
         {
-            throw new NotImplementedException();
+            string keyToReplace = twitchChannel.Key;
+            await ReplaceChannelKey(discordGuild.Key, twitchChannel.Key);
         }
         public void OnUserEntryMerge(UserEntry discordUser, UserEntry twitchUser)
         {
-            throw new NotImplementedException();
+           // TODO make this fix db when a user merges
         }
         public void NewUserValuesEntry(ulong userID, ulong guildID)
         {
