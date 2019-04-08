@@ -29,6 +29,7 @@ namespace MisfitBot2.Services
             TimerStuff.OnSecondTick += OnSecondTick;
         }
 
+
         #region Twitch methods
         private async void TwitchOnChatCommandReceived(object sender, TwitchLib.Client.Events.OnChatCommandReceivedArgs e)
         {
@@ -136,6 +137,52 @@ namespace MisfitBot2.Services
         }
         #endregion
         #region Discord methods
+        public async Task DiscordBets(ICommandContext Context, List<string> args)
+        {
+            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info,
+                PLUGINNAME,
+                $"{Context.User.Username} used command \"bets\" in {Context.Channel.Name}."
+                ));
+            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);
+            if (bChan == null) { return; }
+            BettingSettings settings = await Settings(bChan);
+            switch (args[0].ToLower())
+            {
+                case "chan":
+                    await DiscordSetChannel(Context);
+                    break;
+                case "on":
+                    await DiscordSetActive(true, Context);
+                    await Context.Channel.SendMessageAsync($"Betting is now {(settings._active ? "on" : "off")} here.");
+                    break;
+                case "off":
+                    await DiscordSetActive(false, Context);
+                    await Context.Channel.SendMessageAsync($"Betting is now {(settings._active ? "on" : "off" )} here.");
+                    break;
+                case "open":
+                    if (args.Count >= 2)
+                    {
+                        await DiscordStartBetting(Context, args);
+                    }
+                    break;
+                case "cancel":
+                    await DiscordCancelBets(Context);
+                    break;
+                case "close":
+                    if (args.Count == 1)
+                    {
+                        if (Bets.ValidateBetting(bChan.TwitchChannelName))
+                        {
+                            await CloseBet(bChan.TwitchChannelName);
+                        }
+                    }
+                    else if (args.Count == 2)
+                    {
+                        await DiscordStopBetting(Context, args[1]);
+                    }
+                    break;
+            }
+        }
         public async Task DiscordSetChannel(ICommandContext Context)
         {
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);
@@ -166,15 +213,15 @@ namespace MisfitBot2.Services
         {
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
             if (bChan == null) { return; }
-
+            if(bChan.TwitchChannelName == string.Empty) { return; }
 
             if (arguments.Count < 1)
             {
                 return;
             }
-            else if (arguments.Count == 1)
+            else if (arguments.Count == 2)
             {
-                if (arguments[0].ToLower() == "br")
+                if (arguments[1].ToLower() == "br")
                 {
                     List<string> options = new List<string>();
                     for (int place = 1; place <= 100; place++)
@@ -183,7 +230,7 @@ namespace MisfitBot2.Services
                     }
                     await OpenBet(bChan, options, BETVARIANT.BATTLEROYALE);
                 }
-                if (arguments[0].ToLower() == "dd")
+                if (arguments[1].ToLower() == "dd")
                 {
                     List<string> options = new List<string>();
                     for (int place = 1; place <= 1300; place++)
@@ -192,7 +239,7 @@ namespace MisfitBot2.Services
                     }
                     await OpenBet(bChan, options, BETVARIANT.DEVILDAGGERS);
                 }
-                if (arguments[0].ToLower() == "apex")
+                if (arguments[1].ToLower() == "apex")
                 {
                     List<string> options = new List<string>();
                     for (int place = 1; place <= 20; place++)

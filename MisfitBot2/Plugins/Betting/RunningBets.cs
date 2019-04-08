@@ -167,31 +167,31 @@ namespace MisfitBot2.Plugins.Betting
             switch (variant)
             {
                 case BETVARIANT.NORMAL:
-                    Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Betting open! Type \"?bet <amount> <placement>\" to place a bet.  Valid options are {OptionListToString(options)}");
+                    Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Betting open! Type \"{Core._commandCharacter}bet <amount> <placement>\" to place a bet.  Valid options are {OptionListToString(options)}");
                     if(channelForBet != 0)
                     {
-                        await (Core.Discord.GetChannel(channelForBet) as ISocketMessageChannel).SendMessageAsync($"Betting open! Type \"?bet <amount> <option>\" to place a bet.  Valid options are {OptionListToString(options)}");
+                        await (Core.Discord.GetChannel(channelForBet) as ISocketMessageChannel).SendMessageAsync($"Betting open! Type \"{Core._commandCharacter}bet <amount> <option>\" to place a bet.  Valid options are {OptionListToString(options)}");
                     }
                     break;
                 case BETVARIANT.BATTLEROYALE:
-                    Core.Twitch._client.SendMessage(bChan.TwitchChannelName, "Betting open! Type \"?bet <amount> <placement>\" to place a bet. Valid placements are 1 to 100.");
+                    Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Betting open! Type \"{Core._commandCharacter}bet <amount> <placement>\" to place a bet. Valid placements are 1 to 100.");
                     if (channelForBet != 0)
                     {
-                        await (Core.Discord.GetChannel(channelForBet) as ISocketMessageChannel).SendMessageAsync("Betting open! Type \"?bet <amount> <placement>\" to place a bet. Valid placements are 1 to 100.");
+                        await (Core.Discord.GetChannel(channelForBet) as ISocketMessageChannel).SendMessageAsync($"Betting open! Type \"{Core._commandCharacter}bet <amount> <placement>\" to place a bet. Valid placements are 1 to 100.");
                     }
                     break;
                 case BETVARIANT.DEVILDAGGERS:
-                    Core.Twitch._client.SendMessage(bChan.TwitchChannelName, "Betting open! Type \"?bet <amount> <second>\" to place a bet.  Valid seconds are 1 to 1300.");
+                    Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Betting open! Type \"{Core._commandCharacter}bet <amount> <second>\" to place a bet.  Valid seconds are 1 to 1300.");
                     if (channelForBet != 0)
                     {
-                        await (Core.Discord.GetChannel(channelForBet) as ISocketMessageChannel).SendMessageAsync("Betting open! Type \"?bet <amount> <placement>\" to place a bet.  Valid seconds are 1 to 1300.");
+                        await (Core.Discord.GetChannel(channelForBet) as ISocketMessageChannel).SendMessageAsync($"Betting open! Type \"{Core._commandCharacter}bet <amount> <placement>\" to place a bet.  Valid seconds are 1 to 1300.");
                     }
                     break;
                 case BETVARIANT.APEX:
-                    Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Betting open! Type \"?bet <amount> <placement>\" to place a bet. Valid placements are 1 to 20. Betting closes in {settings.apexOpenTimer} seconds.");
+                    Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Betting open! Type \"{Core._commandCharacter}bet <amount> <placement>\" to place a bet. Valid placements are 1 to 20. Betting closes in {settings.apexOpenTimer} seconds.");
                     if (channelForBet != 0)
                     {
-                        await (Core.Discord.GetChannel(channelForBet) as ISocketMessageChannel).SendMessageAsync($"Betting open! Type \"?bet <amount> <placement>\" to place a bet. Valid placements are 1 to 20. Betting closes in {settings.apexOpenTimer} seconds.");
+                        await (Core.Discord.GetChannel(channelForBet) as ISocketMessageChannel).SendMessageAsync($"Betting open! Type \"{Core._commandCharacter}bet <amount> <placement>\" to place a bet. Valid placements are 1 to 20. Betting closes in {settings.apexOpenTimer} seconds.");
                     }
                     break;
             }

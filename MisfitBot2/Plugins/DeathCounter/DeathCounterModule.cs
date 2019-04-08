@@ -17,59 +17,14 @@ namespace MisfitBot2.Modules
         DeathCounterModule(DeathCounterService deaths){_deathCounterService = deaths;}
 
         [RequireUserPermission(GuildPermission.ManageMessages)]
-        [Command("dc_channel", RunMode = RunMode.Async)]
-        [Summary("Declares used channel as the default deathcounterchannel.")]
-        public async Task SetDefChannel()
+        [Command("dc", RunMode = RunMode.Async)]
+        [Summary("Deathcounter base command.")]
+        public async Task DeathCounter([Remainder]string text)
         {
-            await _deathCounterService.SetDefaultDiscordChannel(Context);
-        }
-
-        [RequireUserPermission(GuildPermission.ManageMessages)]
-        [Command("dc_channelreset", RunMode = RunMode.Async)]
-        [Summary("Resets the default deathcounterchannel.")]
-        public async Task ResetDefChannel()
-        {
-            await _deathCounterService.ClearDefaultDiscordChannel(Context);
-        }
-
-        [RequireUserPermission(GuildPermission.ManageMessages)]
-        [Command("dc_start", RunMode = RunMode.Async)]
-        [Summary("Starts a death counter for the linked Twitchchannel.")]
-        public async Task StartCounter()
-        {
-            await _deathCounterService.StartCounter(Context);
-        }
-
-        [RequireUserPermission(GuildPermission.ManageMessages)]
-        [Command("dc_stop", RunMode = RunMode.Async)]
-        [Summary("Stops the running deathcounter for the linked Twitchchannel.")]
-        public async Task StopCounter()
-        {
-            await _deathCounterService.StopCounter(Context);
-        }
-
-        [Command("dc_reset", RunMode = RunMode.Async)]
-        [RequireUserPermission(GuildPermission.ManageMessages)]
-        [Summary("Resets the running deathcounter for the linked Twitchchannel.")]
-        public async Task ResetCounter()
-        {
-            await _deathCounterService.ResetCounter(Context);
-        }
-
-        [Command("add", RunMode = RunMode.Async)]
-        [RequireUserPermission(GuildPermission.ManageMessages)]
-        [Summary("Adds a death to the running deathcounter for the linked Twitchchannel.")]
-        public async Task AddCounter()
-        {
-            await _deathCounterService.AddCounter(Context);
-        }
-
-        [Command("del", RunMode = RunMode.Async)]
-        [RequireUserPermission(GuildPermission.ManageMessages)]
-        [Summary("Removes a death to the running deathcounter for the linked Twitchchannel.")]
-        public async Task DelCounter()
-        {
-            await _deathCounterService.DelCounter(Context);
+            if (Context.User.IsBot) { return; }
+            string[] args = text.Split(" ");
+            List<string> arguments = new List<string>(args);
+            await _deathCounterService.DiscordCommand(args, Context);
         }
 
         [Command("deaths", RunMode = RunMode.Async)]

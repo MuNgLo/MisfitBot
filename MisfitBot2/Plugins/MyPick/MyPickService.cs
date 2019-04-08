@@ -78,7 +78,7 @@ namespace MisfitBot2.Services
             if (bChan == null) { return; }
             MyPickSettings settings = await Settings(bChan);
             EmbedBuilder builder = new EmbedBuilder();
-            builder.WithTitle("Most liked games of 2018 here is...");
+            builder.WithTitle("Most liked games here is...");
             // TOP LIST
             string msg = await TopList(bChan);
             string nominations = string.Empty;

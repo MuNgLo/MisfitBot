@@ -91,6 +91,9 @@ namespace MisfitBot2.Services
                     break;
             }
         }
+
+       
+
         public async Task TwitchPoorLifeChoice(TwitchLib.Client.Events.OnChatCommandReceivedArgs e)
         {
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(e.Command.ChatMessage.Channel);
@@ -102,7 +105,31 @@ namespace MisfitBot2.Services
         #endregion
 
         #region Discord command methods 
-
+        public async Task DiscordCommand(string[] args, ICommandContext context)
+        {
+            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info,
+                PLUGINNAME,
+                $"{context.User.Username} used command \"plc\" in {context.Channel.Name}."
+                ));
+            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
+            if (bChan == null) { return; }
+            PoorLifeChoicesSettings settings = await Settings(bChan);
+            switch (args[0].ToLower())
+            {
+                case "on":
+                    await DiscordSetActive(true, context);
+                    break;
+                case "off":
+                    await DiscordSetActive(false, context);
+                    break;
+                case "chan":
+                    await SetDefaultDiscordChannel(bChan, context.Channel.Id);
+                    break;
+                case "chanreset":
+                    await ClearDefaultDiscordChannel(bChan, context.Channel.Id);
+                    break;
+            }
+        }
         #region Interface default discord command methods
         public async Task SetDefaultDiscordChannel(BotChannel bChan, ulong discordChannelID)
         {

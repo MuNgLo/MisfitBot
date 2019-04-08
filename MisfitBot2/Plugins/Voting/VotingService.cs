@@ -28,30 +28,34 @@ namespace MisfitBot2.Services
             Core.Twitch._client.OnChatCommandReceived += TwitchOnChatCommandReceived;
             TimerStuff.OnSecondTick += OnSecondTick;
         }// END of Constructor
+
         #region Twitch command methods
         private async void TwitchOnChatCommandReceived(object sender, TwitchLib.Client.Events.OnChatCommandReceivedArgs e)
         {
             switch (e.Command.CommandText.ToLower())
             {
-                case "startvote":
-                    if(e.Command.ChatMessage.IsModerator || e.Command.ChatMessage.IsBroadcaster)
-                    {
-                        if(e.Command.ArgumentsAsList.Count > 1)
-                        {
-                            if(!_activeVotes.Exists(p=>p.twitchChannelName == e.Command.ChatMessage.Channel))
-                            {
-                               await TwitchStartVote(e.Command.ChatMessage.Channel, e.Command.ArgumentsAsList);
-                            }
-                        }
-                    }
-                    break;
-                case "stopvote":
-                case "closevote":
+                case "votes":
                     if (e.Command.ChatMessage.IsModerator || e.Command.ChatMessage.IsBroadcaster)
                     {
-                        if(_activeVotes.Exists(p => p.twitchChannelName == e.Command.ChatMessage.Channel))
+                        switch (e.Command.ArgumentsAsList[0])
                         {
-                            await TwitchStopVote(e.Command.ChatMessage.Channel);
+                            case "start":
+
+                                if (e.Command.ArgumentsAsList.Count > 2)
+                                {
+                                    if (!_activeVotes.Exists(p => p.twitchChannelName == e.Command.ChatMessage.Channel))
+                                    {
+                                        await TwitchStartVote(e.Command.ChatMessage.Channel, e.Command.ArgumentsAsList);
+                                    }
+                                }
+                                break;
+                            case "stop":
+                            case "close":
+                                if (_activeVotes.Exists(p => p.twitchChannelName == e.Command.ChatMessage.Channel))
+                                {
+                                    await TwitchStopVote(e.Command.ChatMessage.Channel);
+                                }
+                                break;
                         }
                     }
                     break;
@@ -83,6 +87,29 @@ namespace MisfitBot2.Services
         }
         #endregion
         #region Discord command methods
+        public async Task DiscordCommand(ICommandContext context, List<string> arguments)
+        {
+            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info,
+                PLUGINNAME,
+                $"{context.User.Username} used command \"bets\" in {context.Channel.Name}."
+                ));
+            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
+            if (bChan == null) { return; }
+            VotingSettings settings = await Settings(bChan);
+            switch (arguments[0].ToLower())
+            {
+                case "start":
+                    if (arguments.Count >= 3)
+                    {
+                        await DiscordStartVote(context, arguments);
+                    }
+                    break;
+                case "stop":
+                case "close":
+                    await DiscordStopVote(context);
+                    break;
+            }
+        }
         #region Interface default discord command methods
         public async Task SetDefaultDiscordChannel(BotChannel bChan, ulong discordChannelID)
         {
@@ -150,6 +177,7 @@ namespace MisfitBot2.Services
         }
         private async Task StartVote(BotChannel bChan, List<string> arguments, bool isTwitch)
         {
+            arguments.RemoveAt(0);
             foreach(string arg in arguments)
             {
                 if(arguments.FindAll(p=>p == arg).Count > 1)

@@ -26,6 +26,7 @@ namespace MisfitBot2.Services
             Core.Twitch._client.OnChatCommandReceived += TWITCH_OnChatCommandReceived;
         }
 
+
         #region Handle Twitch Commands
         private async void TWITCH_OnChatCommandReceived(object sender, TwitchLib.Client.Events.OnChatCommandReceivedArgs e)
         {
@@ -34,48 +35,57 @@ namespace MisfitBot2.Services
 
             switch (e.Command.CommandText.ToLower())
             {
-                case "dc_start":
-                    if (!_deathCounters.ContainsKey(e.Command.ChatMessage.Channel))
+                case "dc":
+                    if (e.Command.ChatMessage.IsModerator || e.Command.ChatMessage.IsBroadcaster)
                     {
-                        if (e.Command.ChatMessage.IsBroadcaster || e.Command.ChatMessage.IsModerator)
+                        switch (e.Command.ArgumentsAsList[0].ToLower())
                         {
-                            await StartDeathCounter(bChan);
-                        }
-                    }
-                    break;
-                case "dc_stop":
-                    if (e.Command.ChatMessage.IsBroadcaster || e.Command.ChatMessage.IsModerator)
-                    {
-                        if (_deathCounters.ContainsKey(e.Command.ChatMessage.Channel))
-                        {
-                            await StopDeathCounter(bChan);
-                        }
-                    }
-                    break;
-                case "dc_reset":
-                    if (e.Command.ChatMessage.IsBroadcaster || e.Command.ChatMessage.IsModerator)
-                    {
-                        if (_deathCounters.ContainsKey(e.Command.ChatMessage.Channel))
-                        {
-                            await ResetDeathcCounter(bChan);
-                        }
-                    }
-                    break;
-                case "add":
-                    if (_deathCounters.ContainsKey(e.Command.ChatMessage.Channel))
-                    {
-                        if (e.Command.ChatMessage.IsBroadcaster || e.Command.ChatMessage.IsModerator)
-                        {
-                            await AddToDeathCounter(bChan);
-                        }
-                    }
-                    break;
-                case "del":
-                    if (_deathCounters.ContainsKey(e.Command.ChatMessage.Channel))
-                    {
-                        if (e.Command.ChatMessage.IsBroadcaster || e.Command.ChatMessage.IsModerator)
-                        {
-                            await DelFromDeathCounter(bChan);
+                            case "start":
+                                if (!_deathCounters.ContainsKey(e.Command.ChatMessage.Channel))
+                                {
+                                    if (e.Command.ChatMessage.IsBroadcaster || e.Command.ChatMessage.IsModerator)
+                                    {
+                                        await StartDeathCounter(bChan);
+                                    }
+                                }
+                                break;
+                            case "stop":
+                                if (e.Command.ChatMessage.IsBroadcaster || e.Command.ChatMessage.IsModerator)
+                                {
+                                    if (_deathCounters.ContainsKey(e.Command.ChatMessage.Channel))
+                                    {
+                                        await StopDeathCounter(bChan);
+                                    }
+                                }
+                                break;
+                            case "reset":
+                                if (e.Command.ChatMessage.IsBroadcaster || e.Command.ChatMessage.IsModerator)
+                                {
+                                    if (_deathCounters.ContainsKey(e.Command.ChatMessage.Channel))
+                                    {
+                                        await ResetDeathcCounter(bChan);
+                                    }
+                                }
+                                break;
+                            case "add":
+                                if (_deathCounters.ContainsKey(e.Command.ChatMessage.Channel))
+                                {
+                                    if (e.Command.ChatMessage.IsBroadcaster || e.Command.ChatMessage.IsModerator)
+                                    {
+                                        await AddToDeathCounter(bChan);
+                                    }
+                                }
+                                break;
+                            case "del":
+                            case "delete":
+                                if (_deathCounters.ContainsKey(e.Command.ChatMessage.Channel))
+                                {
+                                    if (e.Command.ChatMessage.IsBroadcaster || e.Command.ChatMessage.IsModerator)
+                                    {
+                                        await DelFromDeathCounter(bChan);
+                                    }
+                                }
+                                break;
                         }
                     }
                     break;
@@ -96,6 +106,41 @@ namespace MisfitBot2.Services
         #endregion
 
         #region Handling discord commands
+        public async Task DiscordCommand(string[] args, ICommandContext context)
+        {
+            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info,
+                PLUGINNAME,
+                $"{context.User.Username} used command \"dc\" in {context.Channel.Name}."
+                ));
+            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
+            if (bChan == null) { return; }
+            DeathCounterSettings settings = await Settings(bChan);
+            switch (args[0].ToLower())
+            {
+                case "chan":
+                    await SetDefaultDiscordChannel(context);
+                    break;
+                case "chanreset":
+                    await ClearDefaultDiscordChannel(context);
+                    break;
+                case "start":
+                    await StartCounter(context);
+                    break;
+                case "stop":
+                    await StopCounter(context);
+                    break;
+                case "reset":
+                    await ResetCounter(context);
+                    break;
+                case "add":
+                    await AddCounter(context);
+                    break;
+                case "del":
+                case "delete":
+                    await DelCounter(context);
+                    break;
+            }
+        }
         public async Task SetDefaultDiscordChannel(ICommandContext Context)
         {
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);
@@ -120,6 +165,7 @@ namespace MisfitBot2.Services
                 settings._defaultDiscordChannel = 0;
                 Core.Configs.UpdateConfig(bChan, PLUGINNAME, settings);
                 await Context.Message.Channel.SendMessageAsync($"Resseting the default channel for the deathcounter module.");
+                return;
             }
             await Context.Message.Channel.SendMessageAsync($"There was no default channel for the deathcounter module to reset.");
         }
