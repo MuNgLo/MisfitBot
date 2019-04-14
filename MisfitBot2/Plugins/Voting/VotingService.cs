@@ -197,7 +197,7 @@ namespace MisfitBot2.Services
             RunningVote vote = new RunningVote(bChan, arguments);
             _activeVotes.Add(vote);
 
-            string msg = $"Voting started! use \"!vote #\" You can vote between ";
+            string msg = $"Voting started! use \"{Core._commandCharacter}vote #\" You can vote between ";
             foreach(string option in arguments)
             {
                 msg += option + ", ";

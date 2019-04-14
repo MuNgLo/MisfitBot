@@ -115,6 +115,7 @@ namespace MisfitBot2
             await _commands.AddModuleAsync<RaffleModule>(_services);
             await _commands.AddModuleAsync<PoorLifeChoicesModule>(_services);
             await _commands.AddModuleAsync<MyPickModule>(_services);
+            await _commands.AddModuleAsync<CouchModule>(_services);
             await _commands.AddModuleAsync<HelpModule>(_services);
             await _commands.AddModuleAsync<MatchMakingModule>(_services);
             //await _commands.AddModuleAsync<GreeterModule>(_services);

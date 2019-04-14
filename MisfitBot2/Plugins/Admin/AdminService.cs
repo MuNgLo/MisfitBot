@@ -295,7 +295,7 @@ namespace MisfitBot2.Services
         }
 
 
-        #region DATA minapulation stuff
+        #region DATA manipulation stuff
         /// <summary>
         /// Get access to the data related to the botchannel
         /// </summary>

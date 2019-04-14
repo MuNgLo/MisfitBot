@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 using System.Threading.Tasks;
 
 namespace MisfitBot2
@@ -25,6 +26,14 @@ namespace MisfitBot2
             if (bChan.discordAdminChannel != 0)
             {
                 await (Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(message);
+                return;
+            }
+        }
+        public async Task SayEmbedOnDiscordAdmin(BotChannel bChan, Embed obj)
+        {
+            if (bChan.discordAdminChannel != 0)
+            {
+                await (Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync("", false, obj);
                 return;
             }
         }

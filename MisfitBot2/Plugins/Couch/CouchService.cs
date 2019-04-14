@@ -7,7 +7,9 @@ using MisfitBot2.Plugins.PluginTemplate;
 using MisfitBot2.Plugins.Couch;
 using System.Data.SQLite;
 using System.Data;
-using TwitchLib.Api.V5.Models.Users;					 							
+using TwitchLib.Api.V5.Models.Users;
+using MisfitBot2.Components;
+using Discord.Commands;
 
 namespace MisfitBot2.Services
 {
@@ -19,10 +21,11 @@ namespace MisfitBot2.Services
         private List<string> _success = new List<string>();
         private List<string> _fail = new List<string>();
         private List<string> _incident = new List<string>();
-
+        private DatabaseStrings dbStrings;
         // CONSTRUCTOR
         public CouchService()
         {
+            dbStrings = new DatabaseStrings(PLUGINNAME);
             Core.Twitch._client.OnChatCommandReceived += TwitchOnChatCommandReceived;
 			Core.Twitch._client.OnUserJoined += TwitchInUserJoined;								   
             Core.OnBotChannelGoesLive += OnChannelGoesLive;
@@ -311,7 +314,101 @@ namespace MisfitBot2.Services
         }
         #endregion
 
+        #region Discord command methods
+        public async Task DiscordCommand(ICommandContext context, List<string> arguments)
+        {
+            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info,
+                PLUGINNAME,
+                $"{context.User.Username} used command \"couch\" in {context.Channel.Name}."
+                ));
+            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
+            if (bChan == null) { return; }
+            CouchSettings settings = await Settings(bChan);
+            switch (arguments[0].ToLower())
+            {
+                case "addsuccess":
+                    if (arguments.Count >= 2)
+                    {
+                        await AddLine(bChan, "SUCCESS", arguments);
+                    }
+                    break;
+                case "addfail":
+                    if (arguments.Count >= 2)
+                    {
+                        await AddLine(bChan, "FAIL", arguments);
+                    }
+                    break;
+                case "addincident":
+                    if (arguments.Count >= 2)
+                    {
+                        await AddLine(bChan, "INCIDENT", arguments);
+                    }
+                    break;
+                case "rngsuccess":
+                    await SayOnDiscordAdmin(bChan, dbStrings.GetRandomLine(bChan, "SUCCESS"));
+                    break;
+                case "rngfail":
+                    await SayOnDiscordAdmin(bChan, dbStrings.GetRandomLine(bChan, "FAIL"));
+                    break;
+                case "rngincident":
+                    await SayOnDiscordAdmin(bChan, dbStrings.GetRandomLine(bChan, "INCIDENT"));
+                    break;
+                case "list":
+                    await ListLinesFromDB(bChan);
+                    break;
+            }
+        }
+        #endregion
+
         #region Database stuff
+        #region DB Strings stuff
+        private async Task ListLinesFromDB(BotChannel bChan)
+        {
+            EmbedBuilder builder = new EmbedBuilder();
+            builder.WithTitle("Currently stored lines...");
+            builder.WithDescription("These are lines stored in the database that the Couch plugin will use based on topic if they are marked as inuse.");
+            builder.WithColor(Color.Purple);
+
+            // LINES IN USE
+            EmbedFieldBuilder field = new EmbedFieldBuilder();
+            List<string> inuseLines = await dbStrings.GetAllInUse(bChan, "SUCCESS");
+            if (inuseLines.Count == 0)
+            {
+                field.Name = "There is no lines inuse. This is probably a bad thing.";
+            }
+            else
+            {
+                string lines = string.Empty;
+                foreach(string line in inuseLines)
+                {
+                    lines += line+Environment.NewLine;
+                }
+
+                field.Name = lines;
+            }
+            field.Value = 1000;
+            builder.AddField("In Use", field.Build());
+
+            // LINES NOT IN USE
+            //EmbedFieldBuilder field2 = new EmbedFieldBuilder();
+            //field2.Name = help;
+            //field2.Value = 100;
+            //builder.AddField("How to participate", field2.Build());
+
+            Embed obj = builder.Build();
+            await SayEmbedOnDiscordAdmin(bChan, obj);
+        }
+
+        private async Task AddLine(BotChannel bChan, string topic, List<string> arguments)
+        {
+            arguments.RemoveAt(0);
+            string line = string.Empty;
+            foreach(string part in arguments) { line += " " + part; }
+            line.Trim();
+            dbStrings.SaveNewLine(bChan, topic, line);
+            await SayOnDiscordAdmin(bChan, $"Added one more \"{topic}\" line for Couch plugin.");
+        }
+        #endregion
         public bool StatsTableExists()
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
