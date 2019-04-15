@@ -374,59 +374,103 @@ namespace MisfitBot2.Services
                         await AddLine(bChan, "INCIDENT", arguments);
                     }
                     break;
-                case "rngsuccess":
-                    await SayOnDiscordAdmin(bChan, dbStrings.GetRandomLine(bChan, "SUCCESS"));
-                    break;
-                case "rngfail":
-                    await SayOnDiscordAdmin(bChan, dbStrings.GetRandomLine(bChan, "FAIL"));
-                    break;
-                case "rngincident":
-                    await SayOnDiscordAdmin(bChan, dbStrings.GetRandomLine(bChan, "INCIDENT"));
+                case "addgreet":
+                    if (arguments.Count >= 2)
+                    {
+                        await AddLine(bChan, "GREET", arguments);
+                    }
                     break;
                 case "list":
-                    await ListLinesFromDB(bChan, 0);
+                    if (arguments.Count == 1)
+                    {
+                        await ListLinesFromDB(bChan, 0);
+                        return;
+                    }
+                    int page = 0;
+                    int.TryParse(arguments[1], out page);
+                    if (page <= 0) { page = 1; }
+
+                    await ListLinesFromDB(bChan, page - 1);
+                    break;
+                case "use":
+                    if (arguments.Count == 1)
+                    {
+                        return;
+                    }
+                    int id = -1;
+                    int.TryParse(arguments[1], out id);
+                    if (id <= 0) { return; }
+                    await ToggleInUse(bChan, id);
+                    break;
+                case "delete":
+                    if (arguments.Count == 1)
+                    {
+                        return;
+                    }
+                    id = -1;
+                    int.TryParse(arguments[1], out id);
+                    if (id <= 0) { return; }
+                    await DeleteEntry(bChan, id);
                     break;
             }
         }
+
+
         #endregion
 
         #region Database stuff
-        #region DB Strings stuff 
-        private async Task ListLinesFromDB(BotChannel bChan, int page)
+        #region DB Strings stuff
+        private async Task DeleteEntry(BotChannel bChan, int id)
         {
-            // LINES IN USE
-            string inuseText = "These are lines stored in the database that the Couch plugin will use based on topic if they are marked as inuse." + Environment.NewLine + Environment.NewLine;
-            List<string> inuseLines = await dbStrings.GetTenInUse(bChan, "SUCCESS", page);
-            if (inuseLines.Count == 0)
+            CouchDBString entry = await dbStrings.GetStringByID(bChan, id);
+            if (entry._inuse)
             {
-                inuseText += "There is no lines inuse. This is probably a bad thing.";
+                await SayOnDiscordAdmin(bChan, $"Only entries that is not in use can be deleted. Use \"{Core._commandCharacter}couch use <ID>\" to toggle the inuse flag on entries.");
+                return;
+            }
+            if(dbStrings.DeleteEntry(bChan, id))
+            {
+                await SayOnDiscordAdmin(bChan, $"Entry {id} deleted.");
+            }
+        }
+
+        private async Task ToggleInUse(BotChannel bChan, int id)
+        {
+            CouchDBString entry = await dbStrings.GetStringByID(bChan, id);
+            CouchDBString edited = new CouchDBString(entry._id, !entry._inuse, entry._topic, entry._text);
+            if(dbStrings.SaveEditedLineByID(bChan, edited))
+            {
+                await SayOnDiscordAdmin(bChan, "Entry updated.");
             }
             else
             {
-                foreach(string line in inuseLines)
+                await SayOnDiscordAdmin(bChan, "Failed to update entry.");
+            }
+        }
+        private async Task ListLinesFromDB(BotChannel bChan, int page)
+        {
+            // LINES IN USE
+            string inuseText = "Currently stored lines...```" +
+                $"These are lines stored in the database that the Couch plugin will use based on topic if they are marked as inuse.{Environment.NewLine}{Environment.NewLine}" +
+                $"<ID> <TOPIC> <INUSE> <TEXT>        Page {page + 1}{Environment.NewLine}";
+            List<CouchDBString> lines = await dbStrings.GetRowsByTen(bChan, page);
+            if (lines.Count == 0)
+            {
+                inuseText += "No hits. Try a lower page number.";
+            }
+            else
+            {
+                foreach(CouchDBString entry in lines)
                 {
-                    inuseText += line +Environment.NewLine;
+                    inuseText += String.Format("{0,4}", entry._id);
+                    inuseText += String.Format("{0,8}", entry._topic);
+                    inuseText += String.Format("{0,7}", entry._inuse);
+                    inuseText += " " + entry._text + Environment.NewLine;
                 }
             }
-            EmbedBuilder builder = new EmbedBuilder();
-            builder.WithTitle("Currently stored lines...");
-            builder.WithDescription(inuseText);
-            builder.WithColor(Color.Purple);
 
-
-            EmbedFieldBuilder field = new EmbedFieldBuilder();
-            field.Name = $"qweqweqweqweqweq";
-            field.Value = "kjahsdkjhaskdjh";
-            builder.AddField($"In use Success strings. Page {page}", field.Build());
-            
-            // LINES NOT IN USE
-            //EmbedFieldBuilder field2 = new EmbedFieldBuilder();
-            //field2.Name = help;
-            //field2.Value = 100;
-            //builder.AddField("How to participate", field2.Build());
-
-            Embed obj = builder.Build();
-            await SayEmbedOnDiscordAdmin(bChan, obj);
+            inuseText += $"```Use command {Core._commandCharacter}couch list <page> to list a page. Those marked with an X for INUSE are in rotation. Topic is what the text is used for.";
+            await SayOnDiscordAdmin(bChan, inuseText);
         }
 
         private async Task AddLine(BotChannel bChan, string topic, List<string> arguments)

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MisfitBot2.Plugins.Couch;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
@@ -16,60 +17,125 @@ namespace MisfitBot2.Components
         }
 
         #region DB access
-
+        public bool DeleteEntry(BotChannel bChan, int id)
+        {
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = $"DELETE FROM {TableName(bChan.Key)} WHERE ROWID IS @id";
+                cmd.Parameters.AddWithValue("@id", id);
+                if (cmd.ExecuteNonQuery() > 0)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        public async Task<CouchDBString> GetStringByID(BotChannel bChan, int id)
+        {
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = $"SELECT * FROM {TableName(bChan.Key)} WHERE ROWID IS @id";
+                cmd.Parameters.AddWithValue("@id", id);
+                SQLiteDataReader result;
+                try
+                {
+                    result = cmd.ExecuteReader();
+                }
+                catch (Exception)
+                {
+                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME + "DatabseStrings", $"Database query failed hard. ({cmd.CommandText})"));
+                    throw;
+                }
+                result.Read();
+                return new CouchDBString((int)result.GetInt64(0), result.GetBoolean(1), result.GetString(2), result.GetString(3));
+            }
+        }
         public void SaveNewLine(BotChannel bChan, string topic, string line)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"INSERT INTO {TableName(bChan.Key)} VALUES (" +
-                    $"@chanKey, " +
+                cmd.CommandText = $"INSERT INTO {TableName(bChan.Key)} (inuse, topic, text) VALUES (" +
                     $"@inuse, " +
                     $"@topic, " +
                     $"@text)";
-                cmd.Parameters.AddWithValue("@chanKey", bChan.Key);
                 cmd.Parameters.AddWithValue("@inuse", true);
                 cmd.Parameters.AddWithValue("@topic", topic);
                 cmd.Parameters.AddWithValue("@text", line);
                 cmd.ExecuteNonQuery();
             }
         }
-        public async Task<string> GetRNGFromTopic(BotChannel bChan, string topic)
+        public  bool SaveEditedLineByID(BotChannel bChan, CouchDBString entry)
         {
-            List<string> candidates = await GetTenInUse(bChan, topic);
-            if (candidates.Count == 0) { return null; }
-            Random rng = new Random();
-            return candidates[rng.Next(candidates.Count)];
-        }
-        public async Task<List<string>> GetTenInUse(BotChannel bChan, string topic, int page = 0)
-        {
-            List<string> inuseLines = new List<string>();
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM {TableName(bChan.Key)} WHERE inuse IS @inuse AND topic IS @topic LIMIT {page*10}, 10";
+                cmd.CommandText = $"UPDATE {TableName(bChan.Key)} SET inuse=@inuse WHERE ROWID IS @id";
+                cmd.Parameters.AddWithValue("@id", entry._id);
+                cmd.Parameters.AddWithValue("@inuse", entry._inuse);
+                if (cmd.ExecuteNonQuery() == 1)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        public async Task<string> GetRNGFromTopic(BotChannel bChan, string topic)
+        {
+            List<CouchDBString> candidates = await GetRowsInUse(bChan, topic);
+            if (candidates.Count == 0) { return null; }
+            Random rng = new Random();
+            return candidates[rng.Next(candidates.Count)]._text;
+        }
+        public async Task<List<CouchDBString>> GetRowsInUse(BotChannel bChan, string topic)
+        {
+            List<CouchDBString> inuseLines = new List<CouchDBString>();
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = $"SELECT * FROM {TableName(bChan.Key)} WHERE topic=@topic AND inuse=@inuse";
                 cmd.Parameters.AddWithValue("@topic", topic);
                 cmd.Parameters.AddWithValue("@inuse", true);
                 using (SQLiteDataReader result = cmd.ExecuteReader())
                 {
                     while (result.Read())
                     {
-                        inuseLines.Add(result.GetString(3));
+                        CouchDBString entry = new CouchDBString((int)result.GetInt64(0), result.GetBoolean(1), result.GetString(2), result.GetString(3));
+                        inuseLines.Add(entry);
                     }
                 }
-
                 await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, PLUGINNAME, "aasdasdasd"));
-
-                /*settings._active = result.GetBoolean(1);
-                settings._defaultCooldown = result.GetInt32(2);
-                settings._defaultDiscordChannel = (ulong)result.GetInt64(3);
-                settings._defaultTwitchRoom = result.GetString(4);*/
                 return inuseLines;
             }
         }
-            
+        public async Task<List<CouchDBString>> GetRowsByTen(BotChannel bChan, int page = 0)
+        {
+            List<CouchDBString> inuseLines = new List<CouchDBString>();
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = $"SELECT * FROM {TableName(bChan.Key)} LIMIT {page * 10}, 10";
+                using (SQLiteDataReader result = cmd.ExecuteReader())
+                {
+                    while (result.Read())
+                    {
+                        CouchDBString entry = new CouchDBString((int)result.GetInt64(0), result.GetBoolean(1), result.GetString(2), result.GetString(3));
+                        inuseLines.Add(entry);
+                    }
+                }
+                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, PLUGINNAME, "aasdasdasd"));
+                return inuseLines;
+            }
+        }
+
         public string GetRandomLine(BotChannel bChan, string topic)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
@@ -120,8 +186,11 @@ namespace MisfitBot2.Components
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
+
+                //ID int primary key IDENTITY(1,1) NOT NULL
+
                 cmd.CommandText = $"CREATE TABLE {TableName(chanKey)} (" +
-                    $"chanKey VACHAR(30)," +
+                    $"ROWID INTEGER PRIMARY KEY AUTOINCREMENT," +
                     $"inuse BOOLEAN, " +
                     $"topic VACHAR(30), " +
                     $"text VACHAR(255)" +
@@ -153,6 +222,8 @@ namespace MisfitBot2.Components
         {
             return PLUGINNAME + "_" + chanKey;
         }
+
+        
         #endregion
     }//END of DatabaseStrings
 }
