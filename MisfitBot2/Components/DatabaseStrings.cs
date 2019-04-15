@@ -19,7 +19,6 @@ namespace MisfitBot2.Components
 
         public void SaveNewLine(BotChannel bChan, string topic, string line)
         {
-            if (!TableExists(TableName(bChan.Key))) { TableCreate(bChan.Key); }
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
@@ -36,17 +35,23 @@ namespace MisfitBot2.Components
                 cmd.ExecuteNonQuery();
             }
         }
-        public async Task<List<string>> GetAllInUse(BotChannel bChan, string topic)
+        public async Task<string> GetRNGFromTopic(BotChannel bChan, string topic)
+        {
+            List<string> candidates = await GetTenInUse(bChan, topic);
+            if (candidates.Count == 0) { return null; }
+            Random rng = new Random();
+            return candidates[rng.Next(candidates.Count)];
+        }
+        public async Task<List<string>> GetTenInUse(BotChannel bChan, string topic, int page = 0)
         {
             List<string> inuseLines = new List<string>();
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                //cmd.CommandText = $"SELECT * FROM {TableName(bChan.Key)} WHERE inuse IS @inuse AND topic IS @topic";
-                cmd.CommandText = $"SELECT * FROM {TableName(bChan.Key)} WHERE inuse IS @inuse";
+                cmd.CommandText = $"SELECT * FROM {TableName(bChan.Key)} WHERE inuse IS @inuse AND topic IS @topic LIMIT {page*10}, 10";
+                cmd.Parameters.AddWithValue("@topic", topic);
                 cmd.Parameters.AddWithValue("@inuse", true);
-                //cmd.Parameters.AddWithValue("@topic", topic);
                 using (SQLiteDataReader result = cmd.ExecuteReader())
                 {
                     while (result.Read())
@@ -93,6 +98,21 @@ namespace MisfitBot2.Components
                 return result.GetString(3);
             }
 
+        }
+        /// <summary>
+        /// This will return TRUE if table already has been initiated
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <returns></returns>
+        public bool TableInit(BotChannel bChan)
+        {
+            if (TableExists(TableName(bChan.Key)))
+            { return true; }
+            else
+            {
+                TableCreate(bChan.Key);
+                return false;
+            }
         }
         private void TableCreate(string chanKey)
         {

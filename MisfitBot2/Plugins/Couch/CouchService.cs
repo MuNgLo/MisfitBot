@@ -25,7 +25,7 @@ namespace MisfitBot2.Services
         // CONSTRUCTOR
         public CouchService()
         {
-            dbStrings = new DatabaseStrings(PLUGINNAME);
+            
             Core.Twitch._client.OnChatCommandReceived += TwitchOnChatCommandReceived;
 			Core.Twitch._client.OnUserJoined += TwitchInUserJoined;								   
             Core.OnBotChannelGoesLive += OnChannelGoesLive;
@@ -60,21 +60,21 @@ namespace MisfitBot2.Services
             _incident.Add(" leaves the couch mumbling something about bathroom just as a distict smell envelops the whole couch.");
             // Database checks
             if (!StatsTableExists()) { StatsTableCreate(PLUGINSTATS); }
+            // DB Strings setup
+            dbStrings = new DatabaseStrings(PLUGINNAME);
         }
 
 
-        private string GetRNGSuccess()
-        {
-            return _success[rng.Next(_success.Count)];
-        }
-        private string GetRNGFail()
+
+        /*private string GetRNGFail()
         {
             return _fail[rng.Next(_fail.Count)];
         }
         private string GetRNGIncident()
         {
             return _incident[rng.Next(_incident.Count)];
-        }
+        }*/
+
         private string GetRNGSitter(BotChannel bChan, CouchSettings settings)
         {
             int i = rng.Next(settings._couches[bChan.Key].TwitchUsernames.Count);
@@ -138,8 +138,13 @@ namespace MisfitBot2.Services
         #region Twitch methods
         private async void TwitchOnChatCommandReceived(object sender, TwitchLib.Client.Events.OnChatCommandReceivedArgs e)
         {
+
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(e.Command.ChatMessage.Channel);
             if (bChan == null) { return; }
+            if (!dbStrings.TableInit(bChan))
+            {
+                DBStringsFirstSetup(bChan);
+            }
             UserEntry user = await Core.UserMan.GetUserByTwitchID(e.Command.ChatMessage.UserId);
             if (user == null) { return; }
             CouchSettings settings = await Settings(bChan);
@@ -238,27 +243,30 @@ namespace MisfitBot2.Services
 
                     if (settings._couches[bChan.Key].TwitchUsernames.Count < settings.couchsize)
                     {
-                        if (RollIncident())
+                        if (settings._couches[bChan.Key].TwitchUsernames.Count != 0)
                         {
-                            string mark = GetRNGSitter(bChan, settings);
-                            if (mark != null)
+                            if (RollIncident())
                             {
-                                UserEntry failuser = await Core.UserMan.GetUserByTwitchUserName(e.Command.ChatMessage.Username);
-                                if (failuser != null)
+                                string mark = GetRNGSitter(bChan, settings);
+                                if (mark != null)
                                 {
-                                    if (!await UserStatsExists(bChan.Key, failuser.Key))
+                                    UserEntry failuser = await Core.UserMan.GetUserByTwitchUserName(e.Command.ChatMessage.Username);
+                                    if (failuser != null)
                                     {
-                                        UserStatsCreate(bChan.Key, failuser.Key);
+                                        if (!await UserStatsExists(bChan.Key, failuser.Key))
+                                        {
+                                            UserStatsCreate(bChan.Key, failuser.Key);
+                                        }
+                                        CouchUserStats failUserStats = await UserStatsRead(bChan.Key, failuser.Key);
+                                        failUserStats.CountSeated++;
+                                        UserStatsSave(failUserStats);
                                     }
-                                    CouchUserStats failUserStats = await UserStatsRead(bChan.Key, failuser.Key);
-                                    failUserStats.CountSeated++;
-                                    UserStatsSave(failUserStats);
+                                    Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
+                                        $"{mark} {await dbStrings.GetRNGFromTopic(bChan, "INCIDENT")}"
+                                        );
+                                    settings._couches[bChan.Key].TwitchUsernames.RemoveAll(p => p == mark);
+                                    SaveBaseSettings(PLUGINNAME, bChan, settings);
                                 }
-                                Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
-                                    $"{mark} {GetRNGIncident()}"
-                                    );
-                                settings._couches[bChan.Key].TwitchUsernames.RemoveAll(p => p == mark);
-                                SaveBaseSettings(PLUGINNAME, bChan, settings);
                             }
                         }
                         if (!await UserStatsExists(bChan.Key, user.Key))
@@ -270,7 +278,7 @@ namespace MisfitBot2.Services
                         UserStatsSave(userStats);
                         settings._couches[bChan.Key].TwitchUsernames.Add(e.Command.ChatMessage.DisplayName);
                         Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
-                            $"{e.Command.ChatMessage.DisplayName} {GetRNGSuccess()}"
+                            $"{e.Command.ChatMessage.DisplayName} {await dbStrings.GetRNGFromTopic(bChan, "SUCCESS")}"
                             );
                         SaveBaseSettings(PLUGINNAME, bChan, settings);
 
@@ -278,7 +286,7 @@ namespace MisfitBot2.Services
                     else
                     {
                         Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
-                            $"{e.Command.ChatMessage.DisplayName} {GetRNGFail()}"
+                            $"{e.Command.ChatMessage.DisplayName} {await dbStrings.GetRNGFromTopic(bChan, "FAIL")}"
                             );
                         settings.failCount++;
                         SaveBaseSettings(PLUGINNAME, bChan, settings);
@@ -292,7 +300,25 @@ namespace MisfitBot2.Services
                     break;
             }
         }
-		private async void TwitchInUserJoined(object sender, TwitchLib.Client.Events.OnUserJoinedArgs e)
+
+        private void DBStringsFirstSetup(BotChannel bChan)
+        {
+            foreach (string line in _success)
+            {
+                dbStrings.SaveNewLine(bChan, "SUCCESS", line);
+            }
+            foreach (string line in _fail)
+            {
+                dbStrings.SaveNewLine(bChan, "FAIL", line);
+            }
+            foreach (string line in _incident)
+            {
+                dbStrings.SaveNewLine(bChan, "INCIDENT", line);
+            }
+            dbStrings.SaveNewLine(bChan, "GREET", "Welcome back [USER]. You truly are a proper couch potato. BloodTrail");
+        }
+
+        private async void TwitchInUserJoined(object sender, TwitchLib.Client.Events.OnUserJoinedArgs e)
         {
             UserEntry user = await Core.UserMan.GetUserByTwitchUserName(e.Username);
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(e.Channel);
@@ -323,6 +349,10 @@ namespace MisfitBot2.Services
                 ));
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
             if (bChan == null) { return; }
+            if (!dbStrings.TableInit(bChan))
+            {
+                DBStringsFirstSetup(bChan);
+            }
             CouchSettings settings = await Settings(bChan);
             switch (arguments[0].ToLower())
             {
@@ -354,41 +384,41 @@ namespace MisfitBot2.Services
                     await SayOnDiscordAdmin(bChan, dbStrings.GetRandomLine(bChan, "INCIDENT"));
                     break;
                 case "list":
-                    await ListLinesFromDB(bChan);
+                    await ListLinesFromDB(bChan, 0);
                     break;
             }
         }
         #endregion
 
         #region Database stuff
-        #region DB Strings stuff
-        private async Task ListLinesFromDB(BotChannel bChan)
+        #region DB Strings stuff 
+        private async Task ListLinesFromDB(BotChannel bChan, int page)
         {
-            EmbedBuilder builder = new EmbedBuilder();
-            builder.WithTitle("Currently stored lines...");
-            builder.WithDescription("These are lines stored in the database that the Couch plugin will use based on topic if they are marked as inuse.");
-            builder.WithColor(Color.Purple);
-
             // LINES IN USE
-            EmbedFieldBuilder field = new EmbedFieldBuilder();
-            List<string> inuseLines = await dbStrings.GetAllInUse(bChan, "SUCCESS");
+            string inuseText = "These are lines stored in the database that the Couch plugin will use based on topic if they are marked as inuse." + Environment.NewLine + Environment.NewLine;
+            List<string> inuseLines = await dbStrings.GetTenInUse(bChan, "SUCCESS", page);
             if (inuseLines.Count == 0)
             {
-                field.Name = "There is no lines inuse. This is probably a bad thing.";
+                inuseText += "There is no lines inuse. This is probably a bad thing.";
             }
             else
             {
-                string lines = string.Empty;
                 foreach(string line in inuseLines)
                 {
-                    lines += line+Environment.NewLine;
+                    inuseText += line +Environment.NewLine;
                 }
-
-                field.Name = lines;
             }
-            field.Value = 1000;
-            builder.AddField("In Use", field.Build());
+            EmbedBuilder builder = new EmbedBuilder();
+            builder.WithTitle("Currently stored lines...");
+            builder.WithDescription(inuseText);
+            builder.WithColor(Color.Purple);
 
+
+            EmbedFieldBuilder field = new EmbedFieldBuilder();
+            field.Name = $"qweqweqweqweqweq";
+            field.Value = "kjahsdkjhaskdjh";
+            builder.AddField($"In use Success strings. Page {page}", field.Build());
+            
             // LINES NOT IN USE
             //EmbedFieldBuilder field2 = new EmbedFieldBuilder();
             //field2.Name = help;
