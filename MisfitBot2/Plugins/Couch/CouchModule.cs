@@ -16,7 +16,6 @@ namespace MisfitBot2.Modules
         {
             _service = service;
         }
-
         [Command("couch", RunMode = RunMode.Async)]
         [Summary("Base command for the couch plugin.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
@@ -26,6 +25,14 @@ namespace MisfitBot2.Modules
             string[] args = text.Split(" ");
             List<string> arguments = new List<string>(args);
             await _service.DiscordCommand(Context, arguments);
+        }
+        [Command("couch", RunMode = RunMode.Async)]
+        [Summary("Base command for the couch plugin.")]
+        [RequireUserPermission(GuildPermission.ManageMessages)]
+        public async Task CommandMethod()
+        {
+            if (Context.User.IsBot) { return; }
+            await _service.DiscordCommand(Context);
         }
 
     }

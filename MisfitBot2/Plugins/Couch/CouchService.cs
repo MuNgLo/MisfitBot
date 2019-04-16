@@ -64,28 +64,6 @@ namespace MisfitBot2.Services
             dbStrings = new DatabaseStrings(PLUGINNAME);
         }
 
-
-
-        /*private string GetRNGFail()
-        {
-            return _fail[rng.Next(_fail.Count)];
-        }
-        private string GetRNGIncident()
-        {
-            return _incident[rng.Next(_incident.Count)];
-        }*/
-
-        private string GetRNGSitter(BotChannel bChan, CouchSettings settings)
-        {
-            int i = rng.Next(settings._couches[bChan.Key].TwitchUsernames.Count);
-            if (i < settings._couches[bChan.Key].TwitchUsernames.Count && i >= 0)
-            {
-                return settings._couches[bChan.Key].TwitchUsernames[i];
-            }
-            return null;
-        }
-
-
         private async void OnChannelGoesOffline(BotChannel bChan)
         {
             CouchSettings settings = await Settings(bChan);
@@ -113,26 +91,6 @@ namespace MisfitBot2.Services
                 await Core.LOG(new LogMessage(LogSeverity.Info, PLUGINNAME, $"Channel {bChan.TwitchChannelName} went live. Using existing counch."));
                 await SayOnDiscordAdmin(bChan, $"Channel {bChan.TwitchChannelName} went live. Using existing counch.");
             }
-        }
-
-        private bool RollIncident(int chance = 0)
-        {
-            return rng.Next(0, 100) + chance >= 95;
-        }
-
-        private async void ResetCouch(BotChannel bChan, CouchSettings settings)
-        { 
-            await Core.LOG(new LogMessage(LogSeverity.Info, PLUGINNAME, "Live event captured. Opening couch!"));
-            if (!settings._couches.ContainsKey(bChan.Key))
-            {
-                settings._couches[bChan.Key] = new CouchEntry();
-            }
-            settings._couches[bChan.Key].couchOpen = true;
-            settings._couches[bChan.Key].lastActivationTime = Core.CurrentTime;
-            settings._couches[bChan.Key].TwitchUsernames = new List<string>();
-            settings.failCount = 0;
-            SaveBaseSettings(PLUGINNAME, bChan, settings);
-            Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Couch is now open. Take a {Core._commandCharacter}seat.");
         }
 
         #region Twitch methods
@@ -178,7 +136,7 @@ namespace MisfitBot2.Services
                                 settings._active = false;
                                 SaveBaseSettings(PLUGINNAME, bChan, settings);
                                 Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
-                                 $"Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}."
+                                 $"Couch is inactive. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}."
                                  );
                                 break;
                             case "size":
@@ -300,24 +258,6 @@ namespace MisfitBot2.Services
                     break;
             }
         }
-
-        private void DBStringsFirstSetup(BotChannel bChan)
-        {
-            foreach (string line in _success)
-            {
-                dbStrings.SaveNewLine(bChan, "SUCCESS", line);
-            }
-            foreach (string line in _fail)
-            {
-                dbStrings.SaveNewLine(bChan, "FAIL", line);
-            }
-            foreach (string line in _incident)
-            {
-                dbStrings.SaveNewLine(bChan, "INCIDENT", line);
-            }
-            dbStrings.SaveNewLine(bChan, "GREET", "Welcome back [USER]. You truly are a proper couch potato. BloodTrail");
-        }
-
         private async void TwitchInUserJoined(object sender, TwitchLib.Client.Events.OnUserJoinedArgs e)
         {
             UserEntry user = await Core.UserMan.GetUserByTwitchUserName(e.Username);
@@ -327,20 +267,42 @@ namespace MisfitBot2.Services
             {
                 settings._couches[bChan.Key] = new CouchEntry();
             }
-            if (user != null && bChan != null)
+            if (user != null && bChan != null && settings._active)
             {
                 CouchUserStats uStats = await GetUserCouchStats(bChan.Key, user.Key);
                 if(uStats.CountSeated >= settings.potatoGreeting)
                 {
-                    Core.Twitch._client.SendMessage(e.Channel,
-                            $"Welcome back {user._twitchDisplayname}. You truly are a proper couch potato. BloodTrail"
-                            );
+                    Core.Twitch._client.SendMessage(e.Channel, dbStrings.GetRandomLine(bChan, "GREET").Replace("[USER]", user._twitchDisplayname));
                 }
             }
         }
         #endregion
 
         #region Discord command methods
+        public async Task DiscordCommand(ICommandContext context)
+        {
+            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
+            if (bChan == null) { return; }
+            if (!dbStrings.TableInit(bChan))
+            {
+                DBStringsFirstSetup(bChan);
+            }
+            CouchSettings settings = await Settings(bChan);
+            await SayOnDiscordAdmin(bChan, $"Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}.");
+            // Ugly bit coming here
+            string helptext = $"```fix{Environment.NewLine}" +
+                $"Admin/Broadcaster commands{Environment.NewLine}{Environment.NewLine}!couch < Arguments >{Environment.NewLine}{Environment.NewLine}Arguments....{Environment.NewLine}< none > ->responds current settings{Environment.NewLine}" +
+            $"open -> Manually resets and open the couch.{Environment.NewLine}on/off -> Turns module on or off for the channel.{Environment.NewLine}size # -> Sets the number of seats between 1 and 40.{Environment.NewLine}" +
+            $"greet # -> Sets the number of seated needed in stats for a greeting when a user joins the twitch channel.{Environment.NewLine}{Environment.NewLine}Discord only arguments(make sure adminchannel is set in adminplugin){Environment.NewLine}" +
+            $"addsuccess < text > Text being the line returned. Use [USER] in text where username should be.{Environment.NewLine}addfail < text >{Environment.NewLine}addgreet < text >{Environment.NewLine}addincident < text >{Environment.NewLine}" +
+            $"list / list # -> Shows stored lines by page.{Environment.NewLine}use # -> Toggles the inuse flag for the line with given ID.{Environment.NewLine}delete # -> Deletes the line with the ID if inuse flag is false. As in not in use.{Environment.NewLine}" +
+            $"{Environment.NewLine}{Environment.NewLine}User commands{Environment.NewLine}" +
+            $"!seat -> When couch open it responds with success of fail message.{Environment.NewLine}" +
+            $"!seats -> User stats rundown." +
+            $"```";
+            await SayOnDiscordAdmin(bChan, helptext);
+            return;
+        }
         public async Task DiscordCommand(ICommandContext context, List<string> arguments)
         {
             await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info,
@@ -356,6 +318,47 @@ namespace MisfitBot2.Services
             CouchSettings settings = await Settings(bChan);
             switch (arguments[0].ToLower())
             {
+                case "on":
+                    settings._active = true;
+                    SaveBaseSettings(PLUGINNAME, bChan, settings);
+                    await SayOnDiscordAdmin(bChan,
+                    $"Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}."
+                    );
+                    break;
+                case "off":
+                    settings._active = false;
+                    SaveBaseSettings(PLUGINNAME, bChan, settings);
+                    await SayOnDiscordAdmin(bChan,
+                     $"Couch is inactive. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}."
+                     );
+                    break;
+                case "open":
+                    if (!settings._active) { return; }
+                    ResetCouch(bChan, settings);
+                    break;
+                case "size":
+                    if (arguments.Count == 2)
+                    {
+                        int seats = settings.couchsize;
+                        int.TryParse(arguments[1], out seats);
+                        if (seats > 0 && seats <= 40 && seats != settings.couchsize)
+                        {
+                            settings.couchsize = seats;
+                            await SayOnDiscordAdmin(bChan, $"Changed the Couch size to {settings.couchsize}.");
+                            SaveBaseSettings(PLUGINNAME, bChan, settings);
+                        }
+                    }
+                    break;
+                case "greet":
+                        int greet = settings.potatoGreeting;
+                        int.TryParse(arguments[1], out greet);
+                        if (greet > 0 && greet <= 999 && greet != settings.potatoGreeting)
+                        {
+                            settings.potatoGreeting = greet;
+                            await SayOnDiscordAdmin(bChan,$"Couch greeting limit is now {settings.potatoGreeting}.");
+                            SaveBaseSettings(PLUGINNAME, bChan, settings);
+                        }
+                    break;
                 case "addsuccess":
                     if (arguments.Count >= 2)
                     {
@@ -414,15 +417,63 @@ namespace MisfitBot2.Services
                     break;
             }
         }
-
-
         #endregion
-
+        #region Internal stuff
+        private async void ResetCouch(BotChannel bChan, CouchSettings settings)
+        { 
+            await Core.LOG(new LogMessage(LogSeverity.Info, PLUGINNAME, "Live event captured. Opening couch!"));
+            if (!settings._couches.ContainsKey(bChan.Key))
+            {
+                settings._couches[bChan.Key] = new CouchEntry();
+            }
+            settings._couches[bChan.Key].couchOpen = true;
+            settings._couches[bChan.Key].lastActivationTime = Core.CurrentTime;
+            settings._couches[bChan.Key].TwitchUsernames = new List<string>();
+            settings.failCount = 0;
+            SaveBaseSettings(PLUGINNAME, bChan, settings);
+            Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Couch is now open. Take a {Core._commandCharacter}seat.");
+            await SayOnDiscordAdmin(bChan, $"Couch is now open. Click https://twitch.tv/{bChan.TwitchChannelName} and take a {Core._commandCharacter}seat.");
+        }
+        private void DBStringsFirstSetup(BotChannel bChan)
+        {
+            foreach (string line in _success)
+            {
+                dbStrings.SaveNewLine(bChan, "SUCCESS", line);
+            }
+            foreach (string line in _fail)
+            {
+                dbStrings.SaveNewLine(bChan, "FAIL", line);
+            }
+            foreach (string line in _incident)
+            {
+                dbStrings.SaveNewLine(bChan, "INCIDENT", line);
+            }
+            dbStrings.SaveNewLine(bChan, "GREET", "Welcome back [USER]. You truly are a proper couch potato. BloodTrail");
+        }
+        private bool RollIncident(int chance = 0)
+        {
+            return rng.Next(0, 100) + chance >= 95;
+        }
+        private string GetRNGSitter(BotChannel bChan, CouchSettings settings)
+        {
+            int i = rng.Next(settings._couches[bChan.Key].TwitchUsernames.Count);
+            if (i < settings._couches[bChan.Key].TwitchUsernames.Count && i >= 0)
+            {
+                return settings._couches[bChan.Key].TwitchUsernames[i];
+            }
+            return null;
+        }
+        #endregion
         #region Database stuff
         #region DB Strings stuff
         private async Task DeleteEntry(BotChannel bChan, int id)
         {
             CouchDBString entry = await dbStrings.GetStringByID(bChan, id);
+            if (entry == null)
+            {
+                await SayOnDiscordAdmin(bChan, $"Could not match the given ID.");
+                return;
+            }
             if (entry._inuse)
             {
                 await SayOnDiscordAdmin(bChan, $"Only entries that is not in use can be deleted. Use \"{Core._commandCharacter}couch use <ID>\" to toggle the inuse flag on entries.");
@@ -450,7 +501,7 @@ namespace MisfitBot2.Services
         private async Task ListLinesFromDB(BotChannel bChan, int page)
         {
             // LINES IN USE
-            string inuseText = "Currently stored lines...```" +
+            string inuseText = $"Currently stored lines...```fix{Environment.NewLine}" +
                 $"These are lines stored in the database that the Couch plugin will use based on topic if they are marked as inuse.{Environment.NewLine}{Environment.NewLine}" +
                 $"<ID> <TOPIC> <INUSE> <TEXT>        Page {page + 1}{Environment.NewLine}";
             List<CouchDBString> lines = await dbStrings.GetRowsByTen(bChan, page);

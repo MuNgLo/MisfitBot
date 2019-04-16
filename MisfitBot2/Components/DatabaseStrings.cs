@@ -51,6 +51,10 @@ namespace MisfitBot2.Components
                     throw;
                 }
                 result.Read();
+                if (!result.HasRows)
+                {
+                    return null;
+                }
                 return new CouchDBString((int)result.GetInt64(0), result.GetBoolean(1), result.GetString(2), result.GetString(3));
             }
         }
@@ -142,8 +146,7 @@ namespace MisfitBot2.Components
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM {TableName(bChan.Key)} WHERE chanKey IS @chanKey AND inuse IS @inuse AND topic IS @topic";
-                cmd.Parameters.AddWithValue("@chanKey", bChan.Key);
+                cmd.CommandText = $"SELECT * FROM {TableName(bChan.Key)} WHERE inuse IS @inuse AND topic IS @topic";
                 cmd.Parameters.AddWithValue("@inuse", true);
                 cmd.Parameters.AddWithValue("@topic", topic);
                 SQLiteDataReader result;
@@ -157,10 +160,7 @@ namespace MisfitBot2.Components
                     throw;
                 }
                 result.Read();
-                /*settings._active = result.GetBoolean(1);
-                settings._defaultCooldown = result.GetInt32(2);
-                settings._defaultDiscordChannel = (ulong)result.GetInt64(3);
-                settings._defaultTwitchRoom = result.GetString(4);*/
+                if (!result.HasRows) { return "No string found in DB. Make sure to add lines and that they are inuse."; }
                 return result.GetString(3);
             }
 
