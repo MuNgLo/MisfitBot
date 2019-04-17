@@ -18,7 +18,6 @@ namespace MisfitBot2.Services
     public class TwitchService
     {
         private readonly string PLUGINNAME = "TwitchService";
-        //private int _maxMissingConnection = 60, _missedConnections = 0;
         public string _channel = "munglo"; // TODO make this first launch parameter I guess
         public readonly ITwitchAPI _api;
         public readonly ITwitchClient _client;

@@ -7,6 +7,9 @@ using Discord.Commands;
 using Discord.WebSocket;
 using MisfitBot2.Plugins.Admin;
 using MisfitBot2.Services;
+using TwitchLib.Api.V5.Models.Channels;
+using TwitchLib.Api.V5.Models.Streams;
+
 namespace MisfitBot2.Modules
 {
     class AdminModule : ModuleBase<ICommandContext>
@@ -49,8 +52,8 @@ namespace MisfitBot2.Modules
                     await Core.Channels.RestartPubSub(bChan);
                     break;
                 case "setup":
-                    // https://twitchtokengenerator.com/quick/BvKsOpiJVv
-                    await Context.Channel.SendMessageAsync("To start your PubSub setup you need a token from this link https://twitchtokengenerator.com/quick/BvKsOpiJVv It is to generate a token specific for your Twitch channel. To later remove access through this token you remove it on Twitch under settings>Connections. It will be called \"Twitch Token Generator by swiftyspiffy\". Then run !pubsub set <TOKEN>");
+                    // https://twitchtokengenerator.com/quick/YfuRoOx9WW
+                    await Context.Channel.SendMessageAsync("To start your PubSub setup you need a token from this link https://twitchtokengenerator.com/quick/YfuRoOx9WW It is to generate a token specific for your Twitch channel. To later remove access through this token you remove it on Twitch under settings>Connections. It will be called \"Twitch Token Generator by swiftyspiffy\". Then run !pubsub set <TOKEN>");
                     break;
                 case "set":
                     if (arguments.Count < 2) { return; }
@@ -145,7 +148,30 @@ namespace MisfitBot2.Modules
             await Core.LOG(new LogMessage(LogSeverity.Info, "AdminModule", "Reconnecting"));
             Program.DiscordReconnect();
         }
+        [Command("game", RunMode = RunMode.Async)]
+        [Summary("Set the game for the stream on the linked twitchchannel.")]
+        [RequireUserPermission(GuildPermission.ManageMessages)]
+        public async Task GameCMD(string game)
+        {
+            if (Context.User.IsBot) { return; }
+            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);
+            if (bChan == null) { return; }
+            if (bChan.isLinked == false) { return; }
+            game = game.Trim();
 
+            StreamByUser stream = await Core.Twitch._api.V5.Streams.GetStreamByUserAsync(bChan.TwitchChannelID);
+            
+            Channel channel = await Core.Twitch._api.V5.Channels.UpdateChannelAsync(
+                bChan.TwitchChannelID,
+                stream.Stream.Channel.Status,
+                game,
+                stream.Stream.Delay.ToString());
+
+            stream = await Core.Twitch._api.V5.Streams.GetStreamByUserAsync(bChan.TwitchChannelID);
+
+            string msg = $"Game is now set to \"{stream.Stream.Game}\".";
+            await _service.SayOnDiscordAdmin(bChan, msg);
+        }
 
 
 

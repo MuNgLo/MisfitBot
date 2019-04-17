@@ -5,7 +5,9 @@ namespace MisfitBot2.Twitch
 {
     public class TwitchCredentials
     {
-        public string _oauth = "qf9r9tpnez8c508n8q7bszbebdx01s";
+        
+        public string _oauth = "syfu784cl6x248veumbpccpluo7ur2";
+        //public string _oauth = "qf9r9tpnez8c508n8q7bszbebdx01s";
         public string _clientid = "8ku2p031bud14h8lbvj5jevqc2gyi3";
         public string _username = "juanthebot";
 

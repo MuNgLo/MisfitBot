@@ -9,6 +9,7 @@ using MisfitBot2.Services;
 using MisfitBot2;
 using TwitchLib.Client.Events;
 using TwitchLib.Client.Interfaces;
+using TwitchLib.Api.V5.Models.Streams;
 
 namespace MisfitBot2.Modules
 {
@@ -48,10 +49,21 @@ namespace MisfitBot2.Modules
             await Discord.UserExtensions.SendMessageAsync(u, msg );
         }
 
-        
+        [Command("uptime", RunMode = RunMode.Async)]
+        [Summary("How long the current stream has been live.")]
+        public async Task GameCMD()
+        {
+            if (Context.User.IsBot) { return; }
+            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);
+            if (bChan == null) { return; }
+            if (bChan.isLinked == false) { return; }
+            StreamByUser stream = await Core.Twitch._api.V5.Streams.GetStreamByUserAsync(bChan.TwitchChannelID);
+            string msg = $"{bChan.TwitchChannelName} has been streaming for {(DateTime.Now - stream.Stream.CreatedAt).ToString()} and they've been playing {stream.Stream.Game}.";
+            await Context.Channel.SendMessageAsync(msg);
+        }
 
 
-        
+
 
 
     }
