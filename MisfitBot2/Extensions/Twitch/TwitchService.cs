@@ -12,9 +12,28 @@ using Discord;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 using MisfitBot2.Twitch;
+using Microsoft.Extensions.Logging;
 
 namespace MisfitBot2.Services
 {
+    public class KSLogger : ILoggerFactory
+    {
+        public void AddProvider(ILoggerProvider provider)
+        {
+            //throw new NotImplementedException();
+        }
+
+        public ILogger CreateLogger(string categoryName)
+        {
+            return new JuansLog();
+        }
+
+        public void Dispose()
+        {
+            //throw new NotImplementedException();
+        }
+    }
+
     public class TwitchService
     {
         private readonly string PLUGINNAME = "TwitchService";
@@ -28,7 +47,8 @@ namespace MisfitBot2.Services
         {
             _credentials = new TwitchCredentials();
             _twitchUsers = new TwitchUsers();
-            _api = new TwitchAPI();
+            var logger = new KSLogger();
+            _api = new TwitchAPI(logger);
             _api.Settings.SkipDynamicScopeValidation = true;
             _api.Settings.ClientId = _credentials._clientid;
             _api.Settings.AccessToken = "";
