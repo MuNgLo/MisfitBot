@@ -146,7 +146,7 @@ namespace MisfitBot2.Components
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM {TableName(bChan.Key)} WHERE inuse IS @inuse AND topic IS @topic";
+                cmd.CommandText = $"SELECT * FROM {TableName(bChan.Key)} WHERE inuse IS @inuse AND topic IS @topic ORDER BY RANDOM() LIMIT 1";
                 cmd.Parameters.AddWithValue("@inuse", true);
                 cmd.Parameters.AddWithValue("@topic", topic);
                 SQLiteDataReader result;
@@ -180,23 +180,20 @@ namespace MisfitBot2.Components
                 return false;
             }
         }
-        private void TableCreate(string chanKey)
+        public bool TableDrop(BotChannel bChan)
         {
-            using (SQLiteCommand cmd = new SQLiteCommand())
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.Connection = Core.Data;
-
-                //ID int primary key IDENTITY(1,1) NOT NULL
-
-                cmd.CommandText = $"CREATE TABLE {TableName(chanKey)} (" +
-                    $"ROWID INTEGER PRIMARY KEY AUTOINCREMENT," +
-                    $"inuse BOOLEAN, " +
-                    $"topic VACHAR(30), " +
-                    $"text VACHAR(255)" +
-                    $")";
-                cmd.ExecuteNonQuery();
+            if (TableExists(TableName(bChan.Key)))
+                {
+                    using (SQLiteCommand cmd = new SQLiteCommand())
+                    {
+                        cmd.CommandType = CommandType.Text;
+                        cmd.Connection = Core.Data;
+                        cmd.CommandText = $"DROP TABLE {TableName(bChan.Key)}";
+                        cmd.ExecuteNonQuery();
+                    }
+                return TableExists(TableName(bChan.Key));
             }
+            else { return false; }
         }
         private bool TableExists(String tableName)
         {
@@ -214,6 +211,24 @@ namespace MisfitBot2.Components
                 {
                     return true;
                 }
+            }
+        }
+        private void TableCreate(string chanKey)
+        {
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+
+                //ID int primary key IDENTITY(1,1) NOT NULL
+
+                cmd.CommandText = $"CREATE TABLE {TableName(chanKey)} (" +
+                    $"ROWID INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    $"inuse BOOLEAN, " +
+                    $"topic VACHAR(30), " +
+                    $"text VACHAR(255)" +
+                    $")";
+                cmd.ExecuteNonQuery();
             }
         }
         #endregion

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -26,12 +27,25 @@ namespace MisfitBot2.Modules
         {
             await Core.UserMan.LinkTokenRequest(Context.User.Id, Context.Channel);
         }
+
         [Command("pubsub", RunMode = RunMode.Async)]
         [Summary("clear > Removes current token." +
             "restart > Kills and relaunches the Twitch PubSub for the channel." +
             "setup > Instructions on how to get and use token." +
             "set <TOKEN> > Sets the token. Also deletes the message to hide token." +
             "start > Tries to launch the PubSub listener.")]
+        [RequireUserPermission(GuildPermission.ManageMessages)]
+        public async Task PubSubCMD()
+        {
+            if (Context.User.IsBot) { return; }
+            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);
+            if (bChan == null) { return; }
+            await Context.Channel.SendMessageAsync("restart > Kills and relaunches the Twitch PubSub for the channel." +
+            "setup > Instructions on how to get and use token." +
+            "set <TOKEN> > Sets the token. Also deletes the message to hide token." +
+            "start > Tries to launch the PubSub listener.");
+        }
+        [Command("pubsub", RunMode = RunMode.Async)]
         [RequireUserPermission(GuildPermission.ManageMessages)]
         public async Task PubSubCMD([Remainder]string text)
         {
@@ -53,7 +67,9 @@ namespace MisfitBot2.Modules
                     break;
                 case "setup":
                     // https://twitchtokengenerator.com/quick/YfuRoOx9WW
-                    await Context.Channel.SendMessageAsync("To start your PubSub setup you need a token from this link https://twitchtokengenerator.com/quick/YfuRoOx9WW It is to generate a token specific for your Twitch channel. To later remove access through this token you remove it on Twitch under settings>Connections. It will be called \"Twitch Token Generator by swiftyspiffy\". Then run !pubsub set <TOKEN>");
+                    await Context.Channel.SendMessageAsync($"To start your PubSub setup you need a token from this link https://twitchtokengenerator.com/quick/YfuRoOx9WW " +
+                        $"It is to generate a token specific for your Twitch channel. To later remove access through this token you remove it on Twitch under " +
+                        $"settings>Connections. It will be called \"Twitch Token Generator by swiftyspiffy\". Then run {Core._commandCharacter}pubsub set <TOKEN>");
                     break;
                 case "set":
                     if (arguments.Count < 2) { return; }
@@ -68,6 +84,7 @@ namespace MisfitBot2.Modules
                     break;
             }
         }
+
         [Command("adminchan", RunMode = RunMode.Async)]
         [Summary("Declares the channel to be the one issue admin commands. This should not be a public channel. Use adminchan clear to clear the saved channel.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
@@ -151,13 +168,16 @@ namespace MisfitBot2.Modules
         [Command("game", RunMode = RunMode.Async)]
         [Summary("Set the game for the stream on the linked twitchchannel.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task GameCMD(string game)
+        public async Task GameCMD([Remainder]string text)
         {
             if (Context.User.IsBot) { return; }
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);
             if (bChan == null) { return; }
+            if (bChan.pubsubOauth == string.Empty) {
+                await Context.Channel.SendMessageAsync($"To use this command you need to setup a pubsub token. See command {Core._commandCharacter}pubsub.");
+                return; }
             if (bChan.isLinked == false) { return; }
-            game = game.Trim();
+            string game = text.Trim();
 
             StreamByUser stream = await Core.Twitch._api.V5.Streams.GetStreamByUserAsync(bChan.TwitchChannelID);
             
@@ -165,14 +185,36 @@ namespace MisfitBot2.Modules
                 bChan.TwitchChannelID,
                 stream.Stream.Channel.Status,
                 game,
-                stream.Stream.Delay.ToString());
-
-            stream = await Core.Twitch._api.V5.Streams.GetStreamByUserAsync(bChan.TwitchChannelID);
-
-            string msg = $"Game is now set to \"{stream.Stream.Game}\".";
+                stream.Stream.Delay.ToString(), 
+                true, 
+                Crypto.Cipher.Decrypt(bChan.pubsubOauth));
+            string msg = $"Game is now set to \"{channel.Game}\".";
             await _service.SayOnDiscordAdmin(bChan, msg);
         }
-
+        [Command("title", RunMode = RunMode.Async)]
+        [Summary("Set the game for the stream on the linked twitchchannel.")]
+        [RequireUserPermission(GuildPermission.ManageMessages)]
+        public async Task TitleCMD([Remainder]string text)
+        {
+            if (Context.User.IsBot) { return; }
+            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);
+            if (bChan == null) { return; }
+            if (bChan.pubsubOauth == string.Empty) {
+                await Context.Channel.SendMessageAsync($"To use this command you need to setup a pubsub token. See command {Core._commandCharacter}pubsub.");
+                return; }
+            if (bChan.isLinked == false) { return; }
+            string title = text.Trim();
+            StreamByUser stream = await Core.Twitch._api.V5.Streams.GetStreamByUserAsync(bChan.TwitchChannelID);
+            Channel channel = await Core.Twitch._api.V5.Channels.UpdateChannelAsync(
+                bChan.TwitchChannelID,
+                title,
+                stream.Stream.Game,
+                stream.Stream.Delay.ToString(),
+                true,
+                Crypto.Cipher.Decrypt(bChan.pubsubOauth));
+            string msg = $"Title is now set to \"{channel.Status}\".";
+            await _service.SayOnDiscordAdmin(bChan, msg);
+        }
 
 
 

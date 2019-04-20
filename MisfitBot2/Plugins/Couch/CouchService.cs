@@ -33,31 +33,31 @@ namespace MisfitBot2.Services
             ///Core.OnUserEntryMerge += OnUserEntryMerge; FIX THIS NEXT
             Core.Channels.OnBotChannelMerge += OnBotChannelEntryMerge;
             // Successes
-            _success.Add(" takes a seat on the couch.");
-            _success.Add(" backflips onto the couch.");
-            _success.Add(" manages to escape the restrains and takes a seat on the couch.");
-            _success.Add(" suddenly materializes on the couch with a hint of a smirk.");
-            _success.Add(" claws their way up from the void between the cushions.");
-            _success.Add(" does an impressive herolanding then proceeds to stumble to the couch with intence knee pain.");
-            _success.Add(" accepts their fate as a decoration on the couch.");
-            _success.Add(" stridently claims their seat on the couch and act very smug about it.");
+            _success.Add("[USER] takes a seat on the couch.");
+            _success.Add("[USER] backflips onto the couch.");
+            _success.Add("[USER] manages to escape the restrains and takes a seat on the couch.");
+            _success.Add("[USER] suddenly materializes on the couch with a hint of a smirk.");
+            _success.Add("[USER] claws their way up from the void between the cushions.");
+            _success.Add("[USER] does an impressive herolanding then proceeds to stumble to the couch with intence knee pain.");
+            _success.Add("[USER] accepts their fate as a decoration on the couch.");
+            _success.Add("[USER] stridently claims their seat on the couch and act very smug about it.");
 
             // Fails
-            _fail.Add(" is left standing.");
-            _fail.Add(" rolls into fetal position as they don't fit on the couch.");
-            _fail.Add(" creates a tsunami with their tears of despair.");
-            _fail.Add(" hair catches fire from rage and others reach for the marshmallows.");
-            _fail.Add(" is carried away by a flock of chairs to the land of standing space.");
-            _fail.Add(" lacks the basic understanding of how to couch so they end up on the table.");
-            _fail.Add(" storms in with a cavelry, but misses the couch.");
-            _fail.Add(" eagerly runs towards the couch but trips and slides under it only to come out on the other side covered in dustbunnies.");
+            _fail.Add("[USER] is left standing.");
+            _fail.Add("[USER] rolls into fetal position as they don't fit on the couch.");
+            _fail.Add("[USER] creates a tsunami with their tears of despair.");
+            _fail.Add("[USER] hair catches fire from rage and others reach for the marshmallows.");
+            _fail.Add("[USER] is carried away by a flock of chairs to the land of standing space.");
+            _fail.Add("[USER] lacks the basic understanding of how to couch so they end up on the table.");
+            _fail.Add("[USER] storms in with a cavelry, but misses the couch.");
+            _fail.Add("[USER] eagerly runs towards the couch but trips and slides under it only to come out on the other side covered in dustbunnies.");
 
             // Incidents
-            _incident.Add(" got cought suckling a cushion in the couch and had to leave their spot.");
-            _incident.Add(" by pure chance ends up quantum entangling with the couch and disappears back into the void.");
-            _incident.Add(" gets bumped out of the couch as a new victim takes their seat.");
-            _incident.Add(" becomes the victim of EjectorZeat 3000™. Who is playing with the buttons?");
-            _incident.Add(" leaves the couch mumbling something about bathroom just as a distict smell envelops the whole couch.");
+            _incident.Add("[USER] got cought suckling a cushion in the couch and had to leave their spot.");
+            _incident.Add("[USER] by pure chance ends up quantum entangling with the couch and disappears back into the void.");
+            _incident.Add("[USER] gets bumped out of the couch as a new victim takes their seat.");
+            _incident.Add("[USER] becomes the victim of EjectorZeat 3000™. Who is playing with the buttons?");
+            _incident.Add("[USER] leaves the couch mumbling something about bathroom just as a distict smell envelops the whole couch.");
             // Database checks
             if (!StatsTableExists()) { StatsTableCreate(PLUGINSTATS); }
             // DB Strings setup
@@ -220,7 +220,7 @@ namespace MisfitBot2.Services
                                         UserStatsSave(failUserStats);
                                     }
                                     Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
-                                        $"{mark} {await dbStrings.GetRNGFromTopic(bChan, "INCIDENT")}"
+                                        $"{dbStrings.GetRandomLine(bChan, "INCIDENT").Replace("[USER]", mark)}"
                                         );
                                     settings._couches[bChan.Key].TwitchUsernames.RemoveAll(p => p == mark);
                                     SaveBaseSettings(PLUGINNAME, bChan, settings);
@@ -236,7 +236,7 @@ namespace MisfitBot2.Services
                         UserStatsSave(userStats);
                         settings._couches[bChan.Key].TwitchUsernames.Add(e.Command.ChatMessage.DisplayName);
                         Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
-                            $"{e.Command.ChatMessage.DisplayName} {await dbStrings.GetRNGFromTopic(bChan, "SUCCESS")}"
+                            $"{ dbStrings.GetRandomLine(bChan, "SUCCESS").Replace("[USER]", user._twitchDisplayname)}"
                             );
                         SaveBaseSettings(PLUGINNAME, bChan, settings);
 
@@ -244,7 +244,7 @@ namespace MisfitBot2.Services
                     else
                     {
                         Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
-                            $"{e.Command.ChatMessage.DisplayName} {await dbStrings.GetRNGFromTopic(bChan, "FAIL")}"
+                            dbStrings.GetRandomLine(bChan, "FAIL").Replace("[USER]", user._twitchDisplayname)
                             );
                         settings.failCount++;
                         SaveBaseSettings(PLUGINNAME, bChan, settings);
@@ -414,6 +414,17 @@ namespace MisfitBot2.Services
                     int.TryParse(arguments[1], out id);
                     if (id <= 0) { return; }
                     await DeleteEntry(bChan, id);
+                    break;
+                case "restore":
+                    if (dbStrings.TableDrop(bChan))
+                    {
+                        await SayOnDiscordAdmin(bChan, "Removed all current line data from the database.");
+                    }
+                    else
+                    {
+                        await SayOnDiscordAdmin(bChan, "Couldn't remove anything from the database.");
+                    }
+
                     break;
             }
         }

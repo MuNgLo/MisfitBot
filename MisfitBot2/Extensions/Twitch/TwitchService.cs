@@ -25,7 +25,8 @@ namespace MisfitBot2.Services
 
         public ILogger CreateLogger(string categoryName)
         {
-            return new JuansLog();
+            //return new JuansLog();
+            return Core.LOGGER;
         }
 
         public void Dispose()
@@ -48,7 +49,8 @@ namespace MisfitBot2.Services
             _credentials = new TwitchCredentials();
             _twitchUsers = new TwitchUsers();
             var logger = new KSLogger();
-            _api = new TwitchAPI(logger);
+            _api = new TwitchAPI();
+            //_api = new TwitchAPI(logger);
             _api.Settings.SkipDynamicScopeValidation = true;
             _api.Settings.ClientId = _credentials._clientid;
             _api.Settings.AccessToken = "";

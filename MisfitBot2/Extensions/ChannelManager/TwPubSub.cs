@@ -19,13 +19,13 @@ namespace MisfitBot2.Extensions.ChannelManager
         private readonly string _oauth;
         private readonly string _twitchID;
         private readonly string _twitchChannelName;
-        private bool _verbose = true;
+        private bool _verbose = false;
         public TwPubSub(string OAuth, string twitchID, string twitchChannelName, bool silent)
         {
             _oauth = OAuth;
             _twitchID = twitchID;
             _twitchChannelName = twitchChannelName;
-            _verbose = !silent;
+            //_verbose = !silent;
             Client = new TwitchPubSub();
             #region untested
             Client.OnBan += Client_OnBan;

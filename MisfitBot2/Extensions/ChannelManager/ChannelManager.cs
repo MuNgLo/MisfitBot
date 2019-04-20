@@ -361,7 +361,7 @@ namespace MisfitBot2.Extensions.ChannelManager
                     if (bChan.discordAdminChannel != 0)
                     {
                         await (Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
-                            "A pubsub client for that channel already exists. Use \"!pubsub restart\" to restart it with updated token."
+                            $"A pubsub client for that channel already exists. Use \"{Core._commandCharacter}pubsub restart\" to restart it with updated token."
                             );
                     }
                 }
