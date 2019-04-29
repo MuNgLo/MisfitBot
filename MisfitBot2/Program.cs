@@ -84,18 +84,19 @@ namespace MisfitBot2
             _map.AddSingleton(new TwitchService()); // Make sure this loads first
             _map.AddSingleton(new UserManagerService());
             _map.AddSingleton(new ChannelManager());
-            _map.AddSingleton(new MyPickService());
-            _map.AddSingleton(new TreasureService());
             _map.AddSingleton(new AdminService());
+            _map.AddSingleton(new TwitchCommandsService());
+            _map.AddSingleton(new TreasureService());
+            _map.AddSingleton(new MyPickService());
             _map.AddSingleton(new BettingService());
             _map.AddSingleton(new DeathCounterService());
             _map.AddSingleton(new VotingService());
             _map.AddSingleton(new RaffleService());
-            _map.AddSingleton(new TwitchCommandsService());
             _map.AddSingleton(new PoorLifeChoicesService());
             _map.AddSingleton(new CouchService());
             _map.AddSingleton(new HelpService());
             _map.AddSingleton(new MatchMakingService());
+
             //_map.AddSingleton(new GreeterService()); 
             // When all your required services are in the collection, build the container.
             // Tip: There's an overload taking in a 'validateScopes' bool to make sure
@@ -106,15 +107,15 @@ namespace MisfitBot2
             //await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
             // Or add Modules manually if you prefer to be a little more explicit:
             //await _commands.AddModuleAsync<SomeModule>();
-            await _commands.AddModuleAsync<TreasureModule>(_services);
             await _commands.AddModuleAsync<AdminModule>(_services);
+            await _commands.AddModuleAsync<TreasureModule>(_services);
+            await _commands.AddModuleAsync<MyPickModule>(_services);
+            await _commands.AddModuleAsync<BettingModule>(_services);
             await _commands.AddModuleAsync<SimpleCommands>(_services);
             await _commands.AddModuleAsync<DeathCounterModule>(_services);
-            await _commands.AddModuleAsync<BettingModule>(_services);
             await _commands.AddModuleAsync<VotingModule>(_services);
             await _commands.AddModuleAsync<RaffleModule>(_services);
             await _commands.AddModuleAsync<PoorLifeChoicesModule>(_services);
-            await _commands.AddModuleAsync<MyPickModule>(_services);
             await _commands.AddModuleAsync<CouchModule>(_services);
             await _commands.AddModuleAsync<HelpModule>(_services);
             await _commands.AddModuleAsync<MatchMakingModule>(_services);

@@ -59,6 +59,8 @@ namespace MisfitBot2.Services
                     }
                     break;
                 case "coin":
+                    BotChannel bChan = await Core.Channels.GetTwitchChannelByName(e.Command.ChatMessage.Channel);
+                    if (bChan == null) { return; }
                     await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info,
                         PLUGINNAME,
                         $"{e.Command.ChatMessage.Username} used !Coin in {e.Command.ChatMessage.Channel}."));

@@ -104,7 +104,6 @@ namespace MisfitBot2.Plugins.Raffle
         }
         /// <summary>
         /// Removes all active raffle entries from the botchannel
-        /// Returns TRUE if succesfull
         /// </summary>
         /// <param name="bChan"></param>
         public void ClearRaffle(BotChannel bChan)
@@ -130,6 +129,11 @@ namespace MisfitBot2.Plugins.Raffle
                 }
             }
         }
+        /// <summary>
+        /// Cancels the raffle and refunds undrawn tickets
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <returns></returns>
         public bool CancelRaffle(BotChannel bChan)
         {
             string msg = $"Raffle cancelled. Undrawn tickets refunded.";

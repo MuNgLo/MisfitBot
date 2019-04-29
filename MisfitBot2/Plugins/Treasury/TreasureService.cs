@@ -27,10 +27,8 @@ namespace MisfitBot2.Services
             Core.Channels.OnBotChannelMerge += OnBotChannelEntryMerge;
             Core.Discord.GuildAvailable += OnGuildAvailable;
             Core.Twitch._client.OnChatCommandReceived += TWITCH_OnChatCommandReceived;
-            //Core.Twitch._client.OnJoinedChannel += _client_OnJoinedChannel;
             Core.Treasury = this;
             TimerStuff.OnSecondTick += OnSecondTick;
-            //TimerStuff.OnMinuteTick += OnMinuteTick;
         }// END of Constructor
 
         private async void _client_OnJoinedChannel(object sender, TwitchLib.Client.Events.OnJoinedChannelArgs e)

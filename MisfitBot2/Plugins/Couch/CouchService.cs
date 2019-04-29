@@ -35,7 +35,7 @@ namespace MisfitBot2.Services
             // Successes
             _success.Add("[USER] takes a seat on the couch.");
             _success.Add("[USER] backflips onto the couch.");
-            _success.Add("[USER] manages to escape the restrains and takes a seat on the couch.");
+            _success.Add("[USER] manages to escape the restraints and takes a seat on the couch.");
             _success.Add("[USER] suddenly materializes on the couch with a hint of a smirk.");
             _success.Add("[USER] claws their way up from the void between the cushions.");
             _success.Add("[USER] does an impressive herolanding then proceeds to stumble to the couch with intence knee pain.");
@@ -99,9 +99,9 @@ namespace MisfitBot2.Services
 
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(e.Command.ChatMessage.Channel);
             if (bChan == null) { return; }
-            if (!dbStrings.TableInit(bChan))
+            if (!await dbStrings.TableInit(bChan))
             {
-                DBStringsFirstSetup(bChan);
+                await DBStringsFirstSetup(bChan);
             }
             UserEntry user = await Core.UserMan.GetUserByTwitchID(e.Command.ChatMessage.UserId);
             if (user == null) { return; }
@@ -260,6 +260,10 @@ namespace MisfitBot2.Services
         }
         private async void TwitchInUserJoined(object sender, TwitchLib.Client.Events.OnUserJoinedArgs e)
         {
+            if(TimerStuff.Uptime < 300)
+            {
+                return;
+            }
             UserEntry user = await Core.UserMan.GetUserByTwitchUserName(e.Username);
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(e.Channel);
             CouchSettings settings = await Settings(bChan);
@@ -272,6 +276,10 @@ namespace MisfitBot2.Services
                 CouchUserStats uStats = await GetUserCouchStats(bChan.Key, user.Key);
                 if(uStats.CountSeated >= settings.potatoGreeting)
                 {
+                    if (!await dbStrings.TableInit(bChan))
+                    {
+                        await DBStringsFirstSetup(bChan);
+                    }
                     Core.Twitch._client.SendMessage(e.Channel, dbStrings.GetRandomLine(bChan, "GREET").Replace("[USER]", user._twitchDisplayname));
                 }
             }
@@ -281,39 +289,42 @@ namespace MisfitBot2.Services
         #region Discord command methods
         public async Task DiscordCommand(ICommandContext context)
         {
+            if (context.User.IsBot) { return; }
+
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
             if (bChan == null) { return; }
-            if (!dbStrings.TableInit(bChan))
+            if (!await dbStrings.TableInit(bChan))
             {
-                DBStringsFirstSetup(bChan);
+                await DBStringsFirstSetup(bChan);
             }
             CouchSettings settings = await Settings(bChan);
             await SayOnDiscordAdmin(bChan, $"Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}.");
             // Ugly bit coming here
             string helptext = $"```fix{Environment.NewLine}" +
-                $"Admin/Broadcaster commands{Environment.NewLine}{Environment.NewLine}!couch < Arguments >{Environment.NewLine}{Environment.NewLine}Arguments....{Environment.NewLine}< none > ->responds current settings{Environment.NewLine}" +
-            $"open -> Manually resets and open the couch.{Environment.NewLine}on/off -> Turns module on or off for the channel.{Environment.NewLine}size # -> Sets the number of seats between 1 and 40.{Environment.NewLine}" +
+                $"Admin/Broadcaster commands{Environment.NewLine}{Environment.NewLine}{Core._commandCharacter}couch < Arguments >{Environment.NewLine}{Environment.NewLine}Arguments....{Environment.NewLine}< none > ->responds current settings{Environment.NewLine}" +
+            $"open -> Manually resets and open the couch.{Environment.NewLine}on/off -> Turns plugin on or off for the channel.{Environment.NewLine}size # -> Sets the number of seats between 1 and 40.{Environment.NewLine}" +
             $"greet # -> Sets the number of seated needed in stats for a greeting when a user joins the twitch channel.{Environment.NewLine}{Environment.NewLine}Discord only arguments(make sure adminchannel is set in adminplugin){Environment.NewLine}" +
             $"addsuccess < text > Text being the line returned. Use [USER] in text where username should be.{Environment.NewLine}addfail < text >{Environment.NewLine}addgreet < text >{Environment.NewLine}addincident < text >{Environment.NewLine}" +
             $"list / list # -> Shows stored lines by page.{Environment.NewLine}use # -> Toggles the inuse flag for the line with given ID.{Environment.NewLine}delete # -> Deletes the line with the ID if inuse flag is false. As in not in use.{Environment.NewLine}" +
             $"{Environment.NewLine}{Environment.NewLine}User commands{Environment.NewLine}" +
-            $"!seat -> When couch open it responds with success of fail message.{Environment.NewLine}" +
-            $"!seats -> User stats rundown." +
+            $"{Core._commandCharacter}seat -> When couch open it responds with success of fail message.{Environment.NewLine}" +
+            $"{Core._commandCharacter}seats -> User stats rundown." +
             $"```";
             await SayOnDiscordAdmin(bChan, helptext);
             return;
         }
         public async Task DiscordCommand(ICommandContext context, List<string> arguments)
         {
+            if (context.User.IsBot) { return; }
             await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info,
                 PLUGINNAME,
                 $"{context.User.Username} used command \"couch\" in {context.Channel.Name}."
                 ));
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
             if (bChan == null) { return; }
-            if (!dbStrings.TableInit(bChan))
+            if (!await dbStrings.TableInit(bChan))
             {
-                DBStringsFirstSetup(bChan);
+                await DBStringsFirstSetup(bChan);
             }
             CouchSettings settings = await Settings(bChan);
             switch (arguments[0].ToLower())
@@ -416,7 +427,8 @@ namespace MisfitBot2.Services
                     await DeleteEntry(bChan, id);
                     break;
                 case "restore":
-                    if (dbStrings.TableDrop(bChan))
+                    bool removed = await dbStrings.TableDrop(bChan);
+                    if (removed)
                     {
                         await SayOnDiscordAdmin(bChan, "Removed all current line data from the database.");
                     }
@@ -424,7 +436,6 @@ namespace MisfitBot2.Services
                     {
                         await SayOnDiscordAdmin(bChan, "Couldn't remove anything from the database.");
                     }
-
                     break;
             }
         }
@@ -445,21 +456,24 @@ namespace MisfitBot2.Services
             Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Couch is now open. Take a {Core._commandCharacter}seat.");
             await SayOnDiscordAdmin(bChan, $"Couch is now open. Click https://twitch.tv/{bChan.TwitchChannelName} and take a {Core._commandCharacter}seat.");
         }
-        private void DBStringsFirstSetup(BotChannel bChan)
+        private async Task DBStringsFirstSetup(BotChannel bChan)
         {
-            foreach (string line in _success)
+            await Task.Run(() =>
             {
-                dbStrings.SaveNewLine(bChan, "SUCCESS", line);
-            }
-            foreach (string line in _fail)
-            {
-                dbStrings.SaveNewLine(bChan, "FAIL", line);
-            }
-            foreach (string line in _incident)
-            {
-                dbStrings.SaveNewLine(bChan, "INCIDENT", line);
-            }
-            dbStrings.SaveNewLine(bChan, "GREET", "Welcome back [USER]. You truly are a proper couch potato. BloodTrail");
+                foreach (string line in _success)
+                {
+                    dbStrings.SaveNewLine(bChan, "SUCCESS", line);
+                }
+                foreach (string line in _fail)
+                {
+                    dbStrings.SaveNewLine(bChan, "FAIL", line);
+                }
+                foreach (string line in _incident)
+                {
+                    dbStrings.SaveNewLine(bChan, "INCIDENT", line);
+                }
+                dbStrings.SaveNewLine(bChan, "GREET", "Welcome back [USER]. You truly are a proper couch potato. BloodTrail");
+            });
         }
         private bool RollIncident(int chance = 0)
         {
@@ -495,7 +509,6 @@ namespace MisfitBot2.Services
                 await SayOnDiscordAdmin(bChan, $"Entry {id} deleted.");
             }
         }
-
         private async Task ToggleInUse(BotChannel bChan, int id)
         {
             CouchDBString entry = await dbStrings.GetStringByID(bChan, id);
@@ -515,7 +528,7 @@ namespace MisfitBot2.Services
             string inuseText = $"Currently stored lines...```fix{Environment.NewLine}" +
                 $"These are lines stored in the database that the Couch plugin will use based on topic if they are marked as inuse.{Environment.NewLine}{Environment.NewLine}" +
                 $"<ID> <TOPIC> <INUSE> <TEXT>        Page {page + 1}{Environment.NewLine}";
-            List<CouchDBString> lines = await dbStrings.GetRowsByTen(bChan, page);
+            List<CouchDBString> lines = dbStrings.GetRowsByTen(bChan, page);
             if (lines.Count == 0)
             {
                 inuseText += "No hits. Try a lower page number.";
@@ -534,7 +547,6 @@ namespace MisfitBot2.Services
             inuseText += $"```Use command {Core._commandCharacter}couch list <page> to list a page. Those marked with an X for INUSE are in rotation. Topic is what the text is used for.";
             await SayOnDiscordAdmin(bChan, inuseText);
         }
-
         private async Task AddLine(BotChannel bChan, string topic, List<string> arguments)
         {
             arguments.RemoveAt(0);

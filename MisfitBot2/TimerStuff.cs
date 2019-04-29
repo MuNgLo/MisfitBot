@@ -15,6 +15,7 @@ namespace MisfitBot2
         static private System.Threading.Timer seconds;
         static public SecondTick OnSecondTick;
         private static int _secondsFromStart = 0;
+        static public int Uptime { get { return _secondsFromStart; } private set { } }
         static public MinuteTick OnMinuteTick;
 
         public TimerStuff()

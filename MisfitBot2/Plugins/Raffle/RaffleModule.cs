@@ -19,41 +19,25 @@ namespace MisfitBot2.Modules
             _service = service;
         }
 
-        [Command("clearraffle", RunMode = RunMode.Async)]
-        [Summary("Removes any running raffle")]
+        [Command("raffle", RunMode = RunMode.Async)]
+        [Summary("Base command for the Raffle plugin.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task ClearRaffleCMD()
+        public async Task CommandMethod()
         {
             if (Context.User.IsBot) { return; }
-            await _service.DiscordClearRaffle(Context);
+            await _service.DiscordCommand(Context);
         }
-        [Command("cancelraffle", RunMode = RunMode.Async)]
-        [Summary("Clears any running raffle and refunds undrawn tickets")]
+        [Command("raffle", RunMode = RunMode.Async)]
         [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task CancelRaffleCMD()
-        {
-            if (Context.User.IsBot) { return; }
-            await _service.DiscordCancelRaffle(Context);
-        }
-        [Command("startraffle", RunMode = RunMode.Async)]
-        [Summary("Start a raffle in this channel and linked Twitch channel(if it exist).")]
-        [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task StartRaffleCMD()
-        {
-            if (Context.User.IsBot) { return; }
-            await _service.DiscordRaffleHelp(Context);
-        }
-        [Command("startraffle", RunMode = RunMode.Async)]
-        [Summary("Start a raffle in this channel and linked Twitch channel(if it exist).")]
-        [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task StartRaffleCMD([Remainder]string text)
+        public async Task CommandMethod([Remainder]string text)
         {
             if (Context.User.IsBot) { return; }
             string[] args = text.Split(" ");
             List<string> arguments = new List<string>(args);
-
-            await _service.DiscordStartRaffle(Context, arguments);
+            await _service.DiscordCommand(Context, arguments);
         }
+
+
         [Command("buyticket", RunMode = RunMode.Async)]
         [Summary("Buys a ticket if possible and affordable")]
         public async Task BuyTicketCMD()
@@ -61,30 +45,8 @@ namespace MisfitBot2.Modules
             if (Context.User.IsBot) { return; }
             await _service.DiscordBuyTicket(Context);
         }
-        [Command("drawticket", RunMode = RunMode.Async)]
-        [Summary("Draws a ticket from the pool of sold tickets")]
-        [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task DrawTicketCMD()
-        {
-            if (Context.User.IsBot) { return; }
-            await _service.DiscordDrawTicket(Context);
-        }
-        [Command("stopticketsale", RunMode = RunMode.Async)]
-        [Summary("Stops sellling tickets for current raffle")]
-        [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task StopTicketSale()
-        {
-            if (Context.User.IsBot) { return; }
-            await _service.DiscordStopTicketSale(Context);
-        }
-        [Command("startticketsale", RunMode = RunMode.Async)]
-        [Summary("Starts sellling tickets for current raffle")]
-        [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task StartTicketSale()
-        {
-            if (Context.User.IsBot) { return; }
-            await _service.DiscordStartTicketSale(Context);
-        }
+
+       
 
     }
 }

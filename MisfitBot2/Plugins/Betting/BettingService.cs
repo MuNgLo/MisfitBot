@@ -403,19 +403,18 @@ namespace MisfitBot2.Services
                 }
             }
             // Clean queue 
-            foreach (JoinedChannel channel in Core.Twitch._client.JoinedChannels)
+            /*foreach (JoinedChannel channel in Core.Twitch._client.JoinedChannels)
             {
                 BotChannel bChan = await Core.Channels.GetTwitchChannelByName(channel.Channel);
                 if (bChan == null)
                 {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Error, PLUGINNAME, "Could not resolve JoinedChannel.Channel to a botchannel instance."));
                     return;
                 }
                 if (Bets.ValidateBetting(channel.Channel))
                 {
                     apexQueue.RemoveAll(p => p.bChanKey == bChan.Key);
                 }
-            }
+            }*/
         }
         public void OnMinuteTick(int minutes)
         {

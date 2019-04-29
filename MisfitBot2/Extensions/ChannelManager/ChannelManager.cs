@@ -20,9 +20,9 @@ namespace MisfitBot2.Extensions.ChannelManager
     public class ChannelManager
     {
         private readonly string PLUGINNAME = "ChannelManager";
-        private List<BotChannel> channelsToSave = new List<BotChannel>(); // Memory cache to avoid race condition when saving new botchannels to DB
         public BotChannelMergeEvent OnBotChannelMerge;
         public BotChannelGoesOffline OnBotChannelGoesOffline;
+        private volatile bool apiQueryLock = false; // This is true when we have an active channel request towards Twitch API running
         public Dictionary<string, TwPubSub> PubSubClients = new Dictionary<string, TwPubSub>();
         /// CONSTRUCTOR
         public ChannelManager()
@@ -58,16 +58,16 @@ namespace MisfitBot2.Extensions.ChannelManager
         {
             try
             {
-                TwitchLib.Api.V5.Models.Users.Users channelEntry = await Core.Twitch._api.V5.Users.GetUserByNameAsync(channelName);
+                TwitchLib.Api.V5.Models.Users.Users channelEntry = await Core.Twitch._api.V5.Users.GetUserByNameAsync(channelName.ToLower());
                 if (channelEntry.Matches.Length < 1)
                 {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Error, PLUGINNAME, $"Twitch channel lookup failed! Couldn't find channel. Not connecting to \"{channelName}\""));
+                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Error, PLUGINNAME, $"Twitch channel lookup failed! Couldn't find channel. Not connecting to \"{channelName.ToLower()}\""));
                     return false;
                 }
             }
             catch (Exception)
             {
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Error, PLUGINNAME, $"Twitch channel lookup failed! Couldn't find channel. Not connecting to \"{channelName}\""));
+                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Error, PLUGINNAME, $"Twitch channel lookup failed! Couldn't find channel. Not connecting to \"{channelName.ToLower()}\""));
                 return false;
             }
             Core.Twitch._client.JoinChannel(channelName);
@@ -172,33 +172,37 @@ namespace MisfitBot2.Extensions.ChannelManager
         /// <returns></returns>
         public async Task<BotChannel> GetTwitchChannelByName(string TwitchName)
         {
+
             if (!await ChannelDataExists(TwitchName))
             {
-                TwitchLib.Api.V5.Models.Users.Users channelEntry;
+                TwitchLib.Api.V5.Models.Users.Users channelEntry = null;
                 try
                 {
-                    channelEntry = await Core.Twitch._api.V5.Users.GetUserByNameAsync(TwitchName);
+                    while (apiQueryLock) { }
+                    if (!await ChannelDataExists(TwitchName))
+                    {
+                        apiQueryLock = true;
+                        channelEntry = await Core.Twitch._api.V5.Users.GetUserByNameAsync(TwitchName);
+                    }
+                    if (channelEntry == null || channelEntry.Matches.Length < 1)
+                    {
+                        apiQueryLock = false;
+                        return null;
+                    }
+                    await ChannelDataWrite(new BotChannel(channelEntry.Matches[0].Name, channelEntry.Matches[0].Id));
+                    apiQueryLock = false;
+                    return await ChannelDataRead(TwitchName);
                 }
                 catch (Exception)
                 {
+                    apiQueryLock = false;
                     return null;
-                }
-                if (channelEntry.Matches.Length < 1)
-                {
-                    return null;
-                }
-                if (!channelsToSave.Exists(p => p.TwitchChannelName == TwitchName))
-                {
-                    channelsToSave.Add(new BotChannel(TwitchName, channelEntry.Matches[0].Id));
-                    await ChannelDataWrite(channelsToSave.Find(p => p.TwitchChannelName == TwitchName));
-                    channelsToSave.RemoveAll(p => p.TwitchChannelName == TwitchName);
-                }
-                else
-                {
-                    return channelsToSave.Find(p => p.TwitchChannelName == TwitchName);
                 }
             }
-            return await ChannelDataRead(TwitchName);
+            else
+            {
+                return await ChannelDataRead(TwitchName);
+            }
         }
         /// <summary>
         /// Returns 1 match from DB. Creates one if needed and then resolves the TwitchID against Twitch.API to get the Twitch name.
@@ -209,23 +213,34 @@ namespace MisfitBot2.Extensions.ChannelManager
         {
             if (!await ChannelDataExistsTwitchID(TwitchID))
             {
-                TwitchLib.Api.V5.Models.Users.User channel = await Core.Twitch._api.V5.Users.GetUserByIDAsync(TwitchID);
-                if (channel == null)
+                TwitchLib.Api.V5.Models.Users.User channel = null;
+                try
                 {
+                    while (apiQueryLock) { }
+                    if (!await ChannelDataExistsTwitchID(TwitchID))
+                    {
+                        apiQueryLock = true;
+                        channel = await Core.Twitch._api.V5.Users.GetUserByIDAsync(TwitchID);
+                    }
+                    if (channel == null)
+                    {
+                        apiQueryLock = false;
+                        return null;
+                    }
+                    await ChannelDataWrite(new BotChannel(channel.Name, channel.Id));
+                    apiQueryLock = false;
+                    return await ChannelDataReadTwitchID(TwitchID);
+                }
+                catch (Exception)
+                {
+                    apiQueryLock = false;
                     return null;
                 }
-                if (!channelsToSave.Exists(p => p.TwitchChannelID == TwitchID))
-                {
-                    channelsToSave.Add(new BotChannel(channel.Name, channel.Id));
-                    await ChannelDataWrite(channelsToSave.Find(p => p.TwitchChannelID == TwitchID));
-                    channelsToSave.RemoveAll(p => p.TwitchChannelID == TwitchID);
-                }
-                else
-                {
-                    return channelsToSave.Find(p => p.TwitchChannelID == TwitchID);
-                }
             }
-            return await ChannelDataReadTwitchID(TwitchID);
+            else
+            {
+                return await ChannelDataReadTwitchID(TwitchID);
+            }
         }
         /// <summary>
         /// Returns 1 match from DB. If no match can be found NULL is returned.
@@ -389,6 +404,11 @@ namespace MisfitBot2.Extensions.ChannelManager
             }
 
         }
+        /// <summary>
+        /// Returns True if DB has channel entry
+        /// </summary>
+        /// <param name="TwitchName"></param>
+        /// <returns></returns>
         private async Task<bool> ChannelDataExists(string TwitchName)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
@@ -658,7 +678,18 @@ namespace MisfitBot2.Extensions.ChannelManager
                 cmd.Parameters.AddWithValue("@TwitchAutojoin", bChan.TwitchAutojoin);
                 cmd.Parameters.AddWithValue("@pubsubOauth", bChan.pubsubOauth);
                 cmd.ExecuteNonQuery();
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Created entry for Discord Guild {bChan.GuildName}"));
+                if (bChan.isLinked)
+                {
+                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Created linked entry for Discord Guild {bChan.GuildName} and Twitchchannel {bChan.TwitchChannelName}"));
+                }
+                else if (bChan.isTwitch)
+                {
+                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Created entry for Twitch channel {bChan.TwitchChannelName}"));
+                }
+                else
+                {
+                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Created entry for Discord Guild {bChan.GuildName}"));
+                }
             }
         }
         private void TableCreate(string plugin)

@@ -23,7 +23,7 @@ namespace MisfitBot2.Components
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"DELETE FROM {TableName(bChan.Key)} WHERE ROWID IS @id";
+                cmd.CommandText = $"DELETE FROM \"{TableName(bChan.Key)}\" WHERE ROWID IS @id";
                 cmd.Parameters.AddWithValue("@id", id);
                 if (cmd.ExecuteNonQuery() > 0)
                 {
@@ -38,7 +38,7 @@ namespace MisfitBot2.Components
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM {TableName(bChan.Key)} WHERE ROWID IS @id";
+                cmd.CommandText = $"SELECT * FROM \"{TableName(bChan.Key)}\" WHERE ROWID IS @id";
                 cmd.Parameters.AddWithValue("@id", id);
                 SQLiteDataReader result;
                 try
@@ -64,7 +64,7 @@ namespace MisfitBot2.Components
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"INSERT INTO {TableName(bChan.Key)} (inuse, topic, text) VALUES (" +
+                cmd.CommandText = $"INSERT INTO \"{TableName(bChan.Key)}\" (inuse, topic, text) VALUES (" +
                     $"@inuse, " +
                     $"@topic, " +
                     $"@text)";
@@ -80,7 +80,7 @@ namespace MisfitBot2.Components
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"UPDATE {TableName(bChan.Key)} SET inuse=@inuse WHERE ROWID IS @id";
+                cmd.CommandText = $"UPDATE \"{TableName(bChan.Key)}\" SET inuse=@inuse WHERE ROWID IS @id";
                 cmd.Parameters.AddWithValue("@id", entry._id);
                 cmd.Parameters.AddWithValue("@inuse", entry._inuse);
                 if (cmd.ExecuteNonQuery() == 1)
@@ -90,21 +90,15 @@ namespace MisfitBot2.Components
             }
             return false;
         }
-        public async Task<string> GetRNGFromTopic(BotChannel bChan, string topic)
-        {
-            List<CouchDBString> candidates = await GetRowsInUse(bChan, topic);
-            if (candidates.Count == 0) { return null; }
-            Random rng = new Random();
-            return candidates[rng.Next(candidates.Count)]._text;
-        }
-        public async Task<List<CouchDBString>> GetRowsInUse(BotChannel bChan, string topic)
+        
+        public List<CouchDBString> GetRowsInUse(BotChannel bChan, string topic)
         {
             List<CouchDBString> inuseLines = new List<CouchDBString>();
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM {TableName(bChan.Key)} WHERE topic=@topic AND inuse=@inuse";
+                cmd.CommandText = $"SELECT * FROM \"{TableName(bChan.Key)}\" WHERE topic=@topic AND inuse=@inuse";
                 cmd.Parameters.AddWithValue("@topic", topic);
                 cmd.Parameters.AddWithValue("@inuse", true);
                 using (SQLiteDataReader result = cmd.ExecuteReader())
@@ -115,18 +109,17 @@ namespace MisfitBot2.Components
                         inuseLines.Add(entry);
                     }
                 }
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, PLUGINNAME, "aasdasdasd"));
                 return inuseLines;
             }
         }
-        public async Task<List<CouchDBString>> GetRowsByTen(BotChannel bChan, int page = 0)
+        public List<CouchDBString> GetRowsByTen(BotChannel bChan, int page = 0)
         {
             List<CouchDBString> inuseLines = new List<CouchDBString>();
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM {TableName(bChan.Key)} LIMIT {page * 10}, 10";
+                cmd.CommandText = $"SELECT * FROM \"{TableName(bChan.Key)}\" LIMIT {page * 10}, 10";
                 using (SQLiteDataReader result = cmd.ExecuteReader())
                 {
                     while (result.Read())
@@ -135,7 +128,6 @@ namespace MisfitBot2.Components
                         inuseLines.Add(entry);
                     }
                 }
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, PLUGINNAME, "aasdasdasd"));
                 return inuseLines;
             }
         }
@@ -146,7 +138,7 @@ namespace MisfitBot2.Components
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM {TableName(bChan.Key)} WHERE inuse IS @inuse AND topic IS @topic ORDER BY RANDOM() LIMIT 1";
+                cmd.CommandText = $"SELECT * FROM \"{TableName(bChan.Key)}\" WHERE inuse IS @inuse AND topic IS @topic ORDER BY RANDOM() LIMIT 1";
                 cmd.Parameters.AddWithValue("@inuse", true);
                 cmd.Parameters.AddWithValue("@topic", topic);
                 SQLiteDataReader result;
@@ -170,30 +162,47 @@ namespace MisfitBot2.Components
         /// </summary>
         /// <param name="bChan"></param>
         /// <returns></returns>
-        public bool TableInit(BotChannel bChan)
+        public async Task<bool> TableInit(BotChannel bChan)
         {
-            if (TableExists(TableName(bChan.Key)))
-            { return true; }
-            else
-            {
-                TableCreate(bChan.Key);
-                return false;
-            }
-        }
-        public bool TableDrop(BotChannel bChan)
-        {
-            if (TableExists(TableName(bChan.Key)))
+            bool result = false;
+            await Task.Run(() => {
+                if (TableExists(TableName(bChan.Key)))
                 {
-                    using (SQLiteCommand cmd = new SQLiteCommand())
-                    {
-                        cmd.CommandType = CommandType.Text;
-                        cmd.Connection = Core.Data;
-                        cmd.CommandText = $"DROP TABLE {TableName(bChan.Key)}";
-                        cmd.ExecuteNonQuery();
-                    }
+                    result = true;
+                }
+                else
+                {
+                    TableCreate(bChan.Key);
+                    result = false;
+                }
+            });
+            return result;
+        }
+        public async Task<bool> TableDrop(BotChannel bChan)
+        {
+
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = $"PRAGMA foreign_keys = OFF" +
+                    $" DROP TABLE IF EXISTS \"{TableName(bChan.Key)}\"" +
+                    $" PRAGMA foreign_keys = ON";
+                //cmd.ExecuteNonQuery();
+                //cmd.ExecuteNonQuery();
+                try
+                {
+                   int i = await cmd.ExecuteNonQueryAsync();
+                    i = 123;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                    throw;
+                }
                 return TableExists(TableName(bChan.Key));
             }
-            else { return false; }
         }
         private bool TableExists(String tableName)
         {
@@ -222,7 +231,7 @@ namespace MisfitBot2.Components
 
                 //ID int primary key IDENTITY(1,1) NOT NULL
 
-                cmd.CommandText = $"CREATE TABLE {TableName(chanKey)} (" +
+                cmd.CommandText = $"CREATE TABLE \"{TableName(chanKey)}\" (" +
                     $"ROWID INTEGER PRIMARY KEY AUTOINCREMENT," +
                     $"inuse BOOLEAN, " +
                     $"topic VACHAR(30), " +
@@ -235,7 +244,7 @@ namespace MisfitBot2.Components
         #region Internals
         private string TableName(string chanKey)
         {
-            return PLUGINNAME + "_" + chanKey;
+            return chanKey + "_" + PLUGINNAME;
         }
 
         
