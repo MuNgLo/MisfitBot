@@ -280,6 +280,48 @@ namespace MisfitBot2.Extensions.UserManager
                 return user;
             }
         }
+        private async Task<List<UserEntry>> DBSearchByName(string pattern)
+        {
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = $"SELECT * FROM {PLUGINNAME} WHERE twitchUsername LIKE @pattern";
+                cmd.Parameters.AddWithValue("@pattern", "%"+pattern+"%");
+                //cmd.Parameters.AddWithValue("@tdnPattern", pattern);
+                SQLiteDataReader result;
+                try
+                {
+                    result = cmd.ExecuteReader();
+                }
+                catch (Exception)
+                {
+                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
+                    throw;
+                }
+                List<UserEntry> hits = new List<UserEntry>();
+                while (result.Read())
+                {
+                    UserEntry user = new UserEntry
+                    {
+                        linked = result.GetBoolean(0),
+                        _username = result.GetString(1),
+                        _lastseen = result.GetInt32(2),
+                        _lastseenOnTwitch = result.GetInt32(3),
+                        _twitchUID = result.GetString(4),
+                        _twitchUsername = result.GetString(5),
+                        _twitchDisplayname = result.GetString(6),
+                        _twitchColour = result.GetString(7),
+                        _twitchLogo = result.GetString(8),
+                        _discordUID = (ulong)result.GetInt64(11),
+                        lastChange = (int)result.GetInt64(13),
+                        lastSave = (int)result.GetInt64(14)
+                    };
+                    hits.Add(user);
+                }
+                return hits;
+            }
+        }
 
         private void CreateNewDiscordUser(ulong uid, UserEntry user)
         {
@@ -324,6 +366,17 @@ namespace MisfitBot2.Extensions.UserManager
                 //await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Created entry for Discord user {userinfo.Username}"));
             }
         }
+
+        public async Task<List<UserEntry>> SearchDBUserByName(string search)
+        {
+            UserEntry user = new UserEntry();
+            if (!TableExists())
+            {
+                TableCreate();
+            }
+            return await DBSearchByName(search);
+        }
+
         private async void CreateNewTwitchUserFromID(string uid, UserEntry user)
         {
             User userinfo = await Core.Twitch._api.V5.Users.GetUserByIDAsync(uid);
@@ -385,7 +438,7 @@ namespace MisfitBot2.Extensions.UserManager
         {
             try
             {
-                Users users = await Core.Twitch._api.V5.Users.GetUserByNameAsync(twitchusername);
+                Users users = await Core.Twitch._api.V5.Users.GetUserByNameAsync(twitchusername.ToLower());
 
 
                 Users userinfo = users;

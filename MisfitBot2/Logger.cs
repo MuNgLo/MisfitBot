@@ -29,10 +29,13 @@ namespace MisfitBot2
         }
         private async Task AddLogLine(LogMessage message)
         {
-            lock (_logLines)
+            await Task.Run(() =>
             {
-                _logLines.Add(new JuanMessage(message, $"{DateTime.Now,-19}"));
-            }
+                lock (_logLines)
+                {
+                    _logLines.Add(new JuanMessage(message, $"{DateTime.Now,-19}"));
+                }
+            });
         }
 
         /// <summary>

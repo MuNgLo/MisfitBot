@@ -45,7 +45,7 @@ namespace MisfitBot2.Extensions.ChannelManager
         {
             if(await ChannelDataDeleteTwitchID(channel.TwitchChannelID))
             {
-                await ChannelSave(channel);
+                ChannelSave(channel);
             }
             return (await GetDiscordGuildbyID(channel.GuildID)).isLinked;
         }
@@ -120,13 +120,13 @@ namespace MisfitBot2.Extensions.ChannelManager
                         {
                             await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, PLUGINNAME, $"Twitch channel \"{channels.Matches[0].Name}\" went live!!"));
                             bChan.isLive = true;
-                            await ChannelSave(bChan);
+                            ChannelSave(bChan);
                         }
                         else
                         {
                             await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, PLUGINNAME, $"Twitch channel \"{channels.Matches[0].Name}\" is now offline."));
                             bChan.isLive = false;
-                            await ChannelSave(bChan);
+                            ChannelSave(bChan);
                         }
                     }
                 }
@@ -182,7 +182,7 @@ namespace MisfitBot2.Extensions.ChannelManager
                     if (!await ChannelDataExists(TwitchName))
                     {
                         apiQueryLock = true;
-                        channelEntry = await Core.Twitch._api.V5.Users.GetUserByNameAsync(TwitchName);
+                        channelEntry = await Core.Twitch._api.V5.Users.GetUserByNameAsync(TwitchName.ToLower());
                     }
                     if (channelEntry == null || channelEntry.Matches.Length < 1)
                     {
@@ -284,7 +284,7 @@ namespace MisfitBot2.Extensions.ChannelManager
                             isTwitch = true,
                             TwitchAutojoin = true
                         };
-                        await ChannelSave(newChannel);
+                        ChannelSave(newChannel);
                     }
                 }
             }
@@ -582,7 +582,7 @@ namespace MisfitBot2.Extensions.ChannelManager
                 return botChannels;
             }
         }
-        public async Task ChannelSave(BotChannel bChan)
+        public void ChannelSave(BotChannel bChan)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
@@ -637,7 +637,7 @@ namespace MisfitBot2.Extensions.ChannelManager
                 cmd.ExecuteNonQuery();
             }
 
-            await Core.LOG(new LogMessage(LogSeverity.Warning, PLUGINNAME, $"Saving updated channeldata"));
+            //await Core.LOG(new LogMessage(LogSeverity.Warning, PLUGINNAME, $"Saving updated channeldata"));
         }
         /// <summary>
         /// This only takes a botchannel instance and write it into the DB. Not for saving or udpating values

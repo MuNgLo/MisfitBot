@@ -66,6 +66,58 @@ namespace MisfitBot2.Services
         }
 
         #region Discord Command Methods
+        public async Task DiscordCommand(ICommandContext Context, List<string> args)
+        {
+            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info,
+                PLUGINNAME,
+                $"{Context.User.Username} used command \"admin\" in {Context.Channel.Name}."
+                ));
+            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);
+            if (bChan == null) { return; }
+            AdminSettings settings = await Settings(bChan);
+            switch (args[0].ToLower())
+            {
+                case "on":
+                    await DiscordSetActive(true, Context);
+                    break;
+                case "off":
+                    await DiscordSetActive(false, Context);
+                    break;
+                case "user":
+                    if(Context.Channel.Id != bChan.discordAdminChannel || settings._active == false)
+                    {
+                        await Context.Channel.SendMessageAsync($"Make sure the Admin plugin is active and has a adminchannel set.");
+                        return;
+                    }
+                    if(args.Count < 2)
+                    {
+                        await Context.Channel.SendMessageAsync($"You need to give a user related command.");
+                        return;
+                    }
+                    switch (args[1].ToLower()){
+                        case "search":
+                            if(args.Count < 3)
+                            {
+                                await Context.Channel.SendMessageAsync($"Nothing to search for. The search has to be at least 2 characters long.");
+                                return;
+                            }
+                            if(args[2].Length < 2)
+                            {
+                                await Context.Channel.SendMessageAsync($"The search has to be at least 2 characters long.");
+                                return;
+                            }
+
+                            await UserSearch(bChan, args[2]);
+                            break;
+                    }
+
+
+                    break;
+            }
+        }
+
+        
+
         public async Task DiscordLinkChannelCommand(ICommandContext context, string twitchChannelName)
         {
             List<BotChannel> channels = await Core.Channels.GetChannels();
@@ -93,7 +145,7 @@ namespace MisfitBot2.Services
                 Core.Channels.OnBotChannelMerge?.Invoke(discordProfile, twitchProfile);
                 await Core.LOG(new LogMessage(LogSeverity.Info, PLUGINNAME, $"Linking Discord Guild {linkedProfile.GuildID} to Twitch channel {linkedProfile.TwitchChannelName}."));
                 await context.Message.Channel.SendMessageAsync($"This Discord guild linked to Twitchchannel \"{linkedProfile.TwitchChannelName}\" ");
-                await Core.Channels.ChannelSave(linkedProfile);
+                Core.Channels.ChannelSave(linkedProfile);
             }else
             {
                 await Core.LOG(new LogMessage(LogSeverity.Info, PLUGINNAME, $"Failed to link Discord Guild {linkedProfile.GuildID} to Twitch channel {linkedProfile.TwitchChannelName}."));
@@ -109,7 +161,7 @@ namespace MisfitBot2.Services
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
             if (bChan == null){return;}
             bChan.discordAdminChannel = context.Channel.Id;
-            await Core.Channels.ChannelSave(bChan);
+            Core.Channels.ChannelSave(bChan);
             await SayOnDiscordAdmin(bChan, "This is now the dedicated admin command channel. Admin commands are accepted in this channel only.");
         }
         public async Task ResetAdminChannel(ICommandContext context)
@@ -117,7 +169,7 @@ namespace MisfitBot2.Services
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
             if (bChan == null) { return; }
             bChan.discordAdminChannel = 0;
-            await Core.Channels.ChannelSave(bChan);
+            Core.Channels.ChannelSave(bChan);
             await SayOnDiscord("Admin channel is cleared. This should really be set. Remember not to make it a public channel.", context.Channel.Id);
         }
         public async Task SetDefaultChannel(ICommandContext context)
@@ -125,7 +177,7 @@ namespace MisfitBot2.Services
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
             if (bChan == null) { return; }
             bChan.discordDefaultBotChannel = context.Channel.Id;
-            await Core.Channels.ChannelSave(bChan);
+            Core.Channels.ChannelSave(bChan);
             await SayOnDiscord(bChan, "This is now the default channel for the bot. A lot of general purpose messages will be sent here.");
 
         }
@@ -134,7 +186,7 @@ namespace MisfitBot2.Services
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
             if (bChan == null) { return; }
             bChan.discordDefaultBotChannel = 0;
-            await Core.Channels.ChannelSave(bChan);
+            Core.Channels.ChannelSave(bChan);
             await SayOnDiscord("Default channel is cleared. This means a lot of general messages will not show up.", context.Channel.Id);
         }
         public async Task DiscordJoinTwitchChannel(ICommandContext context, string twitchChannelName)
@@ -155,7 +207,7 @@ namespace MisfitBot2.Services
         {
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);
             bChan.pubsubOauth = encryptedoauth;
-            await Core.Channels.ChannelSave(bChan);
+            Core.Channels.ChannelSave(bChan);
             await Context.Channel.SendMessageAsync("PubSub OAUTH key has been updated. Use \"!pubsub start\" to launch it.");
         }
         public async Task DiscordAdminInfo(ICommandContext context)
@@ -294,6 +346,39 @@ namespace MisfitBot2.Services
             }
         }
 
+        private async Task UserSearch(BotChannel bChan, string search)
+        {
+            List<UserEntry> matches = await Core.UserMan.SearchUserName(search);
+
+            string msg = "```" + Environment.NewLine+
+                $"Search results.  {matches.Count} hits.{Environment.NewLine}{Environment.NewLine}";
+
+            msg += String.Format("{0,15}", "D-Username");
+            msg += "    ";
+            msg += String.Format("{0,15}", "Tw-Username");
+            msg += "    ";
+            msg += String.Format("{0,15}", "Tw-Displayname");
+            msg += Environment.NewLine;
+
+            foreach (UserEntry user in matches)
+            {
+                msg += String.Format("{0,15}", user._username);
+                msg += "    ";
+                msg += String.Format("{0,15}", user._twitchUsername);
+                msg += "    ";
+                msg += String.Format("{0,15}", user._twitchDisplayname);
+                msg += Environment.NewLine;
+                if(msg.Length > 1500)
+                {
+                    msg += "More hits than shown. Try a more precise search.";
+                    msg += Environment.NewLine;
+                    break;
+                }
+            }
+            msg += "```";
+
+            await SayOnDiscordAdmin(bChan, msg);
+        }
 
         #region DATA manipulation stuff
         /// <summary>

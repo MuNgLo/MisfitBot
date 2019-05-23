@@ -38,7 +38,7 @@ namespace MisfitBot2.Services
             _success.Add("[USER] manages to escape the restraints and takes a seat on the couch.");
             _success.Add("[USER] suddenly materializes on the couch with a hint of a smirk.");
             _success.Add("[USER] claws their way up from the void between the cushions.");
-            _success.Add("[USER] does an impressive herolanding then proceeds to stumble to the couch with intence knee pain.");
+            _success.Add("[USER] does an impressive herolanding then proceeds to stumble to the couch with intense knee pain.");
             _success.Add("[USER] accepts their fate as a decoration on the couch.");
             _success.Add("[USER] stridently claims their seat on the couch and act very smug about it.");
 
@@ -205,10 +205,11 @@ namespace MisfitBot2.Services
                         {
                             if (RollIncident())
                             {
-                                string mark = GetRNGSitter(bChan, settings);
-                                if (mark != null)
+                                string victim = GetRNGSitter(bChan, settings);
+                                if (victim != null)
                                 {
                                     UserEntry failuser = await Core.UserMan.GetUserByTwitchUserName(e.Command.ChatMessage.Username);
+                                    UserEntry markuser = await Core.UserMan.GetUserByTwitchUserName(victim);
                                     if (failuser != null)
                                     {
                                         if (!await UserStatsExists(bChan.Key, failuser.Key))
@@ -218,11 +219,14 @@ namespace MisfitBot2.Services
                                         CouchUserStats failUserStats = await UserStatsRead(bChan.Key, failuser.Key);
                                         failUserStats.CountSeated++;
                                         UserStatsSave(failUserStats);
+                                        CouchUserStats markUserStats = await UserStatsRead(bChan.Key, markuser.Key);
+                                        markUserStats.CountBooted++;
+                                        UserStatsSave(markUserStats);
                                     }
                                     Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
-                                        $"{dbStrings.GetRandomLine(bChan, "INCIDENT").Replace("[USER]", mark)}"
+                                        $"{dbStrings.GetRandomLine(bChan, "INCIDENT").Replace("[USER]", markuser._twitchDisplayname)}"
                                         );
-                                    settings._couches[bChan.Key].TwitchUsernames.RemoveAll(p => p == mark);
+                                    settings._couches[bChan.Key].TwitchUsernames.RemoveAll(p => p == markuser._twitchUsername);
                                     SaveBaseSettings(PLUGINNAME, bChan, settings);
                                 }
                             }
@@ -234,7 +238,7 @@ namespace MisfitBot2.Services
                         CouchUserStats userStats = await UserStatsRead(bChan.Key, user.Key);
                         userStats.CountSeated++;
                         UserStatsSave(userStats);
-                        settings._couches[bChan.Key].TwitchUsernames.Add(e.Command.ChatMessage.DisplayName);
+                        settings._couches[bChan.Key].TwitchUsernames.Add(e.Command.ChatMessage.Username);
                         Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
                             $"{ dbStrings.GetRandomLine(bChan, "SUCCESS").Replace("[USER]", user._twitchDisplayname)}"
                             );
@@ -642,7 +646,7 @@ namespace MisfitBot2.Services
                 cmd.ExecuteNonQuery();
             }
         }
-        public async void UserStatsSave(CouchUserStats userStats)
+        public void UserStatsSave(CouchUserStats userStats)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
@@ -659,7 +663,6 @@ namespace MisfitBot2.Services
                 cmd.Parameters.AddWithValue("@CountSeated", userStats.CountSeated);
                 cmd.Parameters.AddWithValue("@CountBooted", userStats.CountBooted);
                 cmd.ExecuteNonQuery();
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, "Saved UserStats in DB."));
             }
         }
         private async Task<bool> UserStatsExists(string bKey, string uKey)

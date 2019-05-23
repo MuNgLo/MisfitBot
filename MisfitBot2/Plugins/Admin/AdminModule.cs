@@ -21,6 +21,27 @@ namespace MisfitBot2.Modules
         {
             _service = service;
         }
+        [Command("admin", RunMode = RunMode.Async)]
+        [Summary("Admin module information. Use admin on/off to turn the module on or off.")]
+        [RequireUserPermission(GuildPermission.ManageMessages)]
+        public async Task BotAdminCMD()
+        {
+            await _service.DiscordAdminInfo(Context);
+            return;
+        }
+        [Command("admin", RunMode = RunMode.Async)]
+        [RequireUserPermission(GuildPermission.ManageMessages)]
+        public async Task BotAdminCMD([Remainder]string text)
+        {
+            if (Context.User.IsBot) { return; }
+            string[] args = text.Split(" ");
+            List<string> arguments = new List<string>(args);
+            await _service.DiscordCommand(Context, arguments);
+        }
+
+
+
+
         [Command("usersetup", RunMode = RunMode.Async)]
         [Summary("Link your Discord user with a Twitch username. Note Twitch username is all lowercase and visible in the address to your channel page.")]
         public async Task IsMeCMD()
@@ -59,7 +80,7 @@ namespace MisfitBot2.Modules
             {
                 case "clear":
                     bChan.pubsubOauth = string.Empty;
-                    await Core.Channels.ChannelSave(bChan);
+                    Core.Channels.ChannelSave(bChan);
                     await Context.Channel.SendMessageAsync("Current PubSub Token cleared.");
                     break;
                 case "restart":
@@ -119,30 +140,11 @@ namespace MisfitBot2.Modules
                 await _service.ResetDefaultBotChannel(Context);
             }
         }
-        [Command("admin", RunMode = RunMode.Async)]
-        [Summary("Admin module information. Use admin on/off to turn the module on or off.")]
-        [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task BotAdminCMD()
-        {
-                await _service.DiscordAdminInfo(Context);
-                return;
-        }
-        [Command("admin", RunMode = RunMode.Async)]
-        [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task BotAdminCMD(string arg)
-        {
-            if (arg.ToLower() == "on")
-            {
-                await _service.DiscordSetActive(true, Context);
-                return;
-            }
-            if (arg.ToLower() == "off")
-            {
-                await _service.DiscordSetActive(false, Context);
-                return;
-            }
-            await Context.Channel.SendMessageAsync("This command only takes the arguments \"on\" or \"off\"");
-        }
+
+
+        
+
+
         [Command("link", RunMode = RunMode.Async)]
         [Summary("Links a Discord channel to a Twitch channel.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]

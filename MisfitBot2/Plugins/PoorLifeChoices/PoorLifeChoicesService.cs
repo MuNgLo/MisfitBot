@@ -61,7 +61,7 @@ namespace MisfitBot2.Services
                     {
                         if (e.Command.ArgumentsAsList.Count == 1)
                         {
-                            TwitchLib.Api.V5.Models.Users.Users channels = await Core.Twitch._api.V5.Users.GetUserByNameAsync(Core.Twitch._client.GetJoinedChannel(e.Command.ChatMessage.Channel).Channel);
+                            //TwitchLib.Api.V5.Models.Users.Users channels = await Core.Twitch._api.V5.Users.GetUserByNameAsync(Core.Twitch._client.GetJoinedChannel(e.Command.ChatMessage.Channel).Channel);
                             PoorLifeChoicesSettings settings = await Settings(bChan);
                             if (e.Command.ArgumentsAsList[0].ToLower() == "on")
                             {

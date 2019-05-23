@@ -86,7 +86,7 @@ namespace MisfitBot2.Services
 
 
 
-        
+        #region WTF!!! QUARANTINE THIS SHIT What is wroing here!
 
         /// <summary>
         /// Get UserEntry from twitch UserName. Create a new entry if none exist.
@@ -95,6 +95,11 @@ namespace MisfitBot2.Services
         /// <returns></returns>
         public async Task<UserEntry> GetUserByTwitchUserName(string twitchName)
         {
+            if(twitchName != twitchName.ToLower())
+            {
+                return null;
+            }
+
             return await UserList.GetDBUserByTwitchUserName(twitchName);
         }
         /// <summary>
@@ -106,6 +111,9 @@ namespace MisfitBot2.Services
         {
                 return await UserList.GetDBUserByTwitchID(twitchID);
         }
+
+        #endregion
+
         /// <summary>
         /// Get UserEntry from Discord user ID. Create a new entry if none exist.
         /// </summary>
@@ -287,6 +295,11 @@ namespace MisfitBot2.Services
         private async Task _client_CurrentUserUpdated(SocketSelfUser arg1, SocketSelfUser arg2)
         {
             await Core.LOG(new LogMessage(LogSeverity.Info, PLUGINNAME, "CurrentUserUpdated"));
+        }
+
+        internal async Task<List<UserEntry>> SearchUserName(string search)
+        {
+            return await UserList.SearchDBUserByName(search);
         }
     }// END of UserManagerService
 }

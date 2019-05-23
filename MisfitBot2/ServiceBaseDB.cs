@@ -77,7 +77,7 @@ namespace MisfitBot2
         /// <param name="plugin"></param>
         /// <param name="bChan"></param>
         /// <param name="settings"></param>
-        public async void SaveBaseSettings(string plugin, BotChannel bChan, object settings)
+        public void SaveBaseSettings(string plugin, BotChannel bChan, object settings)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
@@ -87,7 +87,6 @@ namespace MisfitBot2
                 cmd.Parameters.AddWithValue("@data", JsonConvert.SerializeObject(settings));
                 cmd.Parameters.AddWithValue("@key", bChan.Key);
                 cmd.ExecuteNonQuery();
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, plugin, $"Saved updated config for ({plugin}::{bChan.Key}) in DB."));
             }
         }
         #endregion
