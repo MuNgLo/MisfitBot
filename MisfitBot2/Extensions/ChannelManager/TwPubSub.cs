@@ -162,7 +162,6 @@ namespace MisfitBot2.Extensions.ChannelManager
                     $"{_twitchChannelName} :: {e.BannedBy} banned {BannedUser._twitchDisplayname} for \"{e.BanReason}\""
                     ));
             }
-
             BanEventArguments banEvent = new BanEventArguments(
                 bChan,
                 mod,
@@ -173,7 +172,6 @@ namespace MisfitBot2.Extensions.ChannelManager
                 true
                 );
             Core.RaiseBanEvent(banEvent);
-
         }
         private async void Client_OnUntimeout(object sender, OnUntimeoutArgs e)
         {
@@ -302,11 +300,10 @@ namespace MisfitBot2.Extensions.ChannelManager
 
 
         }
-        private void Client_OnHost(object sender, OnHostArgs e)
+        private async void Client_OnHost(object sender, OnHostArgs e)
         {
-            Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
-                $"{e.HostedChannel} hosted by {e.Moderator}"
-                ));
+            BotChannel bChan = await Core.Channels.GetTwitchChannelByID(_twitchChannelName);
+            Core.RaiseHostEvent(bChan, new HostEventArguments(e.HostedChannel, e.Moderator));
         }
         private async void Client_OnFollow(object sender, OnFollowArgs e)
         {
@@ -385,7 +382,6 @@ namespace MisfitBot2.Extensions.ChannelManager
             UserEntry user = await Core.UserMan.GetUserByTwitchID(e.UserId);
             if (user != null && bChan != null)
             {
-
                 BitEventArguments bitEvent = new BitEventArguments(
                     bChan,
                     user,

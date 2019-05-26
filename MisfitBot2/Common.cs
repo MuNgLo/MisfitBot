@@ -9,7 +9,9 @@ namespace MisfitBot2
     public delegate void BotChannelGoesOffline(BotChannel bChan);
     public delegate void BitEvent(BitEventArguments e);
     public delegate void BanEvent(BanEventArguments e);
+    public delegate void HostEvent(BotChannel bChan, HostEventArguments e);
     public delegate void UnBanEvent(UnBanEventArguments e);
+    public delegate void ViewerCountEvent(BotChannel bChan, int oldCount, int newCount);
     public delegate void NewDiscordMember(BotChannel bChan, UserEntry user);
     /// <summary>
     /// Default uservalues class. Only contains a simple timestamp so far
@@ -37,6 +39,18 @@ namespace MisfitBot2
         public BitEventArguments(BotChannel chan, UserEntry usr, int time, int bits, int total, string con, string chatmsg)
         {
             bChan = chan;user = usr;timestamp = time;bitsGiven = bits;bitsTotal = total;context = con;chatmessage = chatmsg;
+        }
+    }
+    /// <summary>
+    /// Botwide event argument class
+    /// </summary>
+    public class HostEventArguments
+    {
+        public string Hostchannel, Moderator;
+        public HostEventArguments(string hostchannel, string moderator)
+        {
+            Hostchannel = hostchannel;
+            Moderator = moderator;
         }
     }
     /// <summary>

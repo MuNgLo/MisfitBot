@@ -19,11 +19,19 @@ namespace MisfitBot2.Services
         public AdminService()
         {
             Core.OnBanEvent += OnBanEvent;
-            Core.OnUnBanEvent += OnUnBanEvent;
             Core.OnBitEvent += OnBitEvent;
-            Core.OnNewDiscordMember += OnNewDiscordMember;
-            Core.OnBotChannelGoesOffline += OnChannelGoesOffline;
             Core.OnBotChannelGoesLive += OnChannelGoesLive;
+            Core.OnBotChannelGoesOffline += OnChannelGoesOffline;
+            Core.OnHostEvent += OnHostEvent;
+            Core.OnNewDiscordMember += OnNewDiscordMember;
+            Core.OnUnBanEvent += OnUnBanEvent;
+
+            Core.OnUserEntryMerge += OnUserEntryMerge;
+        }
+
+        private async void OnHostEvent(BotChannel bChan, HostEventArguments e)
+        {
+            await SayOnDiscordAdmin(bChan, $"{e.Moderator} hosted {e.Hostchannel} https://www.twitch.tv/{e.Hostchannel}");
         }
 
         private async void OnChannelGoesLive(BotChannel bChan, int delay)
@@ -535,7 +543,7 @@ namespace MisfitBot2.Services
         }
         public void OnUserEntryMerge(UserEntry discordUser, UserEntry twitchUser)
         {
-            throw new NotImplementedException();
+            
         }
         public Task SetDefaultDiscordChannel(BotChannel bChan, ulong guildID)
         {

@@ -18,11 +18,14 @@ namespace MisfitBot2
 
         public static BitEvent OnBitEvent;
         public static BanEvent OnBanEvent;
+        public static HostEvent OnHostEvent;
         public static UnBanEvent OnUnBanEvent;
         public static NewDiscordMember OnNewDiscordMember;
         public static BotChannelGoesLive OnBotChannelGoesLive;
         public static BotChannelGoesOffline OnBotChannelGoesOffline;
         public static UserEntryMerge OnUserEntryMerge;
+        public static ViewerCountEvent OnViewercount;
+
 
         public static SQLiteConnection Data;
 
@@ -76,6 +79,10 @@ namespace MisfitBot2
         {
             OnBanEvent?.Invoke(e);
         }
+        public static void RaiseHostEvent(BotChannel bChan, HostEventArguments e)
+        {
+            OnHostEvent?.Invoke(bChan, e);
+        }
         public static void RaiseUnBanEvent(UnBanEventArguments e)
         {
             OnUnBanEvent?.Invoke(e);
@@ -97,6 +104,10 @@ namespace MisfitBot2
             if (bChan == null) { return; }
             bChan.isLive = false;
             OnBotChannelGoesOffline?.Invoke(bChan);
+        }
+        public static void RaiseOnViewerCount(BotChannel bChan, int oldCount, int newCount)
+        {
+            OnViewercount?.Invoke(bChan, oldCount, newCount);
         }
         #endregion
     }
