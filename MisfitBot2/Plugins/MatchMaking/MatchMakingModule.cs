@@ -16,16 +16,24 @@ namespace MisfitBot2.Modules
         {
             _service = service;
         }
+
         [Command("mm", RunMode = RunMode.Async)]
         [Summary("Manage the Matchmaking stuff. on/off")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task mmCMD(string arg)
+        public async Task mm2CMD()
+        {
+            await _service.DiscordCommand(Context);
+        }
+        [Command("mm", RunMode = RunMode.Async)]
+        [Summary("Manage the Matchmaking stuff. on/off")]
+        [RequireUserPermission(GuildPermission.ManageMessages)]
+        public async Task mm1CMD(string arg)
         {
             await _service.DiscordCommand(Context, arg);
         }
         [Command("mm", RunMode = RunMode.Async)]
         [RequireUserPermission(GuildPermission.ManageMessages)]
-        public async Task mm2CMD([Remainder]string text)
+        public async Task mm3CMD([Remainder]string text)
         {
             if (Context.User.IsBot) { return; }
             string[] args = text.Split(" ");
