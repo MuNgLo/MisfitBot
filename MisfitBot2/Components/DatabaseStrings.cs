@@ -1,5 +1,4 @@
-﻿using MisfitBot2.Plugins.Couch;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
@@ -8,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace MisfitBot2.Components
 {
+    /// <summary>
+    /// Create an instanse of this to store/grab strings from DB.
+    /// </summary>
     public class DatabaseStrings
     {
         readonly string PLUGINNAME;
@@ -17,6 +19,12 @@ namespace MisfitBot2.Components
         }
 
         #region DB access
+        /// <summary>
+        /// Deletes entry with ID from table TableName(bChan.Key).
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public bool DeleteEntry(BotChannel bChan, int id)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
@@ -32,7 +40,13 @@ namespace MisfitBot2.Components
             }
             return false;
         }
-        public async Task<CouchDBString> GetStringByID(BotChannel bChan, int id)
+        /// <summary>
+        /// Retrieves string from DB table TableName(bChan.Key) by ID.
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public async Task<DBString> GetStringByID(BotChannel bChan, int id)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
@@ -55,9 +69,15 @@ namespace MisfitBot2.Components
                 {
                     return null;
                 }
-                return new CouchDBString((int)result.GetInt64(0), result.GetBoolean(1), result.GetString(2), result.GetString(3));
+                return new DBString((int)result.GetInt64(0), result.GetBoolean(1), result.GetString(2), result.GetString(3));
             }
         }
+        /// <summary>
+        /// Inserts new string into DB table TableName(bChan.Key) with INUSE=True and TOPIC=topic.
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <param name="topic"></param>
+        /// <param name="line"></param>
         public void SaveNewLine(BotChannel bChan, string topic, string line)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
@@ -74,7 +94,13 @@ namespace MisfitBot2.Components
                 cmd.ExecuteNonQuery();
             }
         }
-        public  bool SaveEditedLineByID(BotChannel bChan, CouchDBString entry)
+        /// <summary>
+        /// Overwrites existing string in DB table TableName(bChan.Key) by ID.
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <param name="entry"></param>
+        /// <returns></returns>
+        public bool SaveEditedLineByID(BotChannel bChan, DBString entry)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
@@ -90,10 +116,15 @@ namespace MisfitBot2.Components
             }
             return false;
         }
-        
-        public List<CouchDBString> GetRowsInUse(BotChannel bChan, string topic)
+        /// <summary>
+        /// Returns a List<string> from DB table TableName(bChan.Key) by topic where INUSE=True.
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <param name="topic"></param>
+        /// <returns></returns>
+        public List<DBString> GetRowsInUse(BotChannel bChan, string topic)
         {
-            List<CouchDBString> inuseLines = new List<CouchDBString>();
+            List<DBString> inuseLines = new List<DBString>();
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
@@ -105,16 +136,22 @@ namespace MisfitBot2.Components
                 {
                     while (result.Read())
                     {
-                        CouchDBString entry = new CouchDBString((int)result.GetInt64(0), result.GetBoolean(1), result.GetString(2), result.GetString(3));
+                        DBString entry = new DBString((int)result.GetInt64(0), result.GetBoolean(1), result.GetString(2), result.GetString(3));
                         inuseLines.Add(entry);
                     }
                 }
                 return inuseLines;
             }
         }
-        public List<CouchDBString> GetRowsByTen(BotChannel bChan, int page = 0)
+        /// <summary>
+        /// Gets a List of up to 10 entries from DB table TableName(bChan.Key). Use page to offset.
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <param name="page"></param>
+        /// <returns></returns>
+        public List<DBString> GetRowsByTen(BotChannel bChan, int page = 0)
         {
-            List<CouchDBString> inuseLines = new List<CouchDBString>();
+            List<DBString> inuseLines = new List<DBString>();
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
@@ -124,14 +161,19 @@ namespace MisfitBot2.Components
                 {
                     while (result.Read())
                     {
-                        CouchDBString entry = new CouchDBString((int)result.GetInt64(0), result.GetBoolean(1), result.GetString(2), result.GetString(3));
+                        DBString entry = new DBString((int)result.GetInt64(0), result.GetBoolean(1), result.GetString(2), result.GetString(3));
                         inuseLines.Add(entry);
                     }
                 }
                 return inuseLines;
             }
         }
-
+        /// <summary>
+        /// Gets a random string from DB table TableName(bChan.Key) under topic that are INUSE.
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <param name="topic"></param>
+        /// <returns></returns>
         public string GetRandomLine(BotChannel bChan, string topic)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
@@ -178,19 +220,20 @@ namespace MisfitBot2.Components
             });
             return result;
         }
+        /// <summary>
+        /// Drops the DB table TableName(bChan.Key)
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <returns></returns>
         public async Task<bool> TableDrop(BotChannel bChan)
         {
-
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
-
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
                 cmd.CommandText = $"PRAGMA foreign_keys = OFF" +
                     $" DROP TABLE IF EXISTS \"{TableName(bChan.Key)}\"" +
                     $" PRAGMA foreign_keys = ON";
-                //cmd.ExecuteNonQuery();
-                //cmd.ExecuteNonQuery();
                 try
                 {
                    int i = await cmd.ExecuteNonQueryAsync();
@@ -228,9 +271,7 @@ namespace MisfitBot2.Components
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-
                 //ID int primary key IDENTITY(1,1) NOT NULL
-
                 cmd.CommandText = $"CREATE TABLE \"{TableName(chanKey)}\" (" +
                     $"ROWID INTEGER PRIMARY KEY AUTOINCREMENT," +
                     $"inuse BOOLEAN, " +
@@ -246,8 +287,6 @@ namespace MisfitBot2.Components
         {
             return chanKey + "_" + PLUGINNAME;
         }
-
-        
         #endregion
     }//END of DatabaseStrings
 }

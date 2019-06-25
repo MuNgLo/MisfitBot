@@ -10,7 +10,6 @@ namespace MisfitBot2.Twitch
     public class TwitchUsers
     {
         private Dictionary<string, List<TwitchChannelUser>> _users = new Dictionary<string, List<TwitchChannelUser>>();
-
         /// <summary>
         /// Add new user or updates the timestamp of existing user
         /// </summary>
@@ -49,6 +48,22 @@ namespace MisfitBot2.Twitch
             }
             return result;
         }
+        public string GetRandomUserInChannel(string channelName)
+        {
+            if (!_users.ContainsKey(channelName))
+            {
+                _users[channelName] = new List<TwitchChannelUser>();
+                return null;
+            }
+            List<string> result = new List<string>();
+            foreach (TwitchChannelUser user in _users[channelName])
+            {
+                result.Add(user._twitchUsername);
+            }
+            System.Random rng = new System.Random();
+            return result[rng.Next(0,result.Count)];
+        }
+
     }
     struct TwitchChannelUser
     {

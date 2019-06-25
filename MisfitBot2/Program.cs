@@ -14,7 +14,6 @@ namespace MisfitBot2
 {
     public class Program
     {
-        
         private static IServiceProvider _services;
         // Keep the CommandService and IServiceCollection around for use with commands.
         // These two types require you install the Discord.Net.Commands package.
@@ -78,7 +77,6 @@ namespace MisfitBot2
 
         public async Task InitCommands()
         {
-            //Console.WriteLine($":DW:[InitCommands]");
             // Repeat this for all the service classes
             // and other dependencies that your commands might need.
             _map.AddSingleton(new TwitchService()); // Make sure this loads first

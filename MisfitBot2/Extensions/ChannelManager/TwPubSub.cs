@@ -14,7 +14,6 @@ namespace MisfitBot2.Extensions.ChannelManager
     public class TwPubSub
     {
         private TwitchPubSub Client;
-        private int _lastViewerCount = 0;
         private readonly string EXTENSIONNAME = "TwPubSub";
         private readonly string _oauth;
         private readonly string _twitchID;
@@ -227,38 +226,26 @@ namespace MisfitBot2.Extensions.ChannelManager
                     );
             }
         }
-        private void OnViewCount(object sender, OnViewCountArgs e)
+        private async void OnViewCount(object sender, OnViewCountArgs e)
         {
-            if (_lastViewerCount != e.Viewers)
+            BotChannel bChan = await Core.Channels.GetTwitchChannelByName(_twitchChannelName);
+            if (bChan != null)
             {
-                _lastViewerCount = e.Viewers;
-                //Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
-                //    $"OnViewCount. {e.Viewers} :: {e.Viewers} viewers."
-                //    ));
+                if (bChan.viewerCount != e.Viewers)
+                {
+                    bChan.viewerCount = e.Viewers;
+                    Core.Channels.ChannelSave(bChan);
+                }
             }
         }
         private async void OnChannelSubscription(object sender, OnChannelSubscriptionArgs e)
         {
-            if(e.Subscription.RecipientId == null)
+            JsonDumper.DumpObjectToJson(e); // collect a few of these so we know what we are dealing with
+            if (e.Subscription.RecipientId == null)
             {
                 await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME, "RecipientId is NULL"));
             }
-            // DEBUG Save the output of this as an example somewhere on Trello
-            /*await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME, "--------------------------"));
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME, $"ChannelId : {e.Subscription.ChannelId}"));
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME, $"ChannelName : {e.Subscription.ChannelName}"));
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME, $"Context : {e.Subscription.Context}"));
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME, $"RecipientDisplayName : {e.Subscription.RecipientDisplayName}"));
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME, $"RecipientId : {e.Subscription.RecipientId}"));
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME, $"RecipientName : {e.Subscription.RecipientName}"));
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME, $"SubMessage : {e.Subscription.SubMessage}"));
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME, $"SubscriptionPlan : {e.Subscription.SubscriptionPlan}"));
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME, $"SubscriptionPlanName : {e.Subscription.SubscriptionPlanName}"));
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME, $"Time : {e.Subscription.Time}"));
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME, $"UserId : {e.Subscription.UserId}"));
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME, $"Username : {e.Subscription.Username}"));
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME, "--------------------------"));
-            */
+            
 
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(e.Subscription.ChannelName);
 
@@ -285,20 +272,6 @@ namespace MisfitBot2.Extensions.ChannelManager
                     await (Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(msg);
                 }
             }
-            /*UserEntry user = null;
-            if (e.Subscription.UserId != null && e.Subscription.UserId != string.Empty)
-            {
-                await Core.UserMan.GetUserByTwitchID(e.Subscription.UserId);
-            }
-            if (user == null) { return; }
-
-            UserEntry recipient = null;
-            if (e.Subscription.RecipientId != null && e.Subscription.RecipientId != string.Empty)
-            {
-                recipient = await Core.UserMan.GetUserByTwitchID(e.Subscription.RecipientId);
-            }*/
-
-
         }
         private async void Client_OnHost(object sender, OnHostArgs e)
         {

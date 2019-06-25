@@ -497,7 +497,7 @@ namespace MisfitBot2.Services
         #region DB Strings stuff
         private async Task DeleteEntry(BotChannel bChan, int id)
         {
-            CouchDBString entry = await dbStrings.GetStringByID(bChan, id);
+            DBString entry = await dbStrings.GetStringByID(bChan, id);
             if (entry == null)
             {
                 await SayOnDiscordAdmin(bChan, $"Could not match the given ID.");
@@ -515,8 +515,8 @@ namespace MisfitBot2.Services
         }
         private async Task ToggleInUse(BotChannel bChan, int id)
         {
-            CouchDBString entry = await dbStrings.GetStringByID(bChan, id);
-            CouchDBString edited = new CouchDBString(entry._id, !entry._inuse, entry._topic, entry._text);
+            DBString entry = await dbStrings.GetStringByID(bChan, id);
+            DBString edited = new DBString(entry._id, !entry._inuse, entry._topic, entry._text);
             if(dbStrings.SaveEditedLineByID(bChan, edited))
             {
                 await SayOnDiscordAdmin(bChan, "Entry updated.");
@@ -532,14 +532,14 @@ namespace MisfitBot2.Services
             string inuseText = $"Currently stored lines...```fix{Environment.NewLine}" +
                 $"These are lines stored in the database that the Couch plugin will use based on topic if they are marked as inuse.{Environment.NewLine}{Environment.NewLine}" +
                 $"<ID> <TOPIC> <INUSE> <TEXT>        Page {page + 1}{Environment.NewLine}";
-            List<CouchDBString> lines = dbStrings.GetRowsByTen(bChan, page);
+            List<DBString> lines = dbStrings.GetRowsByTen(bChan, page);
             if (lines.Count == 0)
             {
                 inuseText += "No hits. Try a lower page number.";
             }
             else
             {
-                foreach(CouchDBString entry in lines)
+                foreach(DBString entry in lines)
                 {
                     inuseText += String.Format("{0,4}", entry._id);
                     inuseText += String.Format("{0,8}", entry._topic);

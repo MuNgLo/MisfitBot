@@ -6,7 +6,9 @@ using System.Linq;
 
 namespace MisfitBot2.Crypto
 {
-
+    /// <summary>
+    /// Static class to handle encrypting and decrypting
+    /// </summary>
     public static class Cipher
     {
         static readonly string key = "aodisjoaiksjdlqwelkj"; // TODO make this a first time launch parameter
@@ -38,7 +40,6 @@ namespace MisfitBot2.Crypto
 
             return Convert.ToBase64String(bytesEncrypted);
         }
-
         /// <summary>
         /// Decrypt a string.
         /// </summary>
@@ -67,7 +68,6 @@ namespace MisfitBot2.Crypto
 
             return Encoding.UTF8.GetString(bytesDecrypted);
         }
-
         private static byte[] Encrypt(byte[] bytesToBeEncrypted, byte[] passwordBytes)
         {
             byte[] encryptedBytes = null;
@@ -101,7 +101,6 @@ namespace MisfitBot2.Crypto
 
             return encryptedBytes;
         }
-
         private static byte[] Decrypt(byte[] bytesToBeDecrypted, byte[] passwordBytes)
         {
             byte[] decryptedBytes = null;

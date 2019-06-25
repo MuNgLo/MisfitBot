@@ -14,6 +14,7 @@
         public string TwitchChannelName = string.Empty; // NOT DisplayName!!
         public bool isTwitch = true; // Phase this one out
         public bool isLive = false;
+        public int viewerCount = 0;
         public bool TwitchAutojoin = false;
         public string pubsubOauth = string.Empty;
         public string Key = string.Empty;

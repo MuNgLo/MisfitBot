@@ -9,7 +9,9 @@ using TwitchLib.PubSub;
 
 namespace MisfitBot2
 {
-
+    /// <summary>
+    /// The main logging class for the bot. The updateScreen part should get rewritten.
+    /// </summary>
     public class JuansLog : ILogger, ILogger<TwitchLib.PubSub.TwitchPubSub>
     {
         private List<JuanMessage> _logLines = new List<JuanMessage>();

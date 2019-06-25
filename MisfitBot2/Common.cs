@@ -24,6 +24,17 @@ namespace MisfitBot2
             _timestamp = time;
         }
     }
+    public class DBString
+    {
+        public readonly int _id;
+        public readonly bool _inuse;
+        public readonly string _topic;
+        public readonly string _text;
+        public DBString(int id, bool inuse, string topic, string text)
+        {
+            _id = id; _inuse = inuse; _topic = topic; _text = text;
+        }
+    }
     /// <summary>
     /// Botwide event argument class
     /// </summary>

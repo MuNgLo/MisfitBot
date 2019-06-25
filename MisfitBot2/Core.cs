@@ -14,7 +14,7 @@ namespace MisfitBot2
 {
     public static class Core
     {
-        public static readonly char _commandCharacter = '?';
+        public static readonly char _commandCharacter = '%';
 
         public static BitEvent OnBitEvent;
         public static BanEvent OnBanEvent;
@@ -25,16 +25,12 @@ namespace MisfitBot2
         public static BotChannelGoesOffline OnBotChannelGoesOffline;
         public static UserEntryMerge OnUserEntryMerge;
         public static ViewerCountEvent OnViewercount;
-
-
         public static SQLiteConnection Data;
-
         public static ConfigurationHandler Configs;
         public static TimerStuff Timers;
         public static UserManagerService UserMan;
         public static TwitchService Twitch;
         public static TreasureService Treasury;
-        //public static DiscordNET Discord;
         public static DiscordSocketClient Discord;
         public static ChannelManager Channels;
         public static int CurrentTime { private set { } get { return UnixTime(); } }

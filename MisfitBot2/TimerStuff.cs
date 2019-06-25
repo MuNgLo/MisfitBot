@@ -24,7 +24,7 @@ namespace MisfitBot2
             System.Threading.TimerCallback cb = new System.Threading.TimerCallback(ProcessTimerEvent);
 
             // Create the object for the timer.
-            clsTime time = new clsTime();
+            ClsTime time = new ClsTime();
             // Create the timer. It is autostart, so creating the timer will start it.
             seconds = new System.Threading.Timer(cb, time, 500, 1000);
         }
@@ -32,17 +32,19 @@ namespace MisfitBot2
         private void ProcessTimerEvent(object obj)
         {
             _secondsFromStart++;
-            if(OnSecondTick != null)
+            //if(OnSecondTick != null)
+            //{
+                OnSecondTick?.Invoke(_secondsFromStart);
+            //}
+            if(_secondsFromStart % 60 == 0)
             {
-                OnSecondTick.Invoke(_secondsFromStart);
-            }
-            if(_secondsFromStart % 60 == 0 && OnMinuteTick != null)
-            {
-                OnMinuteTick.Invoke(_secondsFromStart / 60);
+                OnMinuteTick?.Invoke(_secondsFromStart / 60);
             }
         }
-        // Define a class to use as the object argument for the timer.
-        class clsTime
+        /// <summary>
+        /// Define a class to use as the object argument for the timer.
+        /// </summary>
+        class ClsTime
         {
             public string GetTimeString()
             {
