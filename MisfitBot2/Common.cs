@@ -1,8 +1,11 @@
 ﻿using Discord;
 using System;
+using TwitchLib.PubSub.Enums;
 
 namespace MisfitBot2
 {
+    public enum TWSUBCONTEXT {  UNKNOWN, SUB, RESUB, GIFTSUB }
+
     public delegate void UserEntryMerge(UserEntry discordUser, UserEntry twitchUser);
     public delegate void BotChannelMergeEvent(BotChannel guildID, BotChannel twitchChannelName);
     public delegate void BotChannelGoesLive(BotChannel bChan, int delay);
@@ -10,6 +13,7 @@ namespace MisfitBot2
     public delegate void BitEvent(BitEventArguments e);
     public delegate void BanEvent(BanEventArguments e);
     public delegate void HostEvent(BotChannel bChan, HostEventArguments e);
+    public delegate void TwitchSubscriptionEvent(BotChannel bChan, TwitchSubEventArguments e);
     public delegate void UnBanEvent(UnBanEventArguments e);
     public delegate void ViewerCountEvent(BotChannel bChan, int oldCount, int newCount);
     public delegate void NewDiscordMember(BotChannel bChan, UserEntry user);
@@ -62,6 +66,72 @@ namespace MisfitBot2
         {
             Hostchannel = hostchannel;
             Moderator = moderator;
+        }
+    }/// <summary>
+     /// Botwide event argument class
+     /// </summary>
+    public class TwitchSubEventArguments
+    {
+        public int twitchUserID;
+        public string username;
+        public string userDisplayname;
+
+        public int recipientUserID;
+        public string recipientUsername;
+        public string recipientDisplayname;
+
+        public int twitchChannelID;
+        public string twitchChannelname;
+
+        public SubscriptionPlan subscriptionplan;
+        public int months; // This seems highly unreliable
+
+        public TWSUBCONTEXT subContext;
+        public string subMessage;
+
+        public TwitchSubEventArguments(TwitchLib.PubSub.Events.OnChannelSubscriptionArgs args)
+        {
+            switch (args.Subscription.Context)
+            {
+                case "sub":
+                    MakeSub(args, TWSUBCONTEXT.SUB);
+                    break;
+                case "resub":
+                    MakeSub(args, TWSUBCONTEXT.RESUB);
+                    break;
+                case "giftsub":
+                    MakeSub(args, TWSUBCONTEXT.GIFTSUB);
+                    break;
+                case "unknown":
+                    Core.LOG(new LogMessage(LogSeverity.Error, $"TwitchEventArgument Constructor", $"Sub context is \"unknown\"! ({args.Subscription.Context.ToString()})"));
+                    JsonDumper.DumpObjectToJson(args, "TwitchEventArgument");
+                    break;
+                default:
+                    Core.LOG(new LogMessage(LogSeverity.Error, $"TwitchEventArgument", $"Sub context not recognized! ({args.Subscription.Context.ToString()})"));
+                    subContext = TWSUBCONTEXT.UNKNOWN;
+                    break;
+            }
+        }
+
+        private void MakeSub(TwitchLib.PubSub.Events.OnChannelSubscriptionArgs e, TWSUBCONTEXT context)
+        {
+            int.TryParse(e.Subscription.UserId, out twitchUserID);
+            username = e.Subscription.Username;
+            userDisplayname = e.Subscription.DisplayName;
+
+            int.TryParse(e.Subscription.RecipientId, out recipientUserID);
+            recipientUsername = e.Subscription.RecipientName;
+            recipientDisplayname = e.Subscription.RecipientDisplayName;
+
+            int.TryParse(e.Subscription.ChannelId, out twitchChannelID);
+            twitchChannelname = e.Subscription.ChannelName;
+
+            subscriptionplan = e.Subscription.SubscriptionPlan;
+            months = e.Subscription.Months;
+
+            subContext = context;
+
+            subMessage = e.Subscription.SubMessage.Message;
         }
     }
     /// <summary>

@@ -188,6 +188,9 @@ namespace MisfitBot2.Extensions.UserManager
                     throw;
                 }
                 result.Read();
+
+                //await Core.LOG(new LogMessage(LogSeverity.Error, "DEBUG", $"DiscordID to lookup {uid} "));
+
                 UserEntry user = new UserEntry
                 {
                     linked = result.GetBoolean(0),
@@ -199,7 +202,10 @@ namespace MisfitBot2.Extensions.UserManager
                     _twitchDisplayname = result.GetString(6),
                     _twitchColour = result.GetString(7),
                     _twitchLogo = result.GetString(8),
+
+
                     _discordUID = (ulong)result.GetInt64(11),
+
                     lastChange = (int)result.GetInt64(13),
                     lastSave = (int)result.GetInt64(14)
                 };

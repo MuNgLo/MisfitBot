@@ -25,8 +25,29 @@ namespace MisfitBot2.Services
             Core.OnHostEvent += OnHostEvent;
             Core.OnNewDiscordMember += OnNewDiscordMember;
             Core.OnUnBanEvent += OnUnBanEvent;
-
+            Core.OnTwitchSubEvent += OnTwitchSub;
             Core.OnUserEntryMerge += OnUserEntryMerge;
+        }
+
+        private async void OnTwitchSub(BotChannel bChan, TwitchSubEventArguments e)
+        {
+            string message = string.Empty;
+            switch (e.subContext)
+            {
+                case TWSUBCONTEXT.SUB:
+                    message = $"{e.userDisplayname} subscribed. ({e.subscriptionplan.ToString()})";
+                    break;
+                case TWSUBCONTEXT.RESUB:
+                    message = $"{e.userDisplayname} resubscribed for {e.months} months. ({e.subscriptionplan.ToString()})";
+                    break;
+                case TWSUBCONTEXT.GIFTSUB:
+                    message = $"{e.userDisplayname} gifted {e.recipientDisplayname} asub. {e.recipientDisplayname} subscribed for {e.months} months. ({e.subscriptionplan.ToString()})";
+                    break;
+            }
+            if (bChan.discordAdminChannel != 0 && message != string.Empty)
+            {
+            await SayOnDiscordAdmin(bChan, message);
+            }
         }
 
         private async void OnHostEvent(BotChannel bChan, HostEventArguments e)
@@ -70,7 +91,7 @@ namespace MisfitBot2.Services
         }
         private async void OnNewDiscordMember(BotChannel bChan, UserEntry user)
         {
-            await SayOnDiscordAdmin(bChan, $"{user._username} just joined the Discord."); //<-- VERIFY as seen in live
+            await SayOnDiscordAdmin(bChan, $"{user._username} just joined the Discord.");
         }
 
         #region Discord Command Methods

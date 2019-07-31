@@ -240,38 +240,9 @@ namespace MisfitBot2.Extensions.ChannelManager
         }
         private async void OnChannelSubscription(object sender, OnChannelSubscriptionArgs e)
         {
-            JsonDumper.DumpObjectToJson(e); // collect a few of these so we know what we are dealing with
-            if (e.Subscription.RecipientId == null)
-            {
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME, "RecipientId is NULL"));
-            }
-            
-
+            //JsonDumper.DumpObjectToJson(e); // collect a few of these so we know what we are dealing with
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(e.Subscription.ChannelName);
-
-            if (e.Subscription.RecipientName == null) // TODO this need verification
-            {
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
-                    $"{_twitchChannelName} :: {e.Subscription.Username} subscribed for {e.Subscription.Months} months"
-                    ));
-                if (bChan.discordAdminChannel != 0)
-                {
-                    await (Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
-                        $"{e.Subscription.Username} subscribed for {e.Subscription.Months}. \"{e.Subscription.SubMessage.Message}\""
-                        );
-                }
-            }
-            else
-            {
-                string msg = $"{_twitchChannelName} :: {e.Subscription.DisplayName} gifted {e.Subscription.RecipientDisplayName} " +
-                    $"a {e.Subscription.SubscriptionPlanName} Sub to ";
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME, msg));
-                if (bChan == null) { return; }
-                if (bChan.discordAdminChannel != 0)
-                {
-                    await (Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(msg);
-                }
-            }
+            Core.RaiseOnTwitchSubscription(bChan, new TwitchSubEventArguments(e));
         }
         private async void Client_OnHost(object sender, OnHostArgs e)
         {

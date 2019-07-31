@@ -20,6 +20,7 @@ using MisfitBot2.Plugins.PluginTemplate;
 using MisfitBot2.Plugins.Raffle;
 using MisfitBot2.Plugins.Voting;
 using MisfitBot2.Plugins.MatchMaking;
+using MisfitBot2.Plugins.Queue;
 
 namespace MisfitBot2
 {
@@ -219,6 +220,10 @@ namespace MisfitBot2
                         VotingSettings vote = JsonConvert.DeserializeObject<VotingSettings>(result.GetString(1));
                         //_configs[bChan.Key][plugin] = vote;
                         return vote;
+                    case "Queue":
+                        QueueSettings queue = JsonConvert.DeserializeObject<QueueSettings>(result.GetString(1));
+                        //_configs[bChan.Key][plugin] = vote;
+                        return queue;
                     default:
                         PluginSettingsBase result3 = JsonConvert.DeserializeObject<PluginSettingsBase>(result.GetString(1));
                         //_configs[bChan.Key][plugin] = result3;

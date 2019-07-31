@@ -40,6 +40,10 @@ namespace MisfitBot2
             };
             _DiscordClient = new DiscordSocketClient(disConfig);
             _DiscordClient.Log += Core.LOGGER.LogThis;
+            //_DiscordClient.UserUpdated += Core.RaiseDiscordUserUpdated;
+            _DiscordClient.GuildMemberUpdated += Core.RaiseDiscordUserUpdated;
+            _DiscordClient.GuildUnavailable += (guild) => { Core.LOG(new LogMessage(LogSeverity.Warning, "Misfitbot", $"Discord guild \"{guild.Name}\" unavailable.")); return Task.CompletedTask; };
+            _DiscordClient.JoinedGuild += (guild) => { Core.LOG(new LogMessage(LogSeverity.Info, "Misfitbot", $"Joined Discord guild \"{guild.Name}\".")); return Task.CompletedTask; };
             _DiscordClient.Ready += () => { Core.LOG(new LogMessage(LogSeverity.Info, "Misfitbot", "Connected and ready to be used.")); return Task.CompletedTask; };
             Core.Discord = _DiscordClient;
             string token = DiscordSettings.TOKEN; // Remember to keep this private!
@@ -94,6 +98,7 @@ namespace MisfitBot2
             _map.AddSingleton(new CouchService());
             _map.AddSingleton(new HelpService());
             _map.AddSingleton(new MatchMakingService());
+            _map.AddSingleton(new QueueService());
 
             //_map.AddSingleton(new GreeterService()); 
             // When all your required services are in the collection, build the container.

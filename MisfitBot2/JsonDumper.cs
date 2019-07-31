@@ -15,7 +15,7 @@ namespace MisfitBot2
         /// Serialize an object to Json and write it to a file
         /// </summary>
         /// <param name="obj"></param>
-        static public void DumpObjectToJson(Object obj)
+        static public void DumpObjectToJson(Object obj, string prefix=null)
         {
             if (!System.IO.Directory.Exists("DebugDumps"))
             {
@@ -23,12 +23,27 @@ namespace MisfitBot2
             }
             int time = Core.CurrentTime;
             int index = 1;
-            string fileName = $"DebugDumps/DataDump-{index}--{time}.json";
+            string fileName = FormatFileName(index, time, prefix);
+            while (File.Exists(fileName))
+            {
+                index++;
+                fileName = FormatFileName(index, time, prefix);
+            }
             string data = JsonConvert.SerializeObject(obj, Formatting.Indented);
-            while (File.Exists(fileName)) { index++; }
             File.WriteAllText(fileName, data);
 
         }
+
+        static private string FormatFileName(int index, int time, string prefix=null)
+        {
+            string fileName = $"DebugDumps/DataDump-{index}--{time}.json";
+            if (prefix != null)
+            {
+                fileName = $"DebugDumps/{prefix}-{index}.json";
+            }
+            return fileName;
+        }
+
         /// <summary>
         /// Writes a string to a file.
         /// </summary>

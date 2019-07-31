@@ -246,8 +246,6 @@ namespace MisfitBot2.Plugins.Betting
             {
                 int.TryParse(bet._optionPick, out optionInINT);
                 bet._brPlacementDistance = Math.Abs(winningOptionInINT - optionInINT);
-
-
             }
 
             List<IndividualBet> SortedList = _bets.OrderBy(p => p._brPlacementDistance).ToList();
@@ -255,13 +253,22 @@ namespace MisfitBot2.Plugins.Betting
             string msg = string.Empty;
             List<IndividualBet> winners = SortedList.FindAll(p => p._brPlacementDistance == SortedList[0]._brPlacementDistance);
 
+            int winningBetsTotal = 0;
+            foreach (IndividualBet bet in winners)
+            {
+                winningBetsTotal += bet._amount;
+            }
+
+            float winningOdds = pool / winningBetsTotal;
+
+
             if (winners.Count > 5)
             {
                 int index = 0;
                 foreach (IndividualBet bet in winners)
                 {
                     // DO PAYOUTS!!!
-                    bet._winnings = pool / winners.Count;
+                    bet._winnings = (int)MathF.Floor(bet._amount * winningOdds);
                     await Core.Treasury.GiveGold(bChan, bet._user, bet._winnings);
                     if (index < 5)
                     {
@@ -275,7 +282,7 @@ namespace MisfitBot2.Plugins.Betting
                 foreach (IndividualBet bet in winners)
                 {
                     // DO PAYOUTS!!!
-                    bet._winnings = pool / winners.Count;
+                    bet._winnings = (int)MathF.Floor(bet._amount * winningOdds);
                     await Core.Treasury.GiveGold(bChan, bet._user, bet._winnings);
                     msg += $" {bet._user._twitchUsername}({bet._winnings})";
                 }

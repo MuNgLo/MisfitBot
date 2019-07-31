@@ -14,11 +14,12 @@ namespace MisfitBot2
 {
     public static class Core
     {
-        public static readonly char _commandCharacter = '%';
+        public static readonly char _commandCharacter = '?';
 
         public static BitEvent OnBitEvent;
         public static BanEvent OnBanEvent;
         public static HostEvent OnHostEvent;
+        public static TwitchSubscriptionEvent OnTwitchSubEvent;
         public static UnBanEvent OnUnBanEvent;
         public static NewDiscordMember OnNewDiscordMember;
         public static BotChannelGoesLive OnBotChannelGoesLive;
@@ -38,6 +39,8 @@ namespace MisfitBot2
         public static int UpTime { private set { } get { return UnixTime() - LastLaunchTime; } }
         public static JuansLog LOGGER;
         public static Func<LogMessage, Task> LOG;
+
+
         public static JsonSerializer serializer = new JsonSerializer();
         // TODO Incorperate this into Admin module
         public static List<String> IgnoredTwitchUsers = new List<string> {
@@ -63,24 +66,67 @@ namespace MisfitBot2
         }
         #endregion
         #region Botwide Events gets raised here
+        internal static async Task RaiseDiscordUserUpdated(SocketGuildUser arg1, SocketGuildUser arg2)
+        {
+            if (arg1 == null || arg1 == null)
+            {
+                await Core.LOG(new LogMessage(LogSeverity.Error, $"Core", "RaiseDiscordUserUpdated fed NULL parameter."));
+                return;
+            }
+            if (arg1.IsBot) { return; }
+            if(arg2.Activity == null){return;}
+            if(arg1.Activity == null){return; }
+            if(arg1.Activity.Type == ActivityType.Streaming){return; }
+            if (arg2.Activity.Type == ActivityType.Streaming)
+            {
+                await Core.LOG(new LogMessage(LogSeverity.Error, "Core", $"RaiseDiscordUserUpdated {arg2.Username} started streaming."));
+                return;
+            }
+        }
         public static void RaiseUserLinkEvent(UserEntry discordProfile, UserEntry twitchProfile)
         {
+            if (discordProfile == null || twitchProfile == null)
+            {
+                Core.LOG(new LogMessage(LogSeverity.Error, $"Core", "RaiseUserLinkEvent fed NULL parameter."));
+
+                return;
+            }
             OnUserEntryMerge?.Invoke(discordProfile, twitchProfile);
         }
         public static void RaiseBitEvent(BitEventArguments e)
         {
+            if (e == null)
+            {
+                Core.LOG(new LogMessage(LogSeverity.Error, $"Core", "RaiseBitEvent fed NULL parameter."));
+
+                return;
+            }
             OnBitEvent?.Invoke(e);
         }
         public static void RaiseBanEvent(BanEventArguments e)
         {
+            if (e == null)
+            {
+                Core.LOG(new LogMessage(LogSeverity.Error, $"Core", "RaiseBanEvent fed NULL parameter."));
+                return;
+            }
             OnBanEvent?.Invoke(e);
         }
         public static void RaiseHostEvent(BotChannel bChan, HostEventArguments e)
         {
+            if(bChan == null || e == null)
+            {
+                Core.LOG(new LogMessage(LogSeverity.Error, $"Core", "RaiseHostEvent fed NULL parameter."));
+                return;
+            }
             OnHostEvent?.Invoke(bChan, e);
         }
         public static void RaiseUnBanEvent(UnBanEventArguments e)
         {
+            if (e == null)
+            {
+                return;
+            }
             OnUnBanEvent?.Invoke(e);
         }
         public static void RaiseOnNewDiscordMember(BotChannel bChan, UserEntry user)
@@ -103,7 +149,26 @@ namespace MisfitBot2
         }
         public static void RaiseOnViewerCount(BotChannel bChan, int oldCount, int newCount)
         {
+            if (bChan == null)
+            {
+                Core.LOG(new LogMessage(LogSeverity.Error, $"Core", "RaiseOnViewerCount fed NULL bChan."));
+                return;
+            }
             OnViewercount?.Invoke(bChan, oldCount, newCount);
+        }
+        public static void RaiseOnTwitchSubscription(BotChannel bChan, TwitchSubEventArguments e)
+        {
+            if (bChan == null || e == null)
+            {
+                Core.LOG(new LogMessage(LogSeverity.Error, $"Core", "RaiseOnTwitchSubscription fed NULL parameter."));
+                return;
+            }
+            if (e.subContext == TWSUBCONTEXT.UNKNOWN)
+            {
+                Core.LOG(new LogMessage(LogSeverity.Error, $"Core", "RaiseOnTwitchSubscription UKNOWN sub context."));
+                return;
+            }
+            OnTwitchSubEvent?.Invoke(bChan, e);
         }
         #endregion
     }
