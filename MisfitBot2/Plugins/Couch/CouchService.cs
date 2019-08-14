@@ -126,6 +126,14 @@ namespace MisfitBot2.Services
                         }
                         switch (e.Command.ArgumentsAsList[0].ToLower())
                         {
+                            case "rock":
+                            case "shake":
+                                if(settings._active && settings._couches[bChan.Key].couchOpen)
+                                {
+                                    await ShakeCouch(bChan, settings);
+                                    SaveBaseSettings(PLUGINNAME, bChan, settings);
+                                }
+                                break;
                             case "on":
                                 settings._active = true;
                                 SaveBaseSettings(PLUGINNAME, bChan, settings);
@@ -269,8 +277,12 @@ namespace MisfitBot2.Services
             {
                 return;
             }
-            UserEntry user = await Core.UserMan.GetUserByTwitchUserName(e.Username);
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(e.Channel);
+            if (!bChan.isLive)
+            {
+                return;
+            }
+            UserEntry user = await Core.UserMan.GetUserByTwitchUserName(e.Username);
             CouchSettings settings = await Settings(bChan);
             if (!settings._couches.ContainsKey(bChan.Key))
             {
@@ -334,6 +346,10 @@ namespace MisfitBot2.Services
             CouchSettings settings = await Settings(bChan);
             switch (arguments[0].ToLower())
             {
+                case "shake":
+                case "rock":
+                    await ShakeCouch(bChan, settings);
+                    break;
                 case "on":
                     settings._active = true;
                     SaveBaseSettings(PLUGINNAME, bChan, settings);
@@ -446,6 +462,33 @@ namespace MisfitBot2.Services
         }
         #endregion
         #region Internal stuff
+        private async Task ShakeCouch(BotChannel bChan, CouchSettings settings)
+        {
+            await Core.LOG(new LogMessage(LogSeverity.Info, PLUGINNAME, $"Shaking couch in {bChan.TwitchChannelName}."));
+            Random rng = new Random();
+            List<string> victims = new List<string>();
+            foreach (string twitchUserName in settings._couches[bChan.Key].TwitchUsernames)
+            {
+                if(rng.Next(1, 100) <= 20)
+                {
+                    victims.Add(twitchUserName);
+                }
+            } 
+            if(victims.Count < 1) {
+                Core.Twitch._client.SendMessage(bChan.TwitchChannelName,
+                                $"The couch is shaking! Luckily everybody on the couch manages to bite the pillows and hold on for dear life."
+                                );
+                return; }
+            string msg = string.Empty;
+            foreach(string victim in victims)
+            {
+                settings._couches[bChan.Key].TwitchUsernames.Remove(victim);
+                msg += victim + ",";
+            }
+            Core.Twitch._client.SendMessage(bChan.TwitchChannelName,
+                                $"The couch is shaking! {msg} couldn't hold on."
+                                );
+        }
         private async void ResetCouch(BotChannel bChan, CouchSettings settings)
         { 
             await Core.LOG(new LogMessage(LogSeverity.Info, PLUGINNAME, "Live event captured. Opening couch!"));

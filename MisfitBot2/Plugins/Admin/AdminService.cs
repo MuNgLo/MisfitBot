@@ -34,7 +34,7 @@ namespace MisfitBot2.Services
         {
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(user.Guild.Id);
             if(bChan == null) { return; }
-            await SayOnDiscordAdmin(bChan, $"{user.Username} started streaming.");
+            //await SayOnDiscordAdmin(bChan, $"{user.Username} started streaming.");
         }
 
         private async void OnTwitchSub(BotChannel bChan, TwitchSubEventArguments e)

@@ -278,8 +278,9 @@ namespace MisfitBot2.Extensions.ChannelManager
             BotChannel bChan = await Core.Channels.GetTwitchChannelByID(_twitchID);
             if (bChan != null)
             {
-                if (bChan.discordAdminChannel != 0)
+                if (bChan.discordAdminChannel != 0 && Core.Discord != null)
                 {
+                    if((Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel) == null) { return; }
                     await(Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
                         $"PubSub Service connected."
                         ); 
