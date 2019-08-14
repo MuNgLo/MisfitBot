@@ -195,9 +195,9 @@ namespace MisfitBot2.Services
         private async Task GuildMemberUpdated(SocketGuildUser arg1, SocketGuildUser arg2)
         {
 
-            //JsonDumper.DumpObjectToJson(arg1);
-            //JsonDumper.DumpObjectToJson(arg2);
-            //await UpdateDiscordUserEntry(arg2);
+            //JsonDumper.DumpObjectToJson(arg1, "GuildMemUpd");
+            //JsonDumper.DumpObjectToJson(arg2, "GuildMemUpd");
+            await UpdateDiscordUserEntry(arg2);
         }
         /// <summary>
         /// Fires when discord client is connected and ready.

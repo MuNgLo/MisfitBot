@@ -16,9 +16,11 @@ namespace MisfitBot2
     {
         public static readonly char _commandCharacter = '?';
 
+        public static DiscordUserStartsStream OnDiscordUserStartStream;
         public static BitEvent OnBitEvent;
         public static BanEvent OnBanEvent;
         public static HostEvent OnHostEvent;
+        public static RaidEvent OnRaidEvent;
         public static TwitchSubscriptionEvent OnTwitchSubEvent;
         public static UnBanEvent OnUnBanEvent;
         public static NewDiscordMember OnNewDiscordMember;
@@ -39,19 +41,9 @@ namespace MisfitBot2
         public static int UpTime { private set { } get { return UnixTime() - LastLaunchTime; } }
         public static JuansLog LOGGER;
         public static Func<LogMessage, Task> LOG;
-
+        private static List<GenericTimeStamp> DiscordStreamerStamps;
 
         public static JsonSerializer serializer = new JsonSerializer();
-        // TODO Incorperate this into Admin module
-        public static List<String> IgnoredTwitchUsers = new List<string> {
-            "juanthebot",
-            "nightbot",
-            "fatmanleg",
-            "electricallongboard",
-            "mr__glitch",
-            "electricalskateboard",
-            "boogey2003"
-            };
 
         #region Supporting basic methods
         private static int UnixTime()
@@ -68,6 +60,7 @@ namespace MisfitBot2
         #region Botwide Events gets raised here
         internal static async Task RaiseDiscordUserUpdated(SocketGuildUser arg1, SocketGuildUser arg2)
         {
+            
             if (arg1 == null || arg1 == null)
             {
                 await Core.LOG(new LogMessage(LogSeverity.Error, $"Core", "RaiseDiscordUserUpdated fed NULL parameter."));
@@ -76,13 +69,47 @@ namespace MisfitBot2
             if (arg1.IsBot) { return; }
             if(arg2.Activity == null){return;}
             if(arg1.Activity == null){return; }
-            if(arg1.Activity.Type == ActivityType.Streaming){return; }
+            if(arg1.Activity.Type == ActivityType.Streaming){
+                if (arg2.Activity.Type != ActivityType.Streaming)
+                {
+                    // Fiscord users drops streaming flag
+                    AddRefreshStamp(new GenericTimeStamp() { ulongID = arg1.Id, stringID = string.Empty, timestamp = CurrentTime });
+                }
+                return;
+            }
             if (arg2.Activity.Type == ActivityType.Streaming)
             {
-                await Core.LOG(new LogMessage(LogSeverity.Error, "Core", $"RaiseDiscordUserUpdated {arg2.Username} started streaming."));
+                if (CheckStamp(arg1.Id))
+                {
+                    await Core.LOG(new LogMessage(LogSeverity.Error, "Core", $"RaiseDiscordUserUpdated {arg2.Username} started streaming. IActivity.GetType()={arg2.Activity.GetType()}"));
+                    OnDiscordUserStartStream?.Invoke(arg2);
+                }
                 return;
             }
         }
+        private static void AddRefreshStamp(GenericTimeStamp newStamp)
+        {
+            if(!DiscordStreamerStamps.Exists(p=>p.ulongID == newStamp.ulongID))
+            {
+                DiscordStreamerStamps.Add(newStamp);
+            }
+            else
+            {
+                int index = DiscordStreamerStamps.FindIndex(p => p.ulongID == newStamp.ulongID);
+                DiscordStreamerStamps[index] = newStamp;
+            }
+        }
+        private static bool CheckStamp(ulong discordID)
+        {
+            if(DiscordStreamerStamps == null) { DiscordStreamerStamps = new List<GenericTimeStamp>(); }
+            if (DiscordStreamerStamps.Exists(p => p.ulongID == discordID))
+            {
+                return CurrentTime > DiscordStreamerStamps.Find(p => p.ulongID == discordID).timestamp + 2700;
+            }
+            return true;
+        }
+
+
         public static void RaiseUserLinkEvent(UserEntry discordProfile, UserEntry twitchProfile)
         {
             if (discordProfile == null || twitchProfile == null)
@@ -120,6 +147,17 @@ namespace MisfitBot2
                 return;
             }
             OnHostEvent?.Invoke(bChan, e);
+        }
+        public static void RaiseRaidEvent(BotChannel bChan, RaidEventArguments e)
+        {
+            if (bChan == null || e == null)
+            {
+                Core.LOG(new LogMessage(LogSeverity.Error, $"Core", "RaiseRaidEvent fed NULL parameter."));
+                return;
+            }
+            Core.LOG(new LogMessage(LogSeverity.Error, $"Core", $"RaiseRaidEvent for {e.TargetChannel}. Coming from {e.SourceChannel} with {e.RaiderCount} raiders."));
+
+            OnRaidEvent?.Invoke(bChan, e);
         }
         public static void RaiseUnBanEvent(UnBanEventArguments e)
         {

@@ -27,6 +27,14 @@ namespace MisfitBot2.Services
             Core.OnUnBanEvent += OnUnBanEvent;
             Core.OnTwitchSubEvent += OnTwitchSub;
             Core.OnUserEntryMerge += OnUserEntryMerge;
+            Core.OnDiscordUserStartStream += OnDiscordUserStartStreaming;
+        }
+
+        private async void OnDiscordUserStartStreaming(SocketGuildUser user)
+        {
+            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(user.Guild.Id);
+            if(bChan == null) { return; }
+            await SayOnDiscordAdmin(bChan, $"{user.Username} started streaming.");
         }
 
         private async void OnTwitchSub(BotChannel bChan, TwitchSubEventArguments e)

@@ -19,6 +19,8 @@ namespace MisfitBot2.Extensions.ChannelManager
         private readonly string _twitchID;
         private readonly string _twitchChannelName;
         private bool _verbose = false;
+        private bool _closing = false;
+
         public TwPubSub(string OAuth, string twitchID, string twitchChannelName, bool silent)
         {
             _oauth = OAuth;
@@ -59,6 +61,7 @@ namespace MisfitBot2.Extensions.ChannelManager
         }
         public void Close()
         {
+            _closing = true;
             Client.Disconnect();
         }
         public void Connect()
@@ -212,6 +215,7 @@ namespace MisfitBot2.Extensions.ChannelManager
         }
         private async void OnPubSubServiceError(object sender, OnPubSubServiceErrorArgs e)
         {
+            if (_closing) { return; }
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(_twitchChannelName);
             await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, EXTENSIONNAME,
                 $"{_twitchChannelName} :: OnPubSubServiceError."
@@ -240,7 +244,7 @@ namespace MisfitBot2.Extensions.ChannelManager
         }
         private async void OnChannelSubscription(object sender, OnChannelSubscriptionArgs e)
         {
-            //JsonDumper.DumpObjectToJson(e); // collect a few of these so we know what we are dealing with
+            JsonDumper.DumpObjectToJson(e, "TwitchSUB"); // collect a few of these so we know what we are dealing with
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(e.Subscription.ChannelName);
             Core.RaiseOnTwitchSubscription(bChan, new TwitchSubEventArguments(e));
         }
@@ -271,16 +275,16 @@ namespace MisfitBot2.Extensions.ChannelManager
             await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
                 $"PubSub connected for {_twitchChannelName}."
                 ));
-            /*BotChannel bChan = Core.Channels._botChannels.GetTwitchChannelByID(_twitchID);
+            BotChannel bChan = await Core.Channels.GetTwitchChannelByID(_twitchID);
             if (bChan != null)
             {
                 if (bChan.discordAdminChannel != 0)
                 {
                     await(Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
                         $"PubSub Service connected."
-                        );
+                        ); 
                 }
-            }*/
+            }
         }
         private async void OnListenResponse(object sender, OnListenResponseArgs e)
         {
@@ -304,11 +308,11 @@ namespace MisfitBot2.Extensions.ChannelManager
             }
             else
             {
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
-                    $"Listening to {e.Topic} for {_twitchChannelName}."
-                    ));
                 if (_verbose)
                 {
+                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
+                        $"Listening to {e.Topic} for {_twitchChannelName}."
+                        ));
                     if (bChan.discordAdminChannel != 0)
                     {
                         // This line crashed once Fuck knows how or why

@@ -68,9 +68,22 @@ namespace MisfitBot2.Services
             _client.OnUserJoined += TwitchOnUserJoined;
             _client.OnMessageReceived += TwitchOnMessageReceived;
             _client.OnExistingUsersDetected += TwitchOnExistingUsersDetected;
+            _client.OnRaidNotification += OnRaidNotification;
             _client.Connect();
             Core.Twitch = this;
         }// EO CONSTRUCTOR
+
+        /// <summary>
+        /// Fires when a raid notification is detected in chat
+        /// </summary>
+        private async void OnRaidNotification(object sender, OnRaidNotificationArgs e)
+        {
+            JsonDumper.DumpObjectToJson(e, "Raid"); // TODO Remove
+            BotChannel bChan = await Core.Channels.GetTwitchChannelByName(e.Channel);
+            int i = 0;
+            int.TryParse(e.RaidNotificaiton.MsgParamViewerCount, out i);
+            Core.RaiseRaidEvent(bChan, new RaidEventArguments(e.RaidNotificaiton.DisplayName, e.Channel, i));
+        }
 
         private void TwitchOnMessageReceived(object sender, OnMessageReceivedArgs e)
         {

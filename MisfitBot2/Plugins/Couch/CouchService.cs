@@ -22,6 +22,7 @@ namespace MisfitBot2.Services
         private List<string> _fail = new List<string>();
         private List<string> _incident = new List<string>();
         private DatabaseStrings dbStrings;
+
         // CONSTRUCTOR
         public CouchService()
         {
@@ -197,7 +198,7 @@ namespace MisfitBot2.Services
                     {
                         return;
                     }
-                    if (settings._couches[bChan.Key].TwitchUsernames.Contains(e.Command.ChatMessage.DisplayName)) { return; }
+                    if (settings._couches[bChan.Key].TwitchUsernames.Contains(e.Command.ChatMessage.Username)) { return; }
 
                     if (settings._couches[bChan.Key].TwitchUsernames.Count < settings.couchsize)
                     {

@@ -13,10 +13,21 @@ namespace MisfitBot2
     public delegate void BitEvent(BitEventArguments e);
     public delegate void BanEvent(BanEventArguments e);
     public delegate void HostEvent(BotChannel bChan, HostEventArguments e);
+    public delegate void RaidEvent(BotChannel bChan, RaidEventArguments e);
     public delegate void TwitchSubscriptionEvent(BotChannel bChan, TwitchSubEventArguments e);
     public delegate void UnBanEvent(UnBanEventArguments e);
     public delegate void ViewerCountEvent(BotChannel bChan, int oldCount, int newCount);
     public delegate void NewDiscordMember(BotChannel bChan, UserEntry user);
+    public delegate void DiscordUserStartsStream(Discord.WebSocket.SocketGuildUser user);
+
+
+    public struct GenericTimeStamp
+    {
+        public string stringID;
+        public ulong ulongID;
+        public int timestamp;
+    }
+
     /// <summary>
     /// Default uservalues class. Only contains a simple timestamp so far
     /// </summary>
@@ -67,9 +78,24 @@ namespace MisfitBot2
             Hostchannel = hostchannel;
             Moderator = moderator;
         }
-    }/// <summary>
+    }
+    /// <summary>
      /// Botwide event argument class
      /// </summary>
+    public class RaidEventArguments
+    {
+        public string SourceChannel, TargetChannel;
+        public int RaiderCount;
+        public RaidEventArguments(string sourceChannel, string targetChannel, int raiderCount)
+        {
+            SourceChannel = sourceChannel;
+            TargetChannel = targetChannel;
+            RaiderCount = raiderCount;
+        }
+    }
+    /// <summary>
+    /// Botwide event argument class
+    /// </summary>
     public class TwitchSubEventArguments
     {
         public int twitchUserID;
