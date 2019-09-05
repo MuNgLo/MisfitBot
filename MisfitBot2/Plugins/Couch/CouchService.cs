@@ -222,7 +222,7 @@ namespace MisfitBot2.Services
                     }
                     if (settings._couches[bChan.Key].TwitchUsernames.Contains(e.Command.ChatMessage.Username)) { return; }
 
-                    if (settings._couches[bChan.Key].TwitchUsernames.Count < settings.couchsize)
+                    if (settings._couches[bChan.Key].TwitchUsernames.Count <= settings.couchsize)
                     {
                         if (settings._couches[bChan.Key].TwitchUsernames.Count != 0)
                         {
@@ -298,6 +298,7 @@ namespace MisfitBot2.Services
             }
             UserEntry user = await Core.UserMan.GetUserByTwitchUserName(e.Username);
             CouchSettings settings = await Settings(bChan);
+            if (user == null || settings == null) { return; }
             if(settings._greeted.Exists(p=>p == user._twitchUsername)) { return; }
             if (!settings._couches.ContainsKey(bChan.Key))
             {
@@ -510,6 +511,8 @@ namespace MisfitBot2.Services
             Core.Twitch._client.SendMessage(bChan.TwitchChannelName,
                                 $"The couch is shaking! {msg} couldn't hold on."
                                 );
+            settings._couches[bChan.Key].lastActivationTime = Core.CurrentTime;
+            SaveBaseSettings(PLUGINNAME, bChan, settings);
         }
         private async void ResetCouch(BotChannel bChan, CouchSettings settings)
         { 
@@ -870,15 +873,17 @@ namespace MisfitBot2.Services
         public void OnSecondTick(int seconds)
         {
             // Get all active couches and if they have room and are open do a message now and then
-            foreach(TimedMessage tmsg in _timedMessages)
+            for (int i = 0; i < _timedMessages.Count; i++)
             {
-                if(Core.CurrentTime > tmsg.interval + tmsg.lastused)
+                if (i >= _timedMessages.Count) { return; }
+                if(_timedMessages[i] == null) { return; }
+                if(Core.CurrentTime > _timedMessages[i].interval + _timedMessages[i].lastused)
                 {
-                    if(tmsg.msgSinceLastused > tmsg.msgInterval)
+                    if(_timedMessages[i].msgSinceLastused > _timedMessages[i].msgInterval)
                     {
-                        ReminderText(tmsg.twitchChannelName);
-                        tmsg.lastused = Core.CurrentTime;
-                        tmsg.msgSinceLastused = 0;
+                        ReminderText(_timedMessages[i].twitchChannelName);
+                        _timedMessages[i].lastused = Core.CurrentTime;
+                        _timedMessages[i].msgSinceLastused = 0;
                     }
                 }
             }

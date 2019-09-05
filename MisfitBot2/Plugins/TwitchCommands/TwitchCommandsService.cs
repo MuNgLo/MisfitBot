@@ -21,6 +21,23 @@ namespace MisfitBot2.Services
         public TwitchCommandsService()
         {
             Core.Twitch._client.OnChatCommandReceived += ClientOnChatCommandReceived;
+            Core.Twitch._client.OnMessageReceived += OnMessageReceived;
+        }
+
+        private void OnMessageReceived(object sender, OnMessageReceivedArgs e)
+        {
+            if (e.ChatMessage.Message.ToLower() == "shutup juan")
+            {
+                Insult(e.ChatMessage.DisplayName, e.ChatMessage.Channel);
+            }
+            if (e.ChatMessage.Message.ToLower() == "fuck off juan")
+            {
+                Insult(e.ChatMessage.DisplayName, e.ChatMessage.Channel);
+            }
+            if (e.ChatMessage.Message.ToLower() == "juan sucks")
+            {
+                Insult(e.ChatMessage.DisplayName, e.ChatMessage.Channel);
+            }
         }
 
         public async void ClientOnChatCommandReceived(object sender, OnChatCommandReceivedArgs e)
@@ -33,7 +50,7 @@ namespace MisfitBot2.Services
                     JuanAge(e);
                     break;
                 case "insult":
-                    Insult(e);
+                    Insult(e.Command.ChatMessage.DisplayName, e.Command.ChatMessage.Channel);
                     break;
                 case "revulsion":
                     Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel, "Revulsion store link https://store.steampowered.com/app/719180/Revulsion/");
@@ -100,40 +117,40 @@ namespace MisfitBot2.Services
 
         }
 
-        private void Insult(OnChatCommandReceivedArgs e)
+        private void Insult(string victim, string twitchChannel)
         {
             List<string> insults = new List<string>(
                 new string[] {
-                "Don’t feel bad, there are many people who have no talent!",
-                "As an outsider, what do you think of the human race?",
-                "I’d like to kick you in the teeth, but why should I improve your looks?",
-                "At least there’s one thing good about your body – it’s not as ugly as your face.",
-                "Brains aren’t everything. In fact, in your case they’re nothing.",
-                "I like you.People say I’ve no taste, but I like you.",
-                "Did your parents ever ask you to run away from home?",
-                "If I had a face like yours I’d sue my parents.",
-                "Any similarity between you and a human is purely coincidental.",
-                "Keep talking – someday you’ll say something intelligent.",
-                "Don’t you love nature, despite what it did to you?",
-                "Don’t think, it might sprain your brain.",
-                $"{e.Command.ChatMessage.DisplayName} has a mechanical mind.Too bad they forgot to wind it up this morning.",
-                $"{e.Command.ChatMessage.DisplayName} is always lost in thought.It’s unfamiliar territory.",
-                "Are you always so stupid or is today a special occasion?",
-                $"{e.Command.ChatMessage.DisplayName} is listed in Who’s Who as What’s That?",
-                $"{e.Command.ChatMessage.DisplayName} is living proof that man can live without a brain.",
-                $"{e.Command.ChatMessage.DisplayName} is so short, when it rains they are always the last to know.",
-                $"{e.Command.ChatMessage.DisplayName} is the kind of a person you’d use as a blueprint to build an idiot.",
-                "How did you get here? Did someone leave your cage open?",
-                "How would you like to feel the way you look?",
-                "I can’t talk to you right now. Where will you be 10 years from now?",
-                "I don’t want you to turn the other cheek, it’s just as ugly.",
-                "I don’t know what it is that makes you so stupid but it really works.",
-                "I can’t seem to remember your name, and please don’t help me.",
-                "I’ve seen people like you but I had to pay admission.",
-                "Do you practise being this ugly ?"
+                $"Don’t feel bad {victim}, there are many people who have no talent!",
+                $"Hey {victim}, as an outsider, what do you think of the human race?",
+                $"I’d like to kick {victim} in the teeth, but why should I improve their looks?",
+                $"At least there’s one thing good about {victim}'s body – it’s not as ugly as their face.",
+                $"Brains aren’t everything. In fact, in {victim}'s case they’re nothing.",
+                $"I like {victim}. People say I’ve no taste, but I like {victim}.",
+                $"{victim}, did your parents ever ask you to run away from home?",
+                $"{victim}, If I had a face like yours I’d sue my parents.",
+                $"Any similarity between {victim} and a human is purely coincidental.",
+                $"{victim}, keep talking – someday you’ll say something intelligent.",
+                $"{victim}, don’t you love nature, despite what it did to you?",
+                $"{victim}, don’t think, it might sprain your brain.",
+                $"{victim} has a mechanical mind.Too bad they forgot to wind it up this morning.",
+                $"{victim} is always lost in thought.It’s unfamiliar territory.",
+                $"Are {victim} always so stupid or is today a special occasion?",
+                $"{victim} is listed in Who’s Who as What’s That?",
+                $"{victim} is living proof that man can live without a brain.",
+                $"{victim} is so short, when it rains they are always the last to know.",
+                $"{victim} is the kind of a person you’d use as a blueprint to build an idiot.",
+                $"How did you get here? Chat, did someone leave {victim}'s cage open?",
+                $"{victim}, how would you like to feel the way you look?",
+                $"I can’t talk to you right now. Where will you be 10 years from now?",
+                $"I don’t want you to turn the other cheek, it’s just as ugly.",
+                $"I don’t know what it is that makes you so stupid but it really works.",
+                $"I can’t seem to remember your name, and please don’t help me.",
+                $"I’ve seen people like you but I had to pay admission.",
+                $"{victim}, do you practise being this ugly ?"
                 }
                 );
-            Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel, insults[RNG.Next(0, insults.Count)]);
+            Core.Twitch._client.SendMessage(twitchChannel, insults[RNG.Next(0, insults.Count)]);
         }
 
     }
