@@ -10,6 +10,7 @@ using System.Data;
 using TwitchLib.Api.V5.Models.Users;
 using MisfitBot2.Components;
 using Discord.Commands;
+using TwitchLib.Client.Events;
 
 namespace MisfitBot2.Services
 {
@@ -23,12 +24,16 @@ namespace MisfitBot2.Services
         private List<string> _incident = new List<string>();
         private DatabaseStrings dbStrings;
 
+        private List<TimedMessage> _timedMessages = new List<TimedMessage>();
+
         // CONSTRUCTOR
         public CouchService()
         {
             
             Core.Twitch._client.OnChatCommandReceived += TwitchOnChatCommandReceived;
-			Core.Twitch._client.OnUserJoined += TwitchInUserJoined;								   
+            Core.Twitch._client.OnMessageReceived += TwitchOnMessageRecieved;
+            Core.Twitch._client.OnUserJoined += TwitchInUserJoined;
+            TimerStuff.OnSecondTick += OnSecondTick;
             Core.OnBotChannelGoesLive += OnChannelGoesLive;
             Core.OnBotChannelGoesOffline += OnChannelGoesOffline;
             ///Core.OnUserEntryMerge += OnUserEntryMerge; FIX THIS NEXT
@@ -65,6 +70,13 @@ namespace MisfitBot2.Services
             dbStrings = new DatabaseStrings(PLUGINNAME);
         }
 
+        private void TwitchOnMessageRecieved(object sender, OnMessageReceivedArgs e)
+        {
+            if(_timedMessages.Exists(p=>p.twitchChannelName == e.ChatMessage.Channel)){
+                _timedMessages.Find(p => p.twitchChannelName == e.ChatMessage.Channel).msgSinceLastused++;
+            }
+        }
+
         private async void OnChannelGoesOffline(BotChannel bChan)
         {
             CouchSettings settings = await Settings(bChan);
@@ -85,6 +97,7 @@ namespace MisfitBot2.Services
 
             if(Core.CurrentTime > settings.lastOfflineEvent + 180)
             {
+                settings._greeted = new List<string>();
                 ResetCouch(bChan, settings);
             }
             else
@@ -193,17 +206,18 @@ namespace MisfitBot2.Services
                     // User Commands
                 case "seat":
                     if (!settings._couches[bChan.Key].couchOpen || !settings._active) { return; }
-                    if(Core.CurrentTime - settings._couches[bChan.Key].lastActivationTime > 3600 && settings.failCount < 3)
+                    // To late
+                    if (Core.CurrentTime > settings._couches[bChan.Key].lastActivationTime + settings.openTime)
+                    {
+                        // only give feedback a specified count on fails
+                    if(settings.failCount <= settings.maxFails)
                     {
                         Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
                             $"{e.Command.ChatMessage.DisplayName} is late to get a seat in the couch. It isn't full but the people in it have spread out and refuse to move."
                             );
                         settings.failCount++;
                         SaveBaseSettings(PLUGINNAME, bChan, settings);
-                        return;
                     }
-                    if (Core.CurrentTime - settings._couches[bChan.Key].lastActivationTime > 600 && settings.failCount >= 3)
-                    {
                         return;
                     }
                     if (settings._couches[bChan.Key].TwitchUsernames.Contains(e.Command.ChatMessage.Username)) { return; }
@@ -284,6 +298,7 @@ namespace MisfitBot2.Services
             }
             UserEntry user = await Core.UserMan.GetUserByTwitchUserName(e.Username);
             CouchSettings settings = await Settings(bChan);
+            if(settings._greeted.Exists(p=>p == user._twitchUsername)) { return; }
             if (!settings._couches.ContainsKey(bChan.Key))
             {
                 settings._couches[bChan.Key] = new CouchEntry();
@@ -298,6 +313,8 @@ namespace MisfitBot2.Services
                         await DBStringsFirstSetup(bChan);
                     }
                     Core.Twitch._client.SendMessage(e.Channel, dbStrings.GetRandomLine(bChan, "GREET").Replace("[USER]", user._twitchDisplayname));
+                    settings._greeted.Add(user._twitchUsername);
+                    SaveBaseSettings(PLUGINNAME, bChan, settings);
                 }
             }
         }
@@ -346,8 +363,13 @@ namespace MisfitBot2.Services
             CouchSettings settings = await Settings(bChan);
             switch (arguments[0].ToLower())
             {
+                case "who":
+                    if (!settings._active) { return; }
+                    await SayOnDiscordAdmin(bChan, GetAllSittersAsString(bChan, settings));
+                    break;
                 case "shake":
                 case "rock":
+                    if (!settings._active) { return; }
                     await ShakeCouch(bChan, settings);
                     break;
                 case "on":
@@ -501,8 +523,43 @@ namespace MisfitBot2.Services
             settings._couches[bChan.Key].TwitchUsernames = new List<string>();
             settings.failCount = 0;
             SaveBaseSettings(PLUGINNAME, bChan, settings);
+            RegisterTimedMessage(bChan, settings);
             Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Couch is now open. Take a {Core._commandCharacter}seat.");
             await SayOnDiscordAdmin(bChan, $"Couch is now open. Click https://twitch.tv/{bChan.TwitchChannelName} and take a {Core._commandCharacter}seat.");
+        }
+
+        private void RegisterTimedMessage(BotChannel bChan, CouchSettings settings)
+        {
+            _timedMessages.RemoveAll(p => p.twitchChannelName == bChan.TwitchChannelName);
+            _timedMessages.Add(
+                new TimedMessage()
+                {
+                    twitchChannelName = bChan.TwitchChannelName,
+                    interval = settings.reminderInterval, 
+                    msgInterval = settings.reminderMessageInterval, 
+                    lastused = Core.CurrentTime,
+                    msgSinceLastused = 0
+                }
+                );
+        }
+        private async void ReminderText(string twitchChannelName)
+        {
+            BotChannel bChan = await Core.Channels.GetTwitchChannelByName(twitchChannelName);
+            CouchSettings settings = await Settings(bChan);
+            if(settings._active == false) { RemoveTimedMessage(bChan.TwitchChannelName); return; }
+            if(!settings._couches[bChan.Key].couchOpen) { RemoveTimedMessage(bChan.TwitchChannelName); return; }
+            if (settings._couches[bChan.Key].Count >= settings.couchsize)
+            {
+                Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Couch is now full.");
+                RemoveTimedMessage(bChan.TwitchChannelName);
+                return;
+            }
+            if (Core.CurrentTime > settings._couches[bChan.Key].lastActivationTime + settings.openTime) { RemoveTimedMessage(bChan.TwitchChannelName); return; }
+            Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Couch is still open. Take a {Core._commandCharacter}seat.");
+        }
+        private void RemoveTimedMessage(string twitchChannel)
+        {
+            _timedMessages.RemoveAll(p => p.twitchChannelName == twitchChannel);
         }
         private async Task DBStringsFirstSetup(BotChannel bChan)
         {
@@ -535,6 +592,19 @@ namespace MisfitBot2.Services
                 return settings._couches[bChan.Key].TwitchUsernames[i];
             }
             return null;
+        }
+        private string GetAllSittersAsString(BotChannel bChan, CouchSettings settings)
+        {
+            string txt = string.Empty;
+            foreach(string name in settings._couches[bChan.Key].TwitchUsernames)
+            {
+                txt += $"{name}, ";
+            }
+            if(txt == string.Empty)
+            {
+                txt = "There is nobody in the couch. Feel the anguish of failure puny human.";
+            }
+            return txt;
         }
         #endregion
         #region Database stuff
@@ -799,7 +869,19 @@ namespace MisfitBot2.Services
         #region Interface base methods
         public void OnSecondTick(int seconds)
         {
-            throw new NotImplementedException();
+            // Get all active couches and if they have room and are open do a message now and then
+            foreach(TimedMessage tmsg in _timedMessages)
+            {
+                if(Core.CurrentTime > tmsg.interval + tmsg.lastused)
+                {
+                    if(tmsg.msgSinceLastused > tmsg.msgInterval)
+                    {
+                        ReminderText(tmsg.twitchChannelName);
+                        tmsg.lastused = Core.CurrentTime;
+                        tmsg.msgSinceLastused = 0;
+                    }
+                }
+            }
         }
         public void OnMinuteTick(int minutes)
         {

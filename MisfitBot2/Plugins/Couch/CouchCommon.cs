@@ -4,6 +4,15 @@ using System.Text;
 
 namespace MisfitBot2.Plugins.Couch
 {
+    public class TimedMessage
+    {
+        public string twitchChannelName;
+        public int interval;
+        public int msgInterval;
+        public int lastused;
+        public int msgSinceLastused;
+    }
+
     public class CouchUserStats
     {
         public readonly string BotChannelKey;
