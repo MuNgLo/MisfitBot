@@ -538,10 +538,11 @@ namespace MisfitBot2.Services
                 new TimedMessage()
                 {
                     twitchChannelName = bChan.TwitchChannelName,
-                    interval = settings.reminderInterval, 
-                    msgInterval = settings.reminderMessageInterval, 
+                    interval = settings.reminderInterval,
+                    msgInterval = settings.reminderMessageInterval,
                     lastused = Core.CurrentTime,
-                    msgSinceLastused = 0
+                    msgSinceLastused = 0,
+                    done = false
                 }
                 );
         }
@@ -562,7 +563,10 @@ namespace MisfitBot2.Services
         }
         private void RemoveTimedMessage(string twitchChannel)
         {
-            _timedMessages.RemoveAll(p => p.twitchChannelName == twitchChannel);
+            if (_timedMessages.Exists(p => p.twitchChannelName == twitchChannel))
+            {
+                _timedMessages.Find(p => p.twitchChannelName == twitchChannel).done = true;
+            }
         }
         private async Task DBStringsFirstSetup(BotChannel bChan)
         {
@@ -875,18 +879,18 @@ namespace MisfitBot2.Services
             // Get all active couches and if they have room and are open do a message now and then
             for (int i = 0; i < _timedMessages.Count; i++)
             {
-                if (i >= _timedMessages.Count) { return; }
-                if(_timedMessages[i] == null) { return; }
                 if(Core.CurrentTime > _timedMessages[i].interval + _timedMessages[i].lastused)
                 {
                     if(_timedMessages[i].msgSinceLastused > _timedMessages[i].msgInterval)
                     {
+                        // Reminder also flags it for deletion if it is done
                         ReminderText(_timedMessages[i].twitchChannelName);
                         _timedMessages[i].lastused = Core.CurrentTime;
                         _timedMessages[i].msgSinceLastused = 0;
                     }
                 }
             }
+            _timedMessages.RemoveAll(p => p.done);
         }
         public void OnMinuteTick(int minutes)
         {

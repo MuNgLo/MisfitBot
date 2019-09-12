@@ -11,6 +11,7 @@ namespace MisfitBot2.Plugins.Couch
         public int msgInterval;
         public int lastused;
         public int msgSinceLastused;
+        public bool done;
     }
 
     public class CouchUserStats
