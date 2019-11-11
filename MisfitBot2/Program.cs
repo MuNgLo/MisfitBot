@@ -20,8 +20,7 @@ namespace MisfitBot2
         private static IServiceCollection _map = new ServiceCollection();
         public static CommandService _commands = new CommandService();
         private static DiscordSocketClient _DiscordClient;
-        public static void Main(string[] args=null)
-            => new Program().MainAsync().GetAwaiter().GetResult();
+        public static void Main(string[] args=null) => new Program().MainAsync().GetAwaiter().GetResult();
 
         public async Task MainAsync()
         {

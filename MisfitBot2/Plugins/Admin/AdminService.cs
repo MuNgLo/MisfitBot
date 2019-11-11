@@ -43,10 +43,10 @@ namespace MisfitBot2.Services
             switch (e.subContext)
             {
                 case TWSUBCONTEXT.SUB:
-                    message = $"{e.userDisplayname} subscribed. ({e.subscriptionplan.ToString()})";
+                    message = $"{e.userDisplayname} subscribed. ({e.subscriptionplan.ToString()}) \"{e.subMessage}\"";
                     break;
                 case TWSUBCONTEXT.RESUB:
-                    message = $"{e.userDisplayname} resubscribed for {e.months} months. ({e.subscriptionplan.ToString()})";
+                    message = $"{e.userDisplayname} resubscribed. ({e.subscriptionplan.ToString()}) \"{e.subMessage}\"";
                     break;
                 case TWSUBCONTEXT.GIFTSUB:
                     message = $"{e.userDisplayname} gifted {e.recipientDisplayname} asub. {e.recipientDisplayname} subscribed for {e.months} months. ({e.subscriptionplan.ToString()})";

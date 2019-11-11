@@ -125,7 +125,7 @@ namespace MisfitBot2
                 case "resub":
                     MakeSub(args, TWSUBCONTEXT.RESUB);
                     break;
-                case "giftsub":
+                case "subgift":
                     MakeSub(args, TWSUBCONTEXT.GIFTSUB);
                     break;
                 case "unknown":

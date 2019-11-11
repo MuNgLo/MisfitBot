@@ -193,6 +193,22 @@ namespace MisfitBot2.Services
                                     }
                                 }
                                 break;
+                            case "time":
+                                if (e.Command.ArgumentsAsList.Count == 2)
+                                {
+                                    int timer = settings.openTime;
+                                    int.TryParse(e.Command.ArgumentsAsList[1], out timer);
+                                    if (timer > 0 && timer <= 3600 && timer != settings.openTime)
+                                    {
+                                        settings.openTime = timer;
+                                        Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
+                                        $"Couch time limit is now {settings.openTime}."
+                                        );
+                                        await SayOnDiscordAdmin(bChan, $"{e.Command.ChatMessage.DisplayName} changed the Couch open time limit setting to {settings.openTime}.");
+                                        SaveBaseSettings(PLUGINNAME, bChan, settings);
+                                    }
+                                }
+                                break;
                             case "open":
                                 if (!settings._active) { return; }
                                 if (e.Command.ChatMessage.IsModerator || e.Command.ChatMessage.IsBroadcaster)
@@ -405,14 +421,24 @@ namespace MisfitBot2.Services
                     }
                     break;
                 case "greet":
-                        int greet = settings.potatoGreeting;
-                        int.TryParse(arguments[1], out greet);
-                        if (greet > 0 && greet <= 999 && greet != settings.potatoGreeting)
-                        {
-                            settings.potatoGreeting = greet;
-                            await SayOnDiscordAdmin(bChan,$"Couch greeting limit is now {settings.potatoGreeting}.");
-                            SaveBaseSettings(PLUGINNAME, bChan, settings);
-                        }
+                    int greet = settings.potatoGreeting;
+                    int.TryParse(arguments[1], out greet);
+                    if (greet > 0 && greet <= 999 && greet != settings.potatoGreeting)
+                    {
+                        settings.potatoGreeting = greet;
+                        await SayOnDiscordAdmin(bChan, $"Couch greeting limit is now {settings.potatoGreeting}.");
+                        SaveBaseSettings(PLUGINNAME, bChan, settings);
+                    }
+                    break;
+                case "time":
+                    int timer = settings.openTime;
+                    int.TryParse(arguments[1], out timer);
+                    if (timer > 0 && timer <= 3600 && timer != settings.openTime)
+                    {
+                        settings.openTime = timer;
+                        await SayOnDiscordAdmin(bChan, $"Couch time limit is now {settings.openTime}.");
+                        SaveBaseSettings(PLUGINNAME, bChan, settings);
+                    }
                     break;
                 case "addsuccess":
                     if (arguments.Count >= 2)

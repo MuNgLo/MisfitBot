@@ -37,7 +37,7 @@ namespace MisfitBot2.Services
             switch (args[0].ToLower())
             {
                 case "nominate":
-                    if (await AddNominee(bChan, args[1]))
+                    if (await AddNominee(bChan, args))
                     {
                         await context.Channel.SendMessageAsync($"{args[1]} is now nominated.");
                     }
@@ -78,7 +78,7 @@ namespace MisfitBot2.Services
             if (bChan == null) { return; }
             MyPickSettings settings = await Settings(bChan);
             EmbedBuilder builder = new EmbedBuilder();
-            builder.WithTitle("Most liked games here is...");
+            builder.WithTitle("Most liked clips here is...");
             // TOP LIST
             string msg = await TopList(bChan);
             string nominations = string.Empty;
@@ -86,23 +86,23 @@ namespace MisfitBot2.Services
             {
                 nominations += $"{game},";
             }
-            string help = $"To nominate a game have a word with a moderator.{Environment.NewLine}" +
-                $"To cast your vote type **{Core._commandCharacter}mypick <gametitle>**{Environment.NewLine}" +
-                $"Example: **{Core._commandCharacter}mypick Game1**";
+            string help = $"To nominate a clip have a word with a moderator.{Environment.NewLine}" +
+                $"To cast your vote type **{Core._commandCharacter}mypick <clipname>**{Environment.NewLine}" +
+                $"Example: **{Core._commandCharacter}mypick clip1**";
             builder.WithDescription(msg);
             builder.WithColor(Color.Purple);
 
             EmbedFieldBuilder field = new EmbedFieldBuilder();
             if(nominations == string.Empty)
             {
-                field.Name = "There is no nominated games yet.";
+                field.Name = "There is no nominated clips yet.";
             }
             else
             {
                 field.Name = nominations;
             }
             field.Value = 1000;
-            builder.AddField("Nominated games are....", field.Build());
+            builder.AddField("Nominated clips are....", field.Build());
 
             EmbedFieldBuilder field2 = new EmbedFieldBuilder();
             field2.Name = help;
@@ -155,15 +155,18 @@ namespace MisfitBot2.Services
             MyPickSettings settings = await Settings(bChan);
             return settings.nominees.Contains(nominee);
         }
-        private async Task<bool> AddNominee(BotChannel bChan, string nominee)
+        private async Task<bool> AddNominee(BotChannel bChan, List<string> nominees)
         {
             MyPickSettings settings = await Settings(bChan);
-            if (!settings.nominees.Contains(nominee))
-            {
-                settings.nominees.Add(nominee);
-                SaveBaseSettings(PLUGINNAME, bChan, settings);
-            }
-            return await VerifyNominee(bChan, nominee);
+            nominees.RemoveAt(0);
+ 
+                if (!settings.nominees.Contains(nominees[0]))
+                {
+                    settings.nominees.Add(nominees[0]);
+                    SaveBaseSettings(PLUGINNAME, bChan, settings);
+                }
+                return await VerifyNominee(bChan, nominees[0]);
+ 
         }
         private async Task<bool> DeleteNominee(BotChannel bChan, string nominee)
         {
