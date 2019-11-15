@@ -72,7 +72,7 @@ namespace MisfitBot2
             if(arg1.Activity.Type == ActivityType.Streaming){
                 if (arg2.Activity.Type != ActivityType.Streaming)
                 {
-                    // Fiscord users drops streaming flag
+                    // Discord users drops streaming flag
                     AddRefreshStamp(new GenericTimeStamp() { ulongID = arg1.Id, stringID = string.Empty, timestamp = CurrentTime });
                 }
                 return;
@@ -82,6 +82,9 @@ namespace MisfitBot2
                 if (CheckStamp(arg1.Id))
                 {
                     await Core.LOG(new LogMessage(LogSeverity.Error, "Core", $"RaiseDiscordUserUpdated {arg2.Username} started streaming. IActivity.GetType()={arg2.Activity.GetType()}"));
+                    StreamingGame stream = arg2.Activity as StreamingGame;
+                    await Core.LOG(new LogMessage(LogSeverity.Error, "Core", 
+                        $"RaiseDiscordUserUpdated {arg2.Username} StreamingGame. Stream.Name={stream.Name}, Stream.Type={stream.Type}, Stream.Url={stream.Url}"));
                     OnDiscordUserStartStream?.Invoke(arg2);
                 }
                 return;
@@ -89,6 +92,7 @@ namespace MisfitBot2
         }
         private static void AddRefreshStamp(GenericTimeStamp newStamp)
         {
+            if (DiscordStreamerStamps == null) { DiscordStreamerStamps = new List<GenericTimeStamp>(); }
             if(!DiscordStreamerStamps.Exists(p=>p.ulongID == newStamp.ulongID))
             {
                 DiscordStreamerStamps.Add(newStamp);

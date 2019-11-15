@@ -19,7 +19,7 @@ namespace MisfitBot2.Modules
             _service = service;
         }
         
-        [Command("picks", RunMode = RunMode.Async)]
+        [Command("list", RunMode = RunMode.Async)]
         [Summary("Shows the current picks. Admins use nominate/denominate to handle nominees.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
         public async Task CommandMethod([Remainder]string text)
@@ -29,13 +29,13 @@ namespace MisfitBot2.Modules
             List<string> arguments = new List<string>(args);
             await _service.DiscordPicks(Context, arguments);
         }
-        [Command("picks", RunMode = RunMode.Async)]
+        [Command("list", RunMode = RunMode.Async)]
         public async Task CommandMethod()
         {
             if (Context.User.IsBot) { return; }
             await _service.DiscordTopList(Context);
         }
-        [Command("mypick", RunMode = RunMode.Async)]
+        [Command("listvote", RunMode = RunMode.Async)]
         [Summary("Used to cast vote on a nominee.")]
         public async Task MyPickMethod(string text)
         {

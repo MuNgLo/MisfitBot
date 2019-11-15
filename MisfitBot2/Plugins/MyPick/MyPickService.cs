@@ -53,6 +53,26 @@ namespace MisfitBot2.Services
                         }
                     }
                     break;
+                case "category":
+                    if (await ChangeCategory(bChan, args[1]))
+                    {
+                        await context.Channel.SendMessageAsync($"Category updated.");
+                    }
+                    else
+                    {
+                        await context.Channel.SendMessageAsync($"Failed to update category.");
+                    }
+                    break;
+                case "header":
+                    if (await ChangeHeader(bChan, args))
+                    {
+                        await context.Channel.SendMessageAsync($"header updated.");
+                    }
+                    else
+                    {
+                        await context.Channel.SendMessageAsync($"Failed to update header.");
+                    }
+                    break;
                 case "denominate":
                     if (await DeleteNominee(bChan, args[1]))
                     {
@@ -72,37 +92,46 @@ namespace MisfitBot2.Services
                     break;
             }
         }
+
+       
+
         public async Task DiscordTopList(ICommandContext Context)
         {
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);
             if (bChan == null) { return; }
             MyPickSettings settings = await Settings(bChan);
             EmbedBuilder builder = new EmbedBuilder();
-            builder.WithTitle("Most liked clips here is...");
+            builder.WithTitle(settings.header);
             // TOP LIST
             string msg = await TopList(bChan);
             string nominations = string.Empty;
-            foreach(string game in settings.nominees)
+            foreach(ListEntry entry in settings.nominees)
             {
-                nominations += $"{game},";
+                if (entry.Link != string.Empty)
+                {
+                    nominations += $"[{entry.Title}]({entry.Link}),";
+                }
+                else
+                {
+                    nominations += $"{entry.Title},";
+                }
             }
-            string help = $"To nominate a clip have a word with a moderator.{Environment.NewLine}" +
-                $"To cast your vote type **{Core._commandCharacter}mypick <clipname>**{Environment.NewLine}" +
-                $"Example: **{Core._commandCharacter}mypick clip1**";
+            string help = $"To nominate a {settings.category} have a word with a moderator.{Environment.NewLine}" +
+                $"To cast your vote type **{Core._commandCharacter}listvote <entryname>**{Environment.NewLine}";
             builder.WithDescription(msg);
             builder.WithColor(Color.Purple);
 
             EmbedFieldBuilder field = new EmbedFieldBuilder();
             if(nominations == string.Empty)
             {
-                field.Name = "There is no nominated clips yet.";
+                field.Name = $"There is no nominated {settings.category} yet.";
             }
             else
             {
                 field.Name = nominations;
             }
             field.Value = 1000;
-            builder.AddField("Nominated clips are....", field.Build());
+            builder.AddField($"Nominated {settings.category} are....", field.Build());
 
             EmbedFieldBuilder field2 = new EmbedFieldBuilder();
             field2.Name = help;
@@ -134,6 +163,36 @@ namespace MisfitBot2.Services
 
         #endregion
         #region internal methods
+        private async Task<bool> ChangeCategory(BotChannel bChan, string newCategory)
+        {
+            MyPickSettings settings = await Settings(bChan);
+            if (settings.category != newCategory)
+            {
+                settings.category = newCategory;
+                SaveBaseSettings(PLUGINNAME, bChan, settings);
+                return true;
+            }
+            return false;
+        }
+        private async Task<bool> ChangeHeader(BotChannel bChan, List<string> args)
+        {
+            MyPickSettings settings = await Settings(bChan);
+            args.RemoveAt(0);
+            string header = string.Empty;
+            foreach(string str in args)
+            {
+                header += str + " ";
+            }
+            header = header.Trim();
+
+            if (settings.header != header)
+            {
+                settings.header = header;
+                SaveBaseSettings(PLUGINNAME, bChan, settings);
+                return true;
+            }
+            return false;
+        }
         private async Task<bool> AddVote(BotChannel bChan, ulong userID, string vote)
         {
             MyPickSettings settings = await Settings(bChan);
@@ -148,32 +207,64 @@ namespace MisfitBot2.Services
             {
                 return false;
             }
-            return settings.votes[userID].game == vote;
+            return settings.votes[userID].title == vote;
         }
         private async Task<bool> VerifyNominee(BotChannel bChan, string nominee)
         {
             MyPickSettings settings = await Settings(bChan);
-            return settings.nominees.Contains(nominee);
+            foreach(ListEntry entry in settings.nominees)
+            {
+                if(entry.Title.ToLower() == nominee.ToLower())
+                {
+                    return true;
+                }
+            }
+            return false;
         }
-        private async Task<bool> AddNominee(BotChannel bChan, List<string> nominees)
+        private async Task<ListEntry> GetNominee(BotChannel bChan, string nominee)
         {
             MyPickSettings settings = await Settings(bChan);
-            nominees.RemoveAt(0);
- 
-                if (!settings.nominees.Contains(nominees[0]))
+            foreach (ListEntry entry in settings.nominees)
+            {
+                if (entry.Title.ToLower() == nominee.ToLower())
                 {
-                    settings.nominees.Add(nominees[0]);
+                    return entry;
+                }
+            }
+            return new ListEntry();
+        }
+        /// <summary>
+        /// Trieds to add the nominee and returns true if it did.
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <param name="nominees"></param>
+        /// <returns></returns>
+        private async Task<bool> AddNominee(BotChannel bChan, List<string> args)
+        {
+            MyPickSettings settings = await Settings(bChan);
+            string nominee = args[1];
+            string link = string.Empty;
+            if (args.Count > 2)
+            {
+                link = args[2];
+            }
+                if (!await VerifyNominee(bChan, nominee) && nominee != string.Empty)
+                {
+                    settings.nominees.Add(new ListEntry()
+                    {
+                        Title = nominee,
+                        Link = link
+                    });
                     SaveBaseSettings(PLUGINNAME, bChan, settings);
                 }
-                return await VerifyNominee(bChan, nominees[0]);
- 
+                return await VerifyNominee(bChan, nominee);
         }
         private async Task<bool> DeleteNominee(BotChannel bChan, string nominee)
         {
             MyPickSettings settings = await Settings(bChan);
-            if (settings.nominees.Contains(nominee))
+            if (await VerifyNominee(bChan, nominee))
             {
-                settings.nominees.RemoveAll(p => p == nominee);
+                settings.nominees.RemoveAll(p => p.Title.ToLower() == nominee.ToLower());
             }
             SaveBaseSettings(PLUGINNAME, bChan, settings);
             return !(await VerifyNominee(bChan, nominee));
@@ -186,23 +277,24 @@ namespace MisfitBot2.Services
 
             foreach(ulong userID in settings.votes.Keys)
             {
-                if(await VerifyNominee(bChan, settings.votes[userID].game))
+                ListEntry entry = await GetNominee(bChan, settings.votes[userID].title);
+                if(entry.Title != string.Empty)
                 {
-                    if(!countedVotes.Exists(P=>P.game == settings.votes[userID].game)) {
-                        countedVotes.Add(new VoteCount(settings.votes[userID].game));
+                    if(!countedVotes.Exists(P=>P.Title == settings.votes[userID].title)) {
+                        countedVotes.Add(new VoteCount(settings.votes[userID].title, entry.Link));
                     }
-                    countedVotes.Find(P => P.game == settings.votes[userID].game).votes += 1;
+                    countedVotes.Find(P => P.Title == settings.votes[userID].title).Votes += 1;
                 }
             }
 
-            List<VoteCount> sortedVote = countedVotes.OrderByDescending(p => p.votes).ToList();
+            List<VoteCount> sortedVote = countedVotes.OrderByDescending(p => p.Votes).ToList();
 
             string toplist = string.Empty;
             int index = 1;
 
             foreach(VoteCount count in sortedVote)
             {
-                toplist += $"#{index}  {count.game} ({count.votes}){Environment.NewLine}";
+                toplist += $"#{index}  [{count.Title}]({count.Link}) ({count.Votes}){Environment.NewLine}";
                 index++;
                 if (index > 10) continue;
             }

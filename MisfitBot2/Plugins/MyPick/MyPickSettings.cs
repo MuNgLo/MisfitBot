@@ -7,7 +7,9 @@ namespace MisfitBot2.Plugins.MyPick
 {
     class MyPickSettings : PluginSettingsBase
     {
-        public List<string> nominees;
+        public List<ListEntry> nominees;
+        public String header = "Most liked clips here are....";
+        public String category = "clips";
         /// <summary>
         /// key = userID
         /// </summary>
@@ -15,29 +17,37 @@ namespace MisfitBot2.Plugins.MyPick
         public Dictionary<ulong, Vote> votes;
         public MyPickSettings()
         {
-            nominees = new List<string>();
+            nominees = new List<ListEntry>();
             votes = new Dictionary<ulong, Vote>();
         }
     }
 
+    public struct ListEntry
+    {
+        public string Title;
+        public string Link;
+    }
+
     public struct Vote
     {
-        public string game;
+        public string title;
         public int timestamp;
-        public Vote(string title)
+        public Vote(string titleVoted)
         {
-            game = title;
+            title = titleVoted;
             timestamp = Core.CurrentTime;
         }
     }
     public class VoteCount
     {
-        public string game;
-        public int votes;
-        public VoteCount(string title)
+        public string Title;
+        public string Link;
+        public int Votes;
+        public VoteCount(string title, string link)
         {
-            game = title;
-            votes = 0;
+            Title = title;
+            Link = link;
+            Votes = 0;
         }
     }
 
