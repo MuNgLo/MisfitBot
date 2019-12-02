@@ -18,8 +18,8 @@ namespace MisfitBot2.Services
         public PoorLifeChoicesService()
         {
             _rng = new Random();
-            Core.OnUserEntryMerge += OnUserEntryMerge;
-            Core.Channels.OnBotChannelMerge += OnBotChannelEntryMerge;
+            Events.OnUserEntryMerge += OnUserEntryMergeEvent;
+            Events.OnBotChannelMerge += OnBotChannelEntryMergeEvent;
             TimerStuff.OnSecondTick += OnSecondTick;
             TimerStuff.OnMinuteTick += OnMinuteTick;
             #region responses
@@ -190,11 +190,11 @@ namespace MisfitBot2.Services
         {
 
         }
-        public void OnBotChannelEntryMerge(BotChannel discordGuild, BotChannel twitchChannel)
+        public void OnBotChannelEntryMergeEvent(BotChannel discordGuild, BotChannel twitchChannel)
         {
 
         }
-        public void OnUserEntryMerge(UserEntry discordUser, UserEntry twitchUser)
+        public void OnUserEntryMergeEvent(UserEntry discordUser, UserEntry twitchUser)
         {
 
         }

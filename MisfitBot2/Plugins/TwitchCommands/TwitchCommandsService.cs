@@ -46,6 +46,9 @@ namespace MisfitBot2.Services
             int toss = 0;
             switch (e.Command.CommandText.ToLower())
             {
+                case "trello":
+                    Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel, "My Trello page is https://trello.com/b/JvyAKGJt/misfit-bot");
+                    break;
                 case "juanage":
                     JuanAge(e);
                     break;

@@ -17,8 +17,8 @@ namespace MisfitBot2.Services
         // CONSTRUCTOR
         public MatchMakingService()
         {
-            Core.OnUserEntryMerge += OnUserEntryMerge;
-            Core.Channels.OnBotChannelMerge += OnBotChannelEntryMerge;
+            Events.OnUserEntryMerge += OnUserEntryMergeEvent;
+            Events.OnBotChannelMerge += OnBotChannelEntryMergeEvent;
             TimerStuff.OnSecondTick += OnSecondTick;
             TimerStuff.OnMinuteTick += OnMinuteTick;
         }// END of Constructor
@@ -718,7 +718,7 @@ namespace MisfitBot2.Services
         #endregion
 
         #region Interface compliance
-        public void OnBotChannelEntryMerge(BotChannel discordGuild, BotChannel twitchChannel)
+        public void OnBotChannelEntryMergeEvent(BotChannel discordGuild, BotChannel twitchChannel)
         {
         }
         public void OnMinuteTick(int minutes)
@@ -727,7 +727,7 @@ namespace MisfitBot2.Services
         public void OnSecondTick(int seconds)
         {
         }
-        public void OnUserEntryMerge(UserEntry discordUser, UserEntry twitchUser)
+        public void OnUserEntryMergeEvent(UserEntry discordUser, UserEntry twitchUser)
         {
 
         }

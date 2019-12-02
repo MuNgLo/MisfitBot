@@ -152,7 +152,7 @@ namespace MisfitBot2.Modules
         {
             await _service.DiscordLinkChannelCommand(Context, arg);
         }
-        [Command("tw_join", RunMode = RunMode.Async)]
+        [Command("twitchjoin", RunMode = RunMode.Async)]
         [Summary("Tries to join a Twitch channel. Automatically creates a BotChannel entry for it. Autojoin is on by default.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
         public async Task JoinTwitchChannelCMD(string arg)
@@ -167,6 +167,26 @@ namespace MisfitBot2.Modules
             await Core.LOG(new LogMessage(LogSeverity.Info, "AdminModule", "Reconnecting"));
             Program.DiscordReconnect();
         }
+
+
+        [Command("game", RunMode = RunMode.Async)]
+        [Summary("Set the game for the stream on the linked twitchchannel.")]
+        [RequireUserPermission(GuildPermission.ManageMessages)]
+        public async Task GameCMD()
+        {
+            if (Context.User.IsBot) { return; }
+            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);
+            if (bChan == null) { return; }
+            if (bChan.pubsubOauth == string.Empty)
+            {
+                await Context.Channel.SendMessageAsync($"To use this command you need to setup a pubsub token. See command {Core._commandCharacter}pubsub.");
+                return;
+            }
+            if (bChan.isLinked == false) { return; }
+            StreamByUser stream = await Core.Twitch._api.V5.Streams.GetStreamByUserAsync(bChan.TwitchChannelID);
+            string msg = $"{stream.Stream.Channel.DisplayName} is streaming {stream.Stream.Channel.Status} ({stream.Stream.Game}) for {stream.Stream.Viewers} viewers.";
+            await _service.SayOnDiscordAdmin(bChan, msg);
+        }
         [Command("game", RunMode = RunMode.Async)]
         [Summary("Set the game for the stream on the linked twitchchannel.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
@@ -175,24 +195,52 @@ namespace MisfitBot2.Modules
             if (Context.User.IsBot) { return; }
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);
             if (bChan == null) { return; }
-            if (bChan.pubsubOauth == string.Empty) {
+            if (bChan.pubsubOauth == string.Empty)
+            {
                 await Context.Channel.SendMessageAsync($"To use this command you need to setup a pubsub token. See command {Core._commandCharacter}pubsub.");
-                return; }
+                return;
+            }
             if (bChan.isLinked == false) { return; }
             string game = text.Trim();
 
             StreamByUser stream = await Core.Twitch._api.V5.Streams.GetStreamByUserAsync(bChan.TwitchChannelID);
-            
+
             Channel channel = await Core.Twitch._api.V5.Channels.UpdateChannelAsync(
                 bChan.TwitchChannelID,
                 stream.Stream.Channel.Status,
                 game,
-                stream.Stream.Delay.ToString(), 
-                true, 
+                stream.Stream.Delay.ToString(),
+                true,
                 Crypto.Cipher.Decrypt(bChan.pubsubOauth));
-            string msg = $"Game is now set to \"{channel.Game}\".";
+            stream = await Core.Twitch._api.V5.Streams.GetStreamByUserAsync(bChan.TwitchChannelID);
+            string msg = $"{stream.Stream.Channel.DisplayName} is streaming {stream.Stream.Channel.Status} ({stream.Stream.Game}) for {stream.Stream.Viewers} viewers.";
             await _service.SayOnDiscordAdmin(bChan, msg);
         }
+
+
+        [Command("title", RunMode = RunMode.Async)]
+        [Summary("Set the game for the stream on the linked twitchchannel.")]
+        [RequireUserPermission(GuildPermission.ManageMessages)]
+        public async Task TitleCMD()
+        {
+            if (Context.User.IsBot) { return; }
+            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(Context.Guild.Id);
+            if (bChan == null) { return; }
+            if (bChan.pubsubOauth == string.Empty)
+            {
+                await Context.Channel.SendMessageAsync($"To use this command you need to setup a pubsub token. See command {Core._commandCharacter}pubsub.");
+                return;
+            }
+            if (bChan.isLinked == false)
+            {
+                await Context.Channel.SendMessageAsync($"To use this command you need to link this Discord to a twitch channel. See command {Core._commandCharacter}link.");
+                return;
+            }
+            StreamByUser stream = await Core.Twitch._api.V5.Streams.GetStreamByUserAsync(bChan.TwitchChannelID);
+            string msg = $"{stream.Stream.Channel.DisplayName} is streaming {stream.Stream.Channel.Status} ({stream.Stream.Game}) for {stream.Stream.Viewers} viewers.";
+            await _service.SayOnDiscordAdmin(bChan, msg);
+        }
+
         [Command("title", RunMode = RunMode.Async)]
         [Summary("Set the game for the stream on the linked twitchchannel.")]
         [RequireUserPermission(GuildPermission.ManageMessages)]
@@ -204,7 +252,9 @@ namespace MisfitBot2.Modules
             if (bChan.pubsubOauth == string.Empty) {
                 await Context.Channel.SendMessageAsync($"To use this command you need to setup a pubsub token. See command {Core._commandCharacter}pubsub.");
                 return; }
-            if (bChan.isLinked == false) { return; }
+            if (bChan.isLinked == false) {
+                await Context.Channel.SendMessageAsync($"To use this command you need to link this Discord to a twitch channel. See command {Core._commandCharacter}link.");
+                return; }
             string title = text.Trim();
             StreamByUser stream = await Core.Twitch._api.V5.Streams.GetStreamByUserAsync(bChan.TwitchChannelID);
             Channel channel = await Core.Twitch._api.V5.Channels.UpdateChannelAsync(
@@ -214,10 +264,10 @@ namespace MisfitBot2.Modules
                 stream.Stream.Delay.ToString(),
                 true,
                 Crypto.Cipher.Decrypt(bChan.pubsubOauth));
-            string msg = $"Title is now set to \"{channel.Status}\".";
+            stream = await Core.Twitch._api.V5.Streams.GetStreamByUserAsync(bChan.TwitchChannelID);
+            string msg = $"{stream.Stream.Channel.DisplayName} is streaming {stream.Stream.Channel.Status} ({stream.Stream.Game}) for {stream.Stream.Viewers} viewers.";
             await _service.SayOnDiscordAdmin(bChan, msg);
         }
-
 
 
 

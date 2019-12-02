@@ -312,11 +312,11 @@ namespace MisfitBot2.Services
         {
             
         }
-        public void OnBotChannelEntryMerge(BotChannel discordGuild, BotChannel twitchChannel)
+        public void OnBotChannelEntryMergeEvent(BotChannel discordGuild, BotChannel twitchChannel)
         {
             
         }
-        public void OnUserEntryMerge(UserEntry discordUser, UserEntry twitchUser)
+        public void OnUserEntryMergeEvent(UserEntry discordUser, UserEntry twitchUser)
         {
             
         }

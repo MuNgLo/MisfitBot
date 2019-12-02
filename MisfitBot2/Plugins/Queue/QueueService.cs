@@ -18,7 +18,7 @@ namespace MisfitBot2.Services
             Core.Twitch._client.OnChatCommandReceived += TwitchOnChatCommandReceived;
             Core.Twitch._client.OnMessageReceived += TwitchOnMessageReceived;
             TimerStuff.OnSecondTick += OnSecondTick;
-            Core.OnBotChannelGoesOffline += OnBotChannelGoesOffline;
+            Events.OnTwitchChannelGoesOffline += OnBotChannelGoesOffline;
         }
 
         private async void OnBotChannelGoesOffline(BotChannel bChan)
@@ -160,7 +160,7 @@ namespace MisfitBot2.Services
 
 
         #region IService methods
-        public void OnBotChannelEntryMerge(BotChannel discordGuild, BotChannel twitchChannel)
+        public void OnBotChannelEntryMergeEvent(BotChannel discordGuild, BotChannel twitchChannel)
         {
             throw new NotImplementedException();
         }
@@ -181,7 +181,7 @@ namespace MisfitBot2.Services
             }
         }
 
-        public void OnUserEntryMerge(UserEntry discordUser, UserEntry twitchUser)
+        public void OnUserEntryMergeEvent(UserEntry discordUser, UserEntry twitchUser)
         {
             throw new NotImplementedException();
         }

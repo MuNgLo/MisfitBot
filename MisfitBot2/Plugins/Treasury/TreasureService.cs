@@ -23,8 +23,8 @@ namespace MisfitBot2.Services
         public TreasureService()
         {
             _goldResponseBuffer = new Dictionary<string, List<string>>();
-            Core.OnUserEntryMerge += OnUserEntryMerge;
-            Core.Channels.OnBotChannelMerge += OnBotChannelEntryMerge;
+            Events.OnUserEntryMerge += OnUserEntryMergeEvent;
+            Events.OnBotChannelMerge += OnBotChannelEntryMergeEvent; 
             Core.Discord.GuildAvailable += OnGuildAvailable;
             Core.Twitch._client.OnChatCommandReceived += TWITCH_OnChatCommandReceived;
             Core.Treasury = this;
@@ -550,12 +550,12 @@ namespace MisfitBot2.Services
         {
             throw new NotImplementedException();
         }
-        public async void OnBotChannelEntryMerge(BotChannel discordGuild, BotChannel twitchChannel)
+        public async void OnBotChannelEntryMergeEvent(BotChannel discordGuild, BotChannel twitchChannel)
         {
             await Core.LOG(new LogMessage(LogSeverity.Info, "TreasureService", $"Channel Merge!!! Warning this is not implemented yet!!"));
             // Maybe it is easier to do a user specific check on a linked channel instead of iterating over all users.
         }
-        public async void OnUserEntryMerge(UserEntry discordUser, UserEntry twitchUser)
+        public async void OnUserEntryMergeEvent(UserEntry discordUser, UserEntry twitchUser)
         {
             await Core.LOG(new LogMessage(LogSeverity.Info, "TreasureService", $"Profile Merge!!! {discordUser._username} <> {twitchUser._twitchUsername}"));
             foreach (BotChannel bChan in await Core.Channels.GetChannels())

@@ -18,23 +18,26 @@ namespace MisfitBot2.Services
         // CONSTRUCTOR
         public AdminService()
         {
-            Core.OnBanEvent += OnBanEvent;
-            Core.OnBitEvent += OnBitEvent;
-            Core.OnBotChannelGoesLive += OnChannelGoesLive;
-            Core.OnBotChannelGoesOffline += OnChannelGoesOffline;
-            Core.OnHostEvent += OnHostEvent;
-            Core.OnNewDiscordMember += OnNewDiscordMember;
-            Core.OnUnBanEvent += OnUnBanEvent;
-            Core.OnTwitchSubEvent += OnTwitchSub;
-            Core.OnUserEntryMerge += OnUserEntryMerge;
-            Core.OnDiscordUserStartStream += OnDiscordUserStartStreaming;
+            Events.OnBanEvent += OnBanEvent;
+            Events.OnBitEvent += OnBitEvent;
+            Events.OnTwitchChannelGoesLive += OnChannelGoesLive;
+            Events.OnTwitchChannelGoesOffline += OnChannelGoesOffline;
+            Events.OnHostEvent += OnHostEvent;
+            Events.OnNewDiscordMember += OnNewDiscordMember;
+            Events.OnUnBanEvent += OnUnBanEvent;
+            Events.OnTwitchSubEvent += OnTwitchSub;
+            Events.OnUserEntryMerge += OnUserEntryMergeEvent;
+            Events.OnDiscordUserStartStream += OnDiscordUserStartStreaming;
         }
 
-        private async void OnDiscordUserStartStreaming(SocketGuildUser user)
+        private async void OnDiscordUserStartStreaming(BotChannel bChan, UserEntry user, StreamingGame streamInfo)
         {
-            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(user.Guild.Id);
-            if(bChan == null) { return; }
-            //await SayOnDiscordAdmin(bChan, $"{user.Username} started streaming.");
+            await Core.LOG(new LogMessage(LogSeverity.Info, PLUGINNAME, $"OnDiscordUserStartStreaming event fired!"));
+            AdminSettings settings = await Settings(bChan);
+            if (settings._announceStreamEvents)
+            {
+                await SayOnDiscordAdmin(bChan, $"{user._username} started streaming on {streamInfo.Name}. {streamInfo.Url}");
+            }
         }
 
         private async void OnTwitchSub(BotChannel bChan, TwitchSubEventArguments e)
@@ -103,6 +106,22 @@ namespace MisfitBot2.Services
         }
 
         #region Discord Command Methods
+        public async Task DiscordAdminInfo(ICommandContext context)
+        {
+            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
+            if (bChan == null) { return; }
+            AdminSettings settings = await Settings(bChan);
+            string message = string.Empty;
+            if (settings._active)
+            {
+                message += "Admin module active.";
+            }
+            else
+            {
+                message += "Admin module inactive.";
+            }
+            await (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(message);
+        }
         public async Task DiscordCommand(ICommandContext Context, List<string> args)
         {
             await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info,
@@ -120,6 +139,34 @@ namespace MisfitBot2.Services
                 case "off":
                     await DiscordSetActive(false, Context);
                     break;
+                case "announcestream":
+                    if (args.Count > 1)
+                    {
+                        if (args[1].ToLower() == "debug")
+                        {
+                            await Context.Channel.SendMessageAsync($"Raising Stream Debug Event");
+                            UserEntry user = await Core.UserMan.GetUserByDiscordID(Context.User.Id);
+                            StreamingGame streamInfo = new StreamingGame("Twitch", $"http://twitch.com/{user._twitchUsername}");
+                           
+                            Events.RaiseDiscordUserStartStream(
+                                bChan,
+                                user,
+                                streamInfo
+                                );
+                            return;
+                        }
+                        if (args[1].ToLower() == "on")
+                        {
+                            settings._announceStreamEvents = true;
+                        }
+                        if (args[1].ToLower() == "off")
+                        {
+                            settings._announceStreamEvents = false;
+                        }
+                    }
+                    await Context.Channel.SendMessageAsync($"Stream Event announcement in this channel is set to {settings._announceStreamEvents}");
+                    SaveSettings(PLUGINNAME, bChan, settings);
+                    return;
                 case "user":
                     if(Context.Channel.Id != bChan.discordAdminChannel || settings._active == false)
                     {
@@ -147,8 +194,6 @@ namespace MisfitBot2.Services
                             await UserSearch(bChan, args[2]);
                             break;
                     }
-
-
                     break;
             }
         }
@@ -179,7 +224,7 @@ namespace MisfitBot2.Services
             // Trigger OnLinkingChannel event if channel was added
             if (result)
             {
-                Core.Channels.OnBotChannelMerge?.Invoke(discordProfile, twitchProfile);
+                Events.RaiseOnBotChannelMerge(discordProfile, twitchProfile);
                 await Core.LOG(new LogMessage(LogSeverity.Info, PLUGINNAME, $"Linking Discord Guild {linkedProfile.GuildID} to Twitch channel {linkedProfile.TwitchChannelName}."));
                 await context.Message.Channel.SendMessageAsync($"This Discord guild linked to Twitchchannel \"{linkedProfile.TwitchChannelName}\" ");
                 Core.Channels.ChannelSave(linkedProfile);
@@ -246,22 +291,6 @@ namespace MisfitBot2.Services
             bChan.pubsubOauth = encryptedoauth;
             Core.Channels.ChannelSave(bChan);
             await Context.Channel.SendMessageAsync("PubSub OAUTH key has been updated. Use \"!pubsub start\" to launch it.");
-        }
-        public async Task DiscordAdminInfo(ICommandContext context)
-        {
-            BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(context.Guild.Id);
-            if (bChan == null) { return; }
-            AdminSettings settings = await Settings(bChan);
-            string message = string.Empty;
-            if (settings._active)
-            {
-                message += "Admin module active.";
-            }
-            else
-            {
-                message += "Admin module inactive.";
-            }
-            await (Core.Discord.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(message);
         }
         public async Task DiscordSetActive(bool flag, ICommandContext context)
         {
@@ -449,6 +478,7 @@ namespace MisfitBot2.Services
                 cmd.CommandText = $"CREATE TABLE {plugin} (" +
                     $"configKey VACHAR(30)," +
                     $"active BOOLEAN, " +
+                    $"streamannounce BOOLEAN, " +
                     $"defaultCooldown INTEGER, " +
                     $"defaultDiscordChannel INTEGER, " +
                     $"defaultTwitchRoom VACHAR(30)" +
@@ -483,9 +513,10 @@ namespace MisfitBot2.Services
                 result.Read();
                 AdminSettings settings = new AdminSettings();
                 settings._active = result.GetBoolean(1);
-                settings._defaultCooldown = result.GetInt32(2);
-                settings._defaultDiscordChannel = (ulong)result.GetInt64(3);
-                settings._defaultTwitchRoom = result.GetString(4);
+                settings._announceStreamEvents = result.GetBoolean(2);
+                settings._defaultCooldown = result.GetInt32(3);
+                settings._defaultDiscordChannel = (ulong)result.GetInt64(4);
+                settings._defaultTwitchRoom = result.GetString(5);
                 return settings;
             }
         }
@@ -504,12 +535,14 @@ namespace MisfitBot2.Services
                 cmd.CommandText = $"INSERT INTO {plugin} VALUES (" +
                     $"@key, " +
                     $"@active, " +
+                    $"@streamannounce, " +
                     $"@defaultCooldown, " +
                     $"@defaultDiscordChannel, " +
                     $"@defaultTwitchRoom" +
                     $")";
                 cmd.Parameters.AddWithValue("@key", key);
                 cmd.Parameters.AddWithValue("@active", settings._active);
+                cmd.Parameters.AddWithValue("@streamannounce", settings._announceStreamEvents);
                 cmd.Parameters.AddWithValue("@defaultCooldown", settings._defaultCooldown);
                 cmd.Parameters.AddWithValue("@defaultDiscordChannel", settings._defaultDiscordChannel);
                 cmd.Parameters.AddWithValue("@defaultTwitchRoom", settings._defaultTwitchRoom);
@@ -529,11 +562,13 @@ namespace MisfitBot2.Services
                 cmd.Connection = Core.Data;
                 cmd.CommandText = $"UPDATE {plugin} SET " +
                     $"active = @active, " +
+                    $"streamannounce = @streamannounce, " +
                     $"defaultCooldown = @defaultCooldown, " +
                     $"defaultDiscordChannel = @defaultDiscordChannel, " +
                     $"defaultTwitchRoom = @defaultTwitchRoom " +
                     $" WHERE configKey is @key";
                 cmd.Parameters.AddWithValue("@active", settings._active);
+                cmd.Parameters.AddWithValue("@streamannounce", settings._announceStreamEvents);
                 cmd.Parameters.AddWithValue("@defaultCooldown", settings._defaultCooldown);
                 cmd.Parameters.AddWithValue("@defaultDiscordChannel", settings._defaultDiscordChannel);
                 cmd.Parameters.AddWithValue("@defaultTwitchRoom", settings._defaultTwitchRoom);
@@ -558,7 +593,7 @@ namespace MisfitBot2.Services
         {
             throw new NotImplementedException();
         }
-        public void OnBotChannelEntryMerge(BotChannel discordGuild, BotChannel twitchChannel)
+        public void OnBotChannelEntryMergeEvent(BotChannel discordGuild, BotChannel twitchChannel)
         {
             throw new NotImplementedException();
         }
@@ -570,7 +605,7 @@ namespace MisfitBot2.Services
         {
             throw new NotImplementedException();
         }
-        public void OnUserEntryMerge(UserEntry discordUser, UserEntry twitchUser)
+        public void OnUserEntryMergeEvent(UserEntry discordUser, UserEntry twitchUser)
         {
             
         }

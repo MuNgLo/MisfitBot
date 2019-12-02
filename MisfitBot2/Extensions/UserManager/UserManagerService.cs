@@ -69,7 +69,7 @@ namespace MisfitBot2.Services
                 return;
             }
             // Raise the link event so modules can listen and do whatever they need to do
-            Core.RaiseUserLinkEvent(discordProfile, twitchProfile);
+            Events.RaiseUserLinkEvent(discordProfile, twitchProfile);
             // merge twitch user into discord user then elevate discord user to linked status
             discordProfile._twitchUID = twitchProfile._twitchUID;
             discordProfile._twitchUsername = twitchProfile._twitchUsername;
@@ -140,7 +140,7 @@ namespace MisfitBot2.Services
                 await UpdateDiscordUserEntry(arg);
             UserEntry user = await Core.UserMan.GetUserByDiscordID(arg.Id);
             BotChannel bChan = await Core.Channels.GetDiscordGuildbyID(arg.Guild.Id);
-            Core.RaiseOnNewDiscordMember(bChan, user);
+            Events.RaiseOnNewDiscordMember(bChan, user);
 
         }
         /// <summary>

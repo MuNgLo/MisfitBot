@@ -20,8 +20,8 @@ namespace MisfitBot2.Extensions.ChannelManager
     public class ChannelManager
     {
         private readonly string PLUGINNAME = "ChannelManager";
-        public BotChannelMergeEvent OnBotChannelMerge;
-        public BotChannelGoesOffline OnBotChannelGoesOffline;
+        
+        public TwitchChannelGoesOfflineEvent OnBotChannelGoesOffline;
         private volatile bool apiQueryLock = false; // This is true when we have an active channel request towards Twitch API running
         public Dictionary<string, TwPubSub> PubSubClients = new Dictionary<string, TwPubSub>();
         /// CONSTRUCTOR

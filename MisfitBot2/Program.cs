@@ -40,7 +40,7 @@ namespace MisfitBot2
             _DiscordClient = new DiscordSocketClient(disConfig);
             _DiscordClient.Log += Core.LOGGER.LogThis;
             //_DiscordClient.UserUpdated += Core.RaiseDiscordUserUpdated;
-            _DiscordClient.GuildMemberUpdated += Core.RaiseDiscordUserUpdated;
+            _DiscordClient.GuildMemberUpdated += Events.RaiseDiscordUserUpdated;
             _DiscordClient.GuildUnavailable += (guild) => { Core.LOG(new LogMessage(LogSeverity.Warning, "Misfitbot", $"Discord guild \"{guild.Name}\" unavailable.")); return Task.CompletedTask; };
             _DiscordClient.JoinedGuild += (guild) => { Core.LOG(new LogMessage(LogSeverity.Info, "Misfitbot", $"Joined Discord guild \"{guild.Name}\".")); return Task.CompletedTask; };
             _DiscordClient.Ready += () => { Core.LOG(new LogMessage(LogSeverity.Info, "Misfitbot", "Connected and ready to be used.")); return Task.CompletedTask; };

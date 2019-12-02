@@ -82,7 +82,7 @@ namespace MisfitBot2.Services
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(e.Channel);
             int i = 0;
             int.TryParse(e.RaidNotificaiton.MsgParamViewerCount, out i);
-            Core.RaiseRaidEvent(bChan, new RaidEventArguments(e.RaidNotificaiton.DisplayName, e.Channel, i));
+            Events.RaiseRaidEvent(bChan, new RaidEventArguments(e.RaidNotificaiton.DisplayName, e.Channel, i));
         }
 
         private void TwitchOnMessageReceived(object sender, OnMessageReceivedArgs e)
@@ -106,7 +106,7 @@ namespace MisfitBot2.Services
                 e.UserBan.BanReason, 
                 true
                 );
-            Core.RaiseBanEvent(banEvent);
+            Events.RaiseBanEvent(banEvent);
         }
         private async void TwitchOnLog(object sender, OnLogArgs e)
         {

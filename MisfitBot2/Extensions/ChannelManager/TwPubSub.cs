@@ -151,7 +151,7 @@ namespace MisfitBot2.Extensions.ChannelManager
                 Core.CurrentTime,
                 true
                 );
-            Core.RaiseUnBanEvent(unbanEvent);
+            Events.RaiseUnBanEvent(unbanEvent);
         }
         private async void Client_OnBan(object sender, OnBanArgs e)
         {
@@ -173,7 +173,7 @@ namespace MisfitBot2.Extensions.ChannelManager
                 e.BanReason,
                 true
                 );
-            Core.RaiseBanEvent(banEvent);
+            Events.RaiseBanEvent(banEvent);
         }
         private async void Client_OnUntimeout(object sender, OnUntimeoutArgs e)
         {
@@ -246,12 +246,12 @@ namespace MisfitBot2.Extensions.ChannelManager
         {
             JsonDumper.DumpObjectToJson(e, "TwitchSUB"); // collect a few of these so we know what we are dealing with
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(e.Subscription.ChannelName);
-            Core.RaiseOnTwitchSubscription(bChan, new TwitchSubEventArguments(e));
+            Events.RaiseOnTwitchSubscription(bChan, new TwitchSubEventArguments(e));
         }
         private async void Client_OnHost(object sender, OnHostArgs e)
         {
             BotChannel bChan = await Core.Channels.GetTwitchChannelByID(_twitchChannelName);
-            Core.RaiseHostEvent(bChan, new HostEventArguments(e.HostedChannel, e.Moderator));
+            Events.RaiseHostEvent(bChan, new HostEventArguments(e.HostedChannel, e.Moderator));
         }
         private async void Client_OnFollow(object sender, OnFollowArgs e)
         {
@@ -340,18 +340,18 @@ namespace MisfitBot2.Extensions.ChannelManager
                     e.Context,
                     e.ChatMessage
                 );
-                Core.RaiseBitEvent(bitEvent);
+                Events.RaiseBitEvent(bitEvent);
             }
         }
         private async void Client_OnStreamDown(object sender, OnStreamDownArgs e)
         {
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(_twitchChannelName);
-            Core.RaiseOnBotChannelGoesOffline(bChan);
+            Events.RaiseOnTwitchChannelGoesOffline(bChan);
         }
         private async void Client_OnStreamUp(object sender, OnStreamUpArgs e)
         {
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(_twitchChannelName);
-            Core.RaiseOnBotChannelGoesLive(bChan,  e.PlayDelay);
+            Events.RaiseOnTwitchChannelGoesLive(bChan,  e.PlayDelay);
         }
         #endregion
     }

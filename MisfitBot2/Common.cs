@@ -6,19 +6,7 @@ namespace MisfitBot2
 {
     public enum TWSUBCONTEXT {  UNKNOWN, SUB, RESUB, GIFTSUB }
 
-    public delegate void UserEntryMerge(UserEntry discordUser, UserEntry twitchUser);
-    public delegate void BotChannelMergeEvent(BotChannel guildID, BotChannel twitchChannelName);
-    public delegate void BotChannelGoesLive(BotChannel bChan, int delay);
-    public delegate void BotChannelGoesOffline(BotChannel bChan);
-    public delegate void BitEvent(BitEventArguments e);
-    public delegate void BanEvent(BanEventArguments e);
-    public delegate void HostEvent(BotChannel bChan, HostEventArguments e);
-    public delegate void RaidEvent(BotChannel bChan, RaidEventArguments e);
-    public delegate void TwitchSubscriptionEvent(BotChannel bChan, TwitchSubEventArguments e);
-    public delegate void UnBanEvent(UnBanEventArguments e);
-    public delegate void ViewerCountEvent(BotChannel bChan, int oldCount, int newCount);
-    public delegate void NewDiscordMember(BotChannel bChan, UserEntry user);
-    public delegate void DiscordUserStartsStream(Discord.WebSocket.SocketGuildUser user);
+    
 
 
     public struct GenericTimeStamp
@@ -242,7 +230,7 @@ namespace MisfitBot2.Services
     {
         void OnSecondTick(int seconds);
         void OnMinuteTick(int minutes);
-        void OnUserEntryMerge(UserEntry discordUser, UserEntry twitchUser);
-        void OnBotChannelEntryMerge(BotChannel discordGuild, BotChannel twitchChannel);
+        void OnUserEntryMergeEvent(UserEntry discordUser, UserEntry twitchUser);
+        void OnBotChannelEntryMergeEvent(BotChannel discordGuild, BotChannel twitchChannel);
     }
 }

@@ -8,5 +8,6 @@ namespace MisfitBot2.Plugins.Admin
     {
         public List<string> _bannedTwitchIDs = new List<string>();
         public List<ulong> _bannedDiscordIDs = new List<ulong>();
+        public bool _announceStreamEvents = false;
     }
 }

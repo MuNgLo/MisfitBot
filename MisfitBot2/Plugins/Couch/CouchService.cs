@@ -34,10 +34,10 @@ namespace MisfitBot2.Services
             Core.Twitch._client.OnMessageReceived += TwitchOnMessageRecieved;
             Core.Twitch._client.OnUserJoined += TwitchInUserJoined;
             TimerStuff.OnSecondTick += OnSecondTick;
-            Core.OnBotChannelGoesLive += OnChannelGoesLive;
-            Core.OnBotChannelGoesOffline += OnChannelGoesOffline;
-            ///Core.OnUserEntryMerge += OnUserEntryMerge; FIX THIS NEXT
-            Core.Channels.OnBotChannelMerge += OnBotChannelEntryMerge;
+            Events.OnTwitchChannelGoesLive += OnChannelGoesLive;
+            Events.OnTwitchChannelGoesOffline += OnChannelGoesOffline;
+            Events.OnUserEntryMerge += OnUserEntryMergeEvent;
+            Events.OnBotChannelMerge += OnBotChannelEntryMergeEvent;
             // Successes
             _success.Add("[USER] takes a seat on the couch.");
             _success.Add("[USER] backflips onto the couch.");
@@ -133,7 +133,7 @@ namespace MisfitBot2.Services
                         if(e.Command.ArgumentsAsList.Count == 0)
                         {
                             Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
-                                $"Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}."
+                                $"Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}. Open time is {settings.openTime}"
                                 );
                             return;
                         }
@@ -151,14 +151,14 @@ namespace MisfitBot2.Services
                                 settings._active = true;
                                 SaveBaseSettings(PLUGINNAME, bChan, settings);
                                 Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
-                                $"Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}."
+                                $"Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}. Open time is {settings.openTime}"
                                 );
                                 break;
                             case "off":
                                 settings._active = false;
                                 SaveBaseSettings(PLUGINNAME, bChan, settings);
                                 Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
-                                 $"Couch is inactive. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}."
+                                 $"Couch is inactive. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}. Open time is {settings.openTime}"
                                  );
                                 break;
                             case "size":
@@ -207,6 +207,10 @@ namespace MisfitBot2.Services
                                         await SayOnDiscordAdmin(bChan, $"{e.Command.ChatMessage.DisplayName} changed the Couch open time limit setting to {settings.openTime}.");
                                         SaveBaseSettings(PLUGINNAME, bChan, settings);
                                     }
+                                }
+                                else
+                                {
+                                    await SayOnDiscordAdmin(bChan, $"Couch open time limit is {settings.openTime} seconds.");
                                 }
                                 break;
                             case "open":
@@ -349,12 +353,13 @@ namespace MisfitBot2.Services
                 await DBStringsFirstSetup(bChan);
             }
             CouchSettings settings = await Settings(bChan);
-            await SayOnDiscordAdmin(bChan, $"Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}.");
+            //await SayOnDiscordAdmin(bChan, $"Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}.  Open time is {settings.openTime}");
             // Ugly bit coming here
             string helptext = $"```fix{Environment.NewLine}" +
+                $"Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}.  Open time is {settings.openTime}{Environment.NewLine}{Environment.NewLine}" +
                 $"Admin/Broadcaster commands{Environment.NewLine}{Environment.NewLine}{Core._commandCharacter}couch < Arguments >{Environment.NewLine}{Environment.NewLine}Arguments....{Environment.NewLine}< none > ->responds current settings{Environment.NewLine}" +
             $"open -> Manually resets and open the couch.{Environment.NewLine}on/off -> Turns plugin on or off for the channel.{Environment.NewLine}size # -> Sets the number of seats between 1 and 40.{Environment.NewLine}" +
-            $"greet # -> Sets the number of seated needed in stats for a greeting when a user joins the twitch channel.{Environment.NewLine}{Environment.NewLine}Discord only arguments(make sure adminchannel is set in adminplugin){Environment.NewLine}" +
+            $"greet # -> Sets the number of seated needed in stats for a greeting when a user joins the twitch channel.{Environment.NewLine}time # -> Sets the time in seconds the couch will stay open.{Environment.NewLine}{Environment.NewLine}Discord only arguments(make sure adminchannel is set in adminplugin){Environment.NewLine}" +
             $"addsuccess < text > Text being the line returned. Use [USER] in text where username should be.{Environment.NewLine}addfail < text >{Environment.NewLine}addgreet < text >{Environment.NewLine}addincident < text >{Environment.NewLine}" +
             $"list / list # -> Shows stored lines by page.{Environment.NewLine}use # -> Toggles the inuse flag for the line with given ID.{Environment.NewLine}delete # -> Deletes the line with the ID if inuse flag is false. As in not in use.{Environment.NewLine}" +
             $"{Environment.NewLine}{Environment.NewLine}User commands{Environment.NewLine}" +
@@ -393,14 +398,14 @@ namespace MisfitBot2.Services
                     settings._active = true;
                     SaveBaseSettings(PLUGINNAME, bChan, settings);
                     await SayOnDiscordAdmin(bChan,
-                    $"Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}."
+                    $"Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}. Open time is {settings.openTime}"
                     );
                     break;
                 case "off":
                     settings._active = false;
                     SaveBaseSettings(PLUGINNAME, bChan, settings);
                     await SayOnDiscordAdmin(bChan,
-                     $"Couch is inactive. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}."
+                     $"Couch is inactive. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}. Open time is {settings.openTime}"
                      );
                     break;
                 case "open":
@@ -432,12 +437,19 @@ namespace MisfitBot2.Services
                     break;
                 case "time":
                     int timer = settings.openTime;
-                    int.TryParse(arguments[1], out timer);
-                    if (timer > 0 && timer <= 3600 && timer != settings.openTime)
+                    if (arguments.Count == 2)
                     {
-                        settings.openTime = timer;
-                        await SayOnDiscordAdmin(bChan, $"Couch time limit is now {settings.openTime}.");
-                        SaveBaseSettings(PLUGINNAME, bChan, settings);
+                        int.TryParse(arguments[1], out timer);
+                        if (timer > 0 && timer <= 3600 && timer != settings.openTime)
+                        {
+                            settings.openTime = timer;
+                            await SayOnDiscordAdmin(bChan, $"Couch time limit is now {settings.openTime}.");
+                            SaveBaseSettings(PLUGINNAME, bChan, settings);
+                        }
+                    }
+                    else
+                    {
+                        await SayOnDiscordAdmin(bChan, $"Couch time limit is {settings.openTime}.");
                     }
                     break;
                 case "addsuccess":
@@ -922,12 +934,12 @@ namespace MisfitBot2.Services
         {
             throw new NotImplementedException();
         }
-        public async void OnBotChannelEntryMerge(BotChannel discordGuild, BotChannel twitchChannel)
+        public async void OnBotChannelEntryMergeEvent(BotChannel discordGuild, BotChannel twitchChannel)
         {
             string keyToReplace = twitchChannel.Key;
             await ReplaceChannelKey(discordGuild.Key, twitchChannel.Key);
         }
-        public void OnUserEntryMerge(UserEntry discordUser, UserEntry twitchUser)
+        public void OnUserEntryMergeEvent(UserEntry discordUser, UserEntry twitchUser)
         {
            // TODO make this fix db when a user merges
         }
