@@ -9,14 +9,67 @@ namespace MisfitBot2.Components
 {
     /// <summary>
     /// Create an instanse of this to store/grab strings from DB.
+    /// The pluginname fed to constructor is used as part of the table name
+    /// Seperation of string groups for a plugin is by using different Topics.
     /// </summary>
     public class DatabaseStrings
     {
-        readonly string PLUGINNAME;
-        public DatabaseStrings(string pluginName)
+        readonly string PLUGINNAME; // Is used as tablename, then each row is treated as a
+        readonly string BASECOMMAND; // Is used as command when making help text. Example "couch list"
+        /// <summary>
+        /// pluginName is used as part of tablename
+        /// baseCMD is used as command when making help text. Example "couch list"
+        /// Note the lack of commanidentifier
+        /// </summary>
+        /// <param name="pluginName"></param>
+        /// <param name="baseCMD"></param>
+        public DatabaseStrings(string pluginName, string baseCMD)
         {
             PLUGINNAME = pluginName;
+            BASECOMMAND = baseCMD;
         }
+
+        #region WiP
+        /// <summary>
+        /// Call this to get a list string wrapped in code flags for monospace layout returned with the fitting results.
+        /// NOTE! Topic not implemneted yet TODO
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <param name="page"></param>
+        /// <param name="topic"></param>
+        /// <returns></returns>
+        internal async Task<string> GetPage(BotChannel bChan, int page, string topic="") // TODO make Topic work
+        {
+            StringBuilder text = new StringBuilder();
+            List<DBString> lines = GetRowsByTen(bChan, page);
+            await Task.Run(()=>{
+                text.Append($"```fix{Environment.NewLine}");
+                text.Append($"<ID> <TOPIC> <INUSE> <TEXT>        Page {page + 1}{Environment.NewLine}");
+                if (lines.Count == 0)
+                {
+                    text.Append("No hits. Try a lower page number.");
+                }
+                else
+                {
+                    foreach (DBString entry in lines)
+                    {
+                        text.Append(String.Format("{0,4}", entry._id));
+                        text.Append(String.Format("{0,8}", entry._topic));
+                        text.Append(String.Format("{0,7}", entry._inuse));
+                        text.Append(" ");
+                        text.Append(entry._text);
+                        text.Append(Environment.NewLine);
+                    }
+                }
+            });
+            text.Append(Environment.NewLine);
+            text.Append($"Use command {Core._commandCharacter}{BASECOMMAND} <page> to list a page. Those marked with an X for INUSE are in rotation. Topic is what the text is used for.");
+            text.Append($"```");
+            return text.ToString();
+        }
+
+        #endregion
+
 
         #region DB access
         /// <summary>
@@ -283,6 +336,11 @@ namespace MisfitBot2.Components
         }
         #endregion
         #region Internals
+        /// <summary>
+        /// Constructs the tablename from the BotChannel Key and PLUGINNAME fed through constructor.
+        /// </summary>
+        /// <param name="chanKey"></param>
+        /// <returns></returns>
         private string TableName(string chanKey)
         {
             return chanKey + "_" + PLUGINNAME;

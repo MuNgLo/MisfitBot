@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 //using TwitchLib.Events.Client;
 
 namespace MisfitBot2.Twitch
@@ -14,13 +15,13 @@ namespace MisfitBot2.Twitch
         /// Add new user or updates the timestamp of existing user
         /// </summary>
         /// <param name="userName"></param>
-        public void TouchUser(string channelName, string userName)
+        public void TouchUser(string channelName, string userName, string displayName)
         {
             if (!_users.ContainsKey(channelName))
             {
                 _users[channelName] = new List<TwitchChannelUser>();
             }
-            TwitchChannelUser user = new TwitchChannelUser(userName);
+            TwitchChannelUser user = new TwitchChannelUser(userName, displayName);
             if (_users[channelName].Exists(p => p._twitchUsername == userName))
             {
                 _users[channelName][_users[channelName].FindIndex(p => p._twitchUsername == userName)] = user;
@@ -55,23 +56,25 @@ namespace MisfitBot2.Twitch
                 _users[channelName] = new List<TwitchChannelUser>();
                 return null;
             }
-            List<string> result = new List<string>();
+            List<TwitchChannelUser> result = new List<TwitchChannelUser>();
             foreach (TwitchChannelUser user in _users[channelName])
             {
-                result.Add(user._twitchUsername);
+                result.Add(user);
             }
             System.Random rng = new System.Random();
-            return result[rng.Next(0,result.Count)];
+            return result[rng.Next(0, result.Count)]._twitchDisplayname;
         }
 
     }
     struct TwitchChannelUser
     {
         public string _twitchUsername;
+        public string _twitchDisplayname;
         public int _lastseen;
-        public TwitchChannelUser(string username)
+        public TwitchChannelUser(string username, string displayname)
         {
             _twitchUsername = username;
+            _twitchDisplayname = displayname;
             _lastseen = Core.CurrentTime;
         }
     }

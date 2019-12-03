@@ -14,13 +14,13 @@ namespace MisfitBot2
         /// </summary>
         /// <param name="message"></param>
         /// <returns></returns>
-        public static string ConvertMessage(string message)
+        public static string ConvertMessage(string message, string user, string targetUser, string twitchChannel)
         {
             List<string> parts = GetAllParts(message);
 
             foreach (var part in parts)
             {
-                message = message.Replace(part, GetReplacementValue(part));
+                message = message.Replace(part, GetReplacementValue(part, user, targetUser, twitchChannel));
             }
 
             return message;
@@ -30,13 +30,16 @@ namespace MisfitBot2
         /// </summary>
         /// <param name="pattern"></param>
         /// <returns></returns>
-        private static string GetReplacementValue(string pattern, string twitchChannel=null)
+        private static string GetReplacementValue(string pattern, string user, string targetUser, string twitchChannel)
         {
             string value = string.Empty;
             switch (pattern)
             {
                 case "[User]":
-                    value = "CurrentUser";
+                    if (user != null)
+                    {
+                        value = user;
+                    }
                     break;
                 case "[RandomUser]":
                     if (twitchChannel != null)
@@ -45,7 +48,10 @@ namespace MisfitBot2
                     }
                     break;
                 case "[TargetUser]":
-                    value = "TargetUser";
+                    if (targetUser != null)
+                    {
+                        value = targetUser;
+                    }
                     break;
             }
             return value;
@@ -54,8 +60,16 @@ namespace MisfitBot2
         private static string GetRandomUser(string twitchChannel)
         {
             // TODO MAKE THIS SILLY!!!
-            Core.Twitch._twitchUsers.GetRandomUserInChannel(twitchChannel);
-            return "testUser";
+            string rngUser = Core.Twitch._twitchUsers.GetRandomUserInChannel(twitchChannel);
+            if(rngUser == null)
+            {
+                return "NULLUser";
+            }
+            if (rngUser == string.Empty)
+            {
+                return "EmptyUser";
+            }
+            return rngUser;
         }
 
         /// <summary>

@@ -15,7 +15,7 @@ namespace MisfitBot2
 
         public ServiceBaseMKII(string pluginName)
         {
-            DBStrings = new DatabaseStrings(pluginName);
+            DBStrings = new DatabaseStrings(pluginName, "basecommand list"); // Make sure this is changed
         }
 
         public async Task SayOnDiscord(BotChannel bChan, string message)

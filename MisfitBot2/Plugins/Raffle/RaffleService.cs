@@ -20,7 +20,7 @@ namespace MisfitBot2.Services
         // CONSTRUCTOR
         public RaffleService()
         {
-            dbStrings = new DatabaseStrings(PLUGINNAME);
+            dbStrings = new DatabaseStrings(PLUGINNAME, "raffle list");
             Core.Twitch._client.OnChatCommandReceived += TwitchOnChatCommandReceived;
             Core.Twitch._client.OnMessageReceived += TwitchOnMessageReceived;
             _raffles = new RunningRaffles();

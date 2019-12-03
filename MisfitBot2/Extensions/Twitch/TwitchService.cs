@@ -87,11 +87,17 @@ namespace MisfitBot2.Services
 
         private void TwitchOnMessageReceived(object sender, OnMessageReceivedArgs e)
         {
-            _twitchUsers.TouchUser(e.ChatMessage.Channel, e.ChatMessage.Username);
+            _twitchUsers.TouchUser(e.ChatMessage.Channel, e.ChatMessage.Username, e.ChatMessage.DisplayName);
         }
-        private void TwitchOnUserJoined(object sender, OnUserJoinedArgs e)
+        private async void TwitchOnUserJoined(object sender, OnUserJoinedArgs e)
         {
-            _twitchUsers.TouchUser(e.Channel, e.Username);
+            UserEntry user = await Core.UserMan.GetUserByTwitchUserName(e.Username);
+            if(user == null)
+            {
+                _twitchUsers.TouchUser(e.Channel, e.Username, e.Username);
+                return;
+            }
+            _twitchUsers.TouchUser(e.Channel, e.Username, user._twitchDisplayname);
         }
         private async void TwitchOnUserBanned(object sender, OnUserBannedArgs e)
         {
@@ -146,7 +152,7 @@ namespace MisfitBot2.Services
             foreach (TwitchLib.Api.V5.Models.Users.User user in users.Matches)
             {
                 string twitchID = user.Id;
-                _twitchUsers.TouchUser(e.Channel, user.Id);
+                _twitchUsers.TouchUser(e.Channel, user.Name, user.DisplayName);
                 await Core.LOG(new LogMessage(LogSeverity.Info, "TwitchService", $"TwitchOnExistingUsersDetected :: {user.DisplayName} id:{user.Id}"));
             }
         }

@@ -17,6 +17,47 @@ namespace MisfitBot2.Services
     {
         private readonly string PLUGINNAME = "TwitchCommandsService";
         private readonly Random RNG = new Random();
+        #region insults
+        List<string> insults = new List<string>(
+                new string[] {
+                $"Don’t feel bad [RandomUser], there are many people who have no talent!",
+                $"Hey [RandomUser], as an outsider, what do you think of the human race?",
+                $"I’d like to kick [RandomUser] in the teeth, but why should I improve their looks?"
+                }
+                );
+        List<string> insultsOG = new List<string>(
+                 new string[] {
+                $"Don’t feel bad [User], there are many people who have no talent!",
+                $"Hey [User], as an outsider, what do you think of the human race?",
+                $"I’d like to kick [User] in the teeth, but why should I improve their looks?",
+                $"At least there’s one thing good about [User]'s body – it’s not as ugly as their face.",
+                $"Brains aren’t everything. In fact, in [User]'s case they’re nothing.",
+                $"I like [User]. People say I’ve no taste, but I like [User].",
+                $"[User], did your parents ever ask you to run away from home?",
+                $"[User], If I had a face like yours I’d sue my parents.",
+                $"Any similarity between [User] and a human is purely coincidental.",
+                $"[User], keep talking – someday you’ll say something intelligent.",
+                $"[User], don’t you love nature, despite what it did to you?",
+                $"[User], don’t think, it might sprain your brain.",
+                $"[User] has a mechanical mind.Too bad they forgot to wind it up this morning.",
+                $"[User] is always lost in thought. It’s unfamiliar territory.",
+                $"Are [User] always so stupid or is today a special occasion?",
+                $"[User] is listed in Who’s Who as What’s That?",
+                $"[User] is living proof that man can live without a brain.",
+                $"[User] is so short, when it rains they are always the last to know.",
+                $"[User] is the kind of a person you’d use as a blueprint to build an idiot.",
+                $"How did you get here? Chat, did someone leave [User]'s cage open?",
+                $"[User], how would you like to feel the way you look?",
+                $"I can’t talk to you right now. Where will you be 10 years from now?",
+                $"I don’t want you to turn the other cheek, it’s just as ugly.",
+                $"I don’t know what it is that makes you so stupid but it really works.",
+                $"I can’t seem to remember your name, and please don’t help me.",
+                $"I’ve seen people like you but I had to pay admission.",
+                $"[User], do you practise being this ugly ?"
+                 }
+                 );
+        #endregion
+
         // Use this for initialization
         public TwitchCommandsService()
         {
@@ -122,38 +163,11 @@ namespace MisfitBot2.Services
 
         private void Insult(string victim, string twitchChannel)
         {
-            List<string> insults = new List<string>(
-                new string[] {
-                $"Don’t feel bad {victim}, there are many people who have no talent!",
-                $"Hey {victim}, as an outsider, what do you think of the human race?",
-                $"I’d like to kick {victim} in the teeth, but why should I improve their looks?",
-                $"At least there’s one thing good about {victim}'s body – it’s not as ugly as their face.",
-                $"Brains aren’t everything. In fact, in {victim}'s case they’re nothing.",
-                $"I like {victim}. People say I’ve no taste, but I like {victim}.",
-                $"{victim}, did your parents ever ask you to run away from home?",
-                $"{victim}, If I had a face like yours I’d sue my parents.",
-                $"Any similarity between {victim} and a human is purely coincidental.",
-                $"{victim}, keep talking – someday you’ll say something intelligent.",
-                $"{victim}, don’t you love nature, despite what it did to you?",
-                $"{victim}, don’t think, it might sprain your brain.",
-                $"{victim} has a mechanical mind.Too bad they forgot to wind it up this morning.",
-                $"{victim} is always lost in thought.It’s unfamiliar territory.",
-                $"Are {victim} always so stupid or is today a special occasion?",
-                $"{victim} is listed in Who’s Who as What’s That?",
-                $"{victim} is living proof that man can live without a brain.",
-                $"{victim} is so short, when it rains they are always the last to know.",
-                $"{victim} is the kind of a person you’d use as a blueprint to build an idiot.",
-                $"How did you get here? Chat, did someone leave {victim}'s cage open?",
-                $"{victim}, how would you like to feel the way you look?",
-                $"I can’t talk to you right now. Where will you be 10 years from now?",
-                $"I don’t want you to turn the other cheek, it’s just as ugly.",
-                $"I don’t know what it is that makes you so stupid but it really works.",
-                $"I can’t seem to remember your name, and please don’t help me.",
-                $"I’ve seen people like you but I had to pay admission.",
-                $"{victim}, do you practise being this ugly ?"
-                }
+            
+            Core.Twitch._client.SendMessage(
+                twitchChannel,
+                StringFormatter.ConvertMessage(insults[RNG.Next(0, insults.Count)], victim, null, twitchChannel)
                 );
-            Core.Twitch._client.SendMessage(twitchChannel, insults[RNG.Next(0, insults.Count)]);
         }
 
     }

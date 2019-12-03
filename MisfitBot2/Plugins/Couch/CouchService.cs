@@ -67,7 +67,7 @@ namespace MisfitBot2.Services
             // Database checks
             if (!StatsTableExists()) { StatsTableCreate(PLUGINSTATS); }
             // DB Strings setup
-            dbStrings = new DatabaseStrings(PLUGINNAME);
+            dbStrings = new DatabaseStrings(PLUGINNAME, "couch list");
         }
 
         private void TwitchOnMessageRecieved(object sender, OnMessageReceivedArgs e)
@@ -266,8 +266,8 @@ namespace MisfitBot2.Services
                                         markUserStats.CountBooted++;
                                         UserStatsSave(markUserStats);
                                     }
-                                    Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
-                                        $"{dbStrings.GetRandomLine(bChan, "INCIDENT").Replace("[USER]", markuser._twitchDisplayname)}"
+                                    Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel, 
+                                        StringFormatter.ConvertMessage(dbStrings.GetRandomLine(bChan, "INCIDENT"), markuser._twitchDisplayname, null, e.Command.ChatMessage.Channel)
                                         );
                                     settings._couches[bChan.Key].TwitchUsernames.RemoveAll(p => p == markuser._twitchUsername);
                                     SaveBaseSettings(PLUGINNAME, bChan, settings);
@@ -283,7 +283,7 @@ namespace MisfitBot2.Services
                         UserStatsSave(userStats);
                         settings._couches[bChan.Key].TwitchUsernames.Add(e.Command.ChatMessage.Username);
                         Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
-                            $"{ dbStrings.GetRandomLine(bChan, "SUCCESS").Replace("[USER]", user._twitchDisplayname)}"
+                            StringFormatter.ConvertMessage(dbStrings.GetRandomLine(bChan, "SUCCESS"), user._twitchDisplayname, null, e.Command.ChatMessage.Channel)
                             );
                         SaveBaseSettings(PLUGINNAME, bChan, settings);
 
@@ -291,7 +291,7 @@ namespace MisfitBot2.Services
                     else
                     {
                         Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
-                            dbStrings.GetRandomLine(bChan, "FAIL").Replace("[USER]", user._twitchDisplayname)
+                            StringFormatter.ConvertMessage(dbStrings.GetRandomLine(bChan, "FAIL"), user._twitchDisplayname, null, e.Command.ChatMessage.Channel)
                             );
                         settings.failCount++;
                         SaveBaseSettings(PLUGINNAME, bChan, settings);
@@ -333,14 +333,13 @@ namespace MisfitBot2.Services
                     {
                         await DBStringsFirstSetup(bChan);
                     }
-                    Core.Twitch._client.SendMessage(e.Channel, dbStrings.GetRandomLine(bChan, "GREET").Replace("[USER]", user._twitchDisplayname));
+                    Core.Twitch._client.SendMessage(e.Channel, StringFormatter.ConvertMessage(dbStrings.GetRandomLine(bChan, "GREET"), user._twitchDisplayname, null, e.Channel));
                     settings._greeted.Add(user._twitchUsername);
                     SaveBaseSettings(PLUGINNAME, bChan, settings);
                 }
             }
         }
         #endregion
-
         #region Discord command methods
         public async Task DiscordCommand(ICommandContext context)
         {
@@ -522,6 +521,7 @@ namespace MisfitBot2.Services
             }
         }
         #endregion
+        
         #region Internal stuff
         private async Task ShakeCouch(BotChannel bChan, CouchSettings settings)
         {
@@ -568,7 +568,6 @@ namespace MisfitBot2.Services
             Core.Twitch._client.SendMessage(bChan.TwitchChannelName, $"Couch is now open. Take a {Core._commandCharacter}seat.");
             await SayOnDiscordAdmin(bChan, $"Couch is now open. Click https://twitch.tv/{bChan.TwitchChannelName} and take a {Core._commandCharacter}seat.");
         }
-
         private void RegisterTimedMessage(BotChannel bChan, CouchSettings settings)
         {
             _timedMessages.RemoveAll(p => p.twitchChannelName == bChan.TwitchChannelName);
@@ -687,28 +686,7 @@ namespace MisfitBot2.Services
         }
         private async Task ListLinesFromDB(BotChannel bChan, int page)
         {
-            // LINES IN USE
-            string inuseText = $"Currently stored lines...```fix{Environment.NewLine}" +
-                $"These are lines stored in the database that the Couch plugin will use based on topic if they are marked as inuse.{Environment.NewLine}{Environment.NewLine}" +
-                $"<ID> <TOPIC> <INUSE> <TEXT>        Page {page + 1}{Environment.NewLine}";
-            List<DBString> lines = dbStrings.GetRowsByTen(bChan, page);
-            if (lines.Count == 0)
-            {
-                inuseText += "No hits. Try a lower page number.";
-            }
-            else
-            {
-                foreach(DBString entry in lines)
-                {
-                    inuseText += String.Format("{0,4}", entry._id);
-                    inuseText += String.Format("{0,8}", entry._topic);
-                    inuseText += String.Format("{0,7}", entry._inuse);
-                    inuseText += " " + entry._text + Environment.NewLine;
-                }
-            }
-
-            inuseText += $"```Use command {Core._commandCharacter}couch list <page> to list a page. Those marked with an X for INUSE are in rotation. Topic is what the text is used for.";
-            await SayOnDiscordAdmin(bChan, inuseText);
+            await SayOnDiscordAdmin(bChan, await dbStrings.GetPage(bChan, page));
         }
         private async Task AddLine(BotChannel bChan, string topic, List<string> arguments)
         {
