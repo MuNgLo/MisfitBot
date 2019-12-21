@@ -23,6 +23,13 @@ namespace MisfitBot2
         }
         public async Task SayOnDiscordAdmin(BotChannel bChan, string message)
         {
+            // check if we are connected to discord first
+            if(Core.Discord.Status != UserStatus.Online)
+            {
+                await Core.LOG(new LogMessage(LogSeverity.Error, "ServiceBase", $"SayOnDiscordAdmin({bChan.discordAdminChannel},  {message}) failed because online check failed."));
+                return;
+            }
+
             if (bChan.discordAdminChannel != 0)
             {
                 await (Core.Discord.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(message);
