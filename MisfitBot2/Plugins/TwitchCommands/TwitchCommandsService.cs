@@ -18,14 +18,14 @@ namespace MisfitBot2.Services
         private readonly string PLUGINNAME = "TwitchCommandsService";
         private readonly Random RNG = new Random();
         #region insults
-        List<string> insults = new List<string>(
+        List<string> insultsRMG = new List<string>(
                 new string[] {
                 $"Don’t feel bad [RandomUser], there are many people who have no talent!",
                 $"Hey [RandomUser], as an outsider, what do you think of the human race?",
                 $"I’d like to kick [RandomUser] in the teeth, but why should I improve their looks?"
                 }
                 );
-        List<string> insultsOG = new List<string>(
+        List<string> insults = new List<string>(
                  new string[] {
                 $"Don’t feel bad [User], there are many people who have no talent!",
                 $"Hey [User], as an outsider, what do you think of the human race?",
@@ -163,11 +163,17 @@ namespace MisfitBot2.Services
 
         private void Insult(string victim, string twitchChannel)
         {
-            
+
             Core.Twitch._client.SendMessage(
                 twitchChannel,
-                StringFormatter.ConvertMessage(insults[RNG.Next(0, insults.Count)], victim, null, twitchChannel)
-                );
+                StringFormatter.ConvertMessage(new StringFormatterArguments()
+                {
+                  message=insults[RNG.Next(0, insults.Count)],
+                  user = victim,
+                  targetUser = null,
+                  twitchChannel = twitchChannel
+                }
+                ));
         }
 
     }

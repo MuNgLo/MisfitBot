@@ -14,16 +14,21 @@ namespace MisfitBot2
         /// </summary>
         /// <param name="message"></param>
         /// <returns></returns>
-        public static string ConvertMessage(string message, string user, string targetUser, string twitchChannel)
+        public static string ConvertMessage(StringFormatterArguments args)
         {
-            List<string> parts = GetAllParts(message);
-
+            if(args.message == null)
+            {
+                Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Error, "STRINGFORMATTER", "CovertMessage() Message is NULL"));
+                return "NULL Message";
+            }
+            List<string> parts = GetAllParts(args.message);
+            string outMsg = args.message;
             foreach (var part in parts)
             {
-                message = message.Replace(part, GetReplacementValue(part, user, targetUser, twitchChannel));
+                outMsg = args.message.Replace(part, GetReplacementValue(part, args.user, args.targetUser, args.twitchChannel));
             }
 
-            return message;
+            return outMsg;
         }
         /// <summary>
         /// Checks for patterns to replace. Returns input or replacement value.
@@ -33,21 +38,21 @@ namespace MisfitBot2
         private static string GetReplacementValue(string pattern, string user, string targetUser, string twitchChannel)
         {
             string value = string.Empty;
-            switch (pattern)
+            switch (pattern.ToLower())
             {
-                case "[User]":
+                case "[user]":
                     if (user != null)
                     {
                         value = user;
                     }
                     break;
-                case "[RandomUser]":
+                case "[randomuser]":
                     if (twitchChannel != null)
                     {
                         value = GetRandomUser(twitchChannel);
                     }
                     break;
-                case "[TargetUser]":
+                case "[targetuser]":
                     if (targetUser != null)
                     {
                         value = targetUser;

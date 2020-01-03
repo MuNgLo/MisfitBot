@@ -4,7 +4,7 @@ using TwitchLib.PubSub.Enums;
 
 namespace MisfitBot2
 {
-    public enum TWSUBCONTEXT {  UNKNOWN, SUB, RESUB, GIFTSUB }
+    public enum TWSUBCONTEXT {  UNKNOWN, SUB, RESUB, GIFTSUB, ANONSUBGIFT }
 
     
 
@@ -114,7 +114,11 @@ namespace MisfitBot2
                     MakeSub(args, TWSUBCONTEXT.RESUB);
                     break;
                 case "subgift":
+                    if(args.Subscription.Username == "ananonymousgifter") { return; } // Twitsub sends both this and anonsubgift so ignore one
                     MakeSub(args, TWSUBCONTEXT.GIFTSUB);
+                    break;
+                case "anonsubgift":
+                    MakeSub(args, TWSUBCONTEXT.ANONSUBGIFT);
                     break;
                 case "unknown":
                     Core.LOG(new LogMessage(LogSeverity.Error, $"TwitchEventArgument Constructor", $"Sub context is \"unknown\"! ({args.Subscription.Context.ToString()})"));
@@ -221,6 +225,13 @@ namespace MisfitBot2
         }
     }
 
+    public struct StringFormatterArguments
+    {
+        public string message;
+        public string user;
+        public string targetUser;
+        public string twitchChannel;
+    }
 }// EO Namespace
 
 

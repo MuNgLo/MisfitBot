@@ -267,8 +267,15 @@ namespace MisfitBot2.Services
                                         UserStatsSave(markUserStats);
                                     }
                                     Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel, 
-                                        StringFormatter.ConvertMessage(dbStrings.GetRandomLine(bChan, "INCIDENT"), markuser._twitchDisplayname, null, e.Command.ChatMessage.Channel)
-                                        );
+                                        StringFormatter.ConvertMessage(
+                                            new StringFormatterArguments()
+                                            {
+                                                message = dbStrings.GetRandomLine(bChan, "INCIDENT"),
+                                                user = markuser._twitchDisplayname,
+                                                targetUser = null,
+                                                twitchChannel = e.Command.ChatMessage.Channel
+                                            }
+                                        ));
                                     settings._couches[bChan.Key].TwitchUsernames.RemoveAll(p => p == markuser._twitchUsername);
                                     SaveBaseSettings(PLUGINNAME, bChan, settings);
                                 }
@@ -282,17 +289,32 @@ namespace MisfitBot2.Services
                         userStats.CountSeated++;
                         UserStatsSave(userStats);
                         settings._couches[bChan.Key].TwitchUsernames.Add(e.Command.ChatMessage.Username);
-                        Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
-                            StringFormatter.ConvertMessage(dbStrings.GetRandomLine(bChan, "SUCCESS"), user._twitchDisplayname, null, e.Command.ChatMessage.Channel)
-                            );
+                        Core.Twitch._client.SendMessage(
+                            e.Command.ChatMessage.Channel,
+                            StringFormatter.ConvertMessage(
+                                new StringFormatterArguments()
+                                {
+                                    message = dbStrings.GetRandomLine(bChan, "SUCCESS"),
+                                    user = user._twitchDisplayname,
+                                    targetUser = null,
+                                    twitchChannel = e.Command.ChatMessage.Channel
+                                }
+                            ));
                         SaveBaseSettings(PLUGINNAME, bChan, settings);
 
                     }
                     else
                     {
                         Core.Twitch._client.SendMessage(e.Command.ChatMessage.Channel,
-                            StringFormatter.ConvertMessage(dbStrings.GetRandomLine(bChan, "FAIL"), user._twitchDisplayname, null, e.Command.ChatMessage.Channel)
-                            );
+                            StringFormatter.ConvertMessage(
+                                new StringFormatterArguments()
+                                {
+                                    message = dbStrings.GetRandomLine(bChan, "FAIL"),
+                                    user = user._twitchDisplayname,
+                                    targetUser = null,
+                                    twitchChannel = e.Command.ChatMessage.Channel
+                                }
+                            ));
                         settings.failCount++;
                         SaveBaseSettings(PLUGINNAME, bChan, settings);
                     }
@@ -333,7 +355,15 @@ namespace MisfitBot2.Services
                     {
                         await DBStringsFirstSetup(bChan);
                     }
-                    Core.Twitch._client.SendMessage(e.Channel, StringFormatter.ConvertMessage(dbStrings.GetRandomLine(bChan, "GREET"), user._twitchDisplayname, null, e.Channel));
+                    Core.Twitch._client.SendMessage(e.Channel, StringFormatter.ConvertMessage(
+                        new StringFormatterArguments()
+                        {
+                            message = dbStrings.GetRandomLine(bChan, "GREET"),
+                            user = user._twitchDisplayname,
+                            targetUser = null,
+                            twitchChannel = e.Channel
+                        }
+                        ));
                     settings._greeted.Add(user._twitchUsername);
                     SaveBaseSettings(PLUGINNAME, bChan, settings);
                 }

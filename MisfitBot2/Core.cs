@@ -14,7 +14,7 @@ namespace MisfitBot2
 {
     public static class Core
     {
-        public static readonly char _commandCharacter = '!';
+        public static readonly char _commandCharacter = '?';
 
         
         public static SQLiteConnection Data;

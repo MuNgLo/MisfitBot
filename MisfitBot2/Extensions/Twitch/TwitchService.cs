@@ -81,8 +81,8 @@ namespace MisfitBot2.Services
             JsonDumper.DumpObjectToJson(e, "Raid"); // TODO Remove
             BotChannel bChan = await Core.Channels.GetTwitchChannelByName(e.Channel);
             int i = 0;
-            int.TryParse(e.RaidNotificaiton.MsgParamViewerCount, out i);
-            Events.RaiseRaidEvent(bChan, new RaidEventArguments(e.RaidNotificaiton.DisplayName, e.Channel, i));
+            int.TryParse(e.RaidNotification.MsgParamViewerCount, out i);
+            Events.RaiseRaidEvent(bChan, new RaidEventArguments(e.RaidNotification.DisplayName, e.Channel, i));
         }
 
         private void TwitchOnMessageReceived(object sender, OnMessageReceivedArgs e)

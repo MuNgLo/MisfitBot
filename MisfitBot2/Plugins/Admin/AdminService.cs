@@ -23,12 +23,15 @@ namespace MisfitBot2.Services
             Events.OnTwitchChannelGoesLive += OnChannelGoesLive;
             Events.OnTwitchChannelGoesOffline += OnChannelGoesOffline;
             Events.OnHostEvent += OnHostEvent;
+            Events.OnRaidEvent += OnRaidEvent;
             Events.OnNewDiscordMember += OnNewDiscordMember;
             Events.OnUnBanEvent += OnUnBanEvent;
             Events.OnTwitchSubEvent += OnTwitchSub;
             Events.OnUserEntryMerge += OnUserEntryMergeEvent;
             Events.OnDiscordUserStartStream += OnDiscordUserStartStreaming;
         }
+
+        
 
         private async void OnDiscordUserStartStreaming(BotChannel bChan, UserEntry user, StreamingGame streamInfo)
         {
@@ -65,7 +68,10 @@ namespace MisfitBot2.Services
         {
             await SayOnDiscordAdmin(bChan, $"{e.Moderator} hosted {e.Hostchannel} https://www.twitch.tv/{e.Hostchannel}");
         }
-
+        private async void OnRaidEvent(BotChannel bChan, RaidEventArguments e)
+        {
+            await SayOnDiscordAdmin(bChan, $"{e.SourceChannel} is raiding with {e.RaiderCount}.");
+        }
         private async void OnChannelGoesLive(BotChannel bChan, int delay)
         {
             if (bChan.discordAdminChannel != 0)
