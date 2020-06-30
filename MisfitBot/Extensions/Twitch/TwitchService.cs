@@ -22,7 +22,7 @@ namespace MisfitBot_MKII.Services
         public string _channel = "munglo"; // TODO make this first launch parameter I guess
         public readonly ITwitchAPI _api;
         public readonly ITwitchClient _client;
-        public TwitchCredentials _credentials; // TODO make this into adminservice stuff
+        private TwitchCredentials _credentials; // TODO make this into adminservice stuff
         public TwitchUsers _twitchUsers;
         // CONSTRUCTOR
         public TwitchService()
