@@ -1,2 +1,0 @@
-This is a precompiled version that works on a headless raspbian on a raspberry pi.
-Worth a shot if you wanna run this on any other arm cpu I guess.
