@@ -6,43 +6,13 @@ using System.Text;
 using System.Threading.Tasks;
 using TwitchLib.Client.Events;
 
-namespace MisfitBot_MKII.JuanEvents
+namespace MisfitBot_MKII.MisfitBotEvents
 {
-    #region Event definitions
-    // All Discord events here and they all need to start with Discord and end with Event
-    public delegate void DiscordConnectedEvent();
-    public delegate void DiscordGuildAvailableEvent(SocketGuild arg);
-    public delegate void DiscordNewMemberEvent(BotChannel bChan, UserEntry user);
-    public delegate void DiscordMemberLeftEvent(BotChannel bChan, UserEntry user);
-    public delegate void DiscordMemberUpdatedEvent(BotChannel bchan, UserEntry currentUser, UserEntry oldUser);
-    public delegate void DiscordMembersDownloadedEvent(SocketGuild arg);
-    public delegate void DiscordReadyEvent();
-    // All Twitch events here all all need to start with Twitch and end with Event
-    public delegate void TwitchConnectedEvent(OnConnectedArgs args);
-    public delegate void TwitchDisconnectedEvent();
-
-    // Botwide type events
-    public delegate void MessageReceivedEvent(BotWideMessageArguments args);
-
-    // Below needs to be verified
-    public delegate void BanEvent(BanEventArguments e);
-    public delegate void BitEvent(BitEventArguments e);
-    public delegate void DiscordUserStartsStreamEvent(BotChannel bChan, UserEntry user, StreamingGame streaminfo);
-    public delegate void TwitchChannelGoesLiveEvent(BotChannel bChan, int delay);
-    public delegate void TwitchChannelGoesOfflineEvent(BotChannel bChan);
-    public delegate void BotChannelMergeEvent(BotChannel discordBotChannel, BotChannel twitchBotChannel);
-    public delegate void HostEvent(BotChannel bChan, HostEventArguments e);
-    public delegate void RaidEvent(BotChannel bChan, RaidEventArguments e);
-    public delegate void TwitchSubscriptionEvent(BotChannel bChan, TwitchSubEventArguments e);
-    public delegate void UnBanEvent(UnBanEventArguments e);
-    public delegate void UserEntryMergeEvents(UserEntry discordUser, UserEntry twitchUser);
-    public delegate void ViewerCountEvent(BotChannel bChan, int oldCount, int newCount);
-    #endregion
-
     public class BotwideEvents
     {
         // Discord
         public DiscordConnectedEvent OnDiscordConnected;
+        public DiscordDisConnectedEvent OnDiscordDisConnected;
         public DiscordGuildAvailableEvent OnDiscordGuildAvailable;
         public DiscordNewMemberEvent OnDiscordNewMember;
         public DiscordMemberLeftEvent OnDiscordMemberLeft;
@@ -51,6 +21,7 @@ namespace MisfitBot_MKII.JuanEvents
         public DiscordReadyEvent OnDiscordReady;
         // Twitch
         public TwitchConnectedEvent OnTwitchConnected;
+        public TwitchConnectionErrorEvent OnTwitchConnectionError;
         public TwitchDisconnectedEvent OnTwitchDisconnected;
         // Botwide
         public MessageReceivedEvent OnMessageReceived;
@@ -85,10 +56,24 @@ namespace MisfitBot_MKII.JuanEvents
         {
             OnDiscordConnected?.Invoke();
         }
-        internal void RaiseOnTwitchConnected(object sender, OnConnectedArgs args)
+        #region Twitch raisers pass 1
+        internal async Task RaiseOnTwitchConnected(string msg)
         {
-            OnTwitchConnected?.Invoke(args);
+            await Core.LOG(new LogMessage(LogSeverity.Info, "Events", "Twitch Connected: " + msg));
+            OnTwitchConnected?.Invoke(msg);
         }
+        internal async Task RaiseOnTwitchConnectionError(string msg)
+        {
+            await Core.LOG(new LogMessage(LogSeverity.Error, "Events", "Twitch Connection Error: " + msg));
+            OnTwitchConnectionError?.Invoke(msg);
+        }
+        internal async Task RaiseOnTwitchDisconnected(string msg)
+        {
+            await Core.LOG(new LogMessage(LogSeverity.Error, "Events", "Twitch Disconnected: " + msg));
+            OnTwitchDisconnected?.Invoke();
+        }
+        #endregion
+
         internal Task RaiseOnDiscordGuildAvailable(SocketGuild arg)
         {
             OnDiscordGuildAvailable?.Invoke(arg);
@@ -161,6 +146,13 @@ namespace MisfitBot_MKII.JuanEvents
                 return;
             }
         }
+
+        internal async Task RaiseOnDiscordDisconnected(Exception e)
+        {
+            await Core.LOG(new LogMessage(LogSeverity.Error, "BotwideEvents", $"ClientDisconnected:{e.Message}"));
+            OnDiscordDisConnected?.Invoke();
+        }
+
         private void AddRefreshStamp(GenericTimeStamp newStamp)
         {
             if (DiscordStreamerStamps == null) { DiscordStreamerStamps = new List<GenericTimeStamp>(); }

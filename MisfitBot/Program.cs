@@ -18,20 +18,20 @@ using TwitchLib.Client.Events;
 using TwitchLib.Api.Interfaces;
 using TwitchLib.Api;
 using Newtonsoft.Json;
-using MisfitBot_MKII.JuanEvents;
+using MisfitBot_MKII.MisfitBotEvents;
 
 namespace MisfitBot_MKII
 {
     class Program
     {
         private static DiscordSocketClient _DiscordClient;
-        private static DiscordEventCatcher _DiscordEvents;
+        private static EventCatcherDiscord _DiscordEvents;
         private static IServiceProvider _services;
         private static IServiceCollection _map = new ServiceCollection();
         public static CommandService _commands = new CommandService();
 
         private static ITwitchClient _TwitchClient;
-        private static TwitchEventCatcher _TwitchEvents;
+        private static EventCatcherTwitch _TwitchEvents;
         private static ITwitchAPI _TwitchAPI;
 
         private static ChannelManager _Channels;
@@ -40,6 +40,7 @@ namespace MisfitBot_MKII
 
         private static MainConfig config;
         private static bool _Debugmode = false;
+        private static bool _LogTwitch = false;
 
         internal static DiscordSocketClient DiscordClient { get => _DiscordClient; private set => _DiscordClient = value; }
         internal static ITwitchClient TwitchClient { get => _TwitchClient; private set => _TwitchClient = value; }
@@ -69,9 +70,9 @@ namespace MisfitBot_MKII
             _Users = new UserManagerService();
 
             await VerifyFoldersAndStartupFiles();
+            LoadPlugins();
             StartTwitchClient();
             await StartDiscordClient();
-            LoadPlugins();
             // Block the program until it is closed.
             await Task.Delay(Timeout.Infinite);
         }
@@ -86,7 +87,7 @@ namespace MisfitBot_MKII
         {
             if (!config.UseTwitch) { return; }
             KSLogger logger = new KSLogger();
-            if (_Debugmode) { TwitchAPI = new TwitchAPI(logger); }
+            if (_LogTwitch) { TwitchAPI = new TwitchAPI(logger); }
             else
             { TwitchAPI = new TwitchAPI(); }
             TwitchAPI.Settings.SkipDynamicScopeValidation = true;
@@ -98,7 +99,7 @@ namespace MisfitBot_MKII
             _TwitchClient.Initialize(cred, TwitchUserName());
             _TwitchClient.RemoveChatCommandIdentifier('!');
             _TwitchClient.AddChatCommandIdentifier(Program.CommandCharacter);
-            _TwitchEvents = new TwitchEventCatcher(_TwitchClient);
+            _TwitchEvents = new EventCatcherTwitch(_TwitchClient, _LogTwitch);
             _TwitchClient.Connect();
         }
 
@@ -120,6 +121,11 @@ namespace MisfitBot_MKII
             {
                 Console.WriteLine("!!!!RUNNING IN DEBUGMODE!!!!");
                 _Debugmode = true;
+            }
+            if (args.Exists(p => p.Trim().ToLower() == "logtwitch"))
+            {
+                Console.WriteLine("!!!!LOGGING TWITCH OUTPUT!!!!");
+                _LogTwitch = true;
             }
             if (args.Exists(p => p.Trim().ToLower() == "dev"))
             {
@@ -186,7 +192,8 @@ namespace MisfitBot_MKII
         {
             if (!config.UseDiscord) { return; }
             _DiscordClient = new DiscordSocketClient();
-            _DiscordEvents = new DiscordEventCatcher(_DiscordClient);
+            _DiscordEvents = new EventCatcherDiscord(_DiscordClient);
+            
             InitCommands();
             // Tokens should be considered secret data, and never hard-coded.
             await _DiscordClient.LoginAsync(TokenType.Bot, DiscordToken());

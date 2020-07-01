@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 namespace MisfitBot_MKII.Twitch
 {
     /// <summary>
+    /// Somewhere this needs to be rewritten to hold a reachable userlist for people in chat
     /// Keeps a list of users per channel that we know about. Each user has a timestamp of lastseen.
     /// </summary>
     public class TwitchUsers
@@ -43,7 +44,7 @@ namespace MisfitBot_MKII.Twitch
                 _users[channelName] = new List<TwitchChannelUser>();
             }
             List<string> result = new List<string>();
-            foreach(TwitchChannelUser user in _users[channelName])
+            foreach (TwitchChannelUser user in _users[channelName])
             {
                 result.Add(user._twitchUsername);
             }

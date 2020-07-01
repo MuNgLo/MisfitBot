@@ -11,7 +11,7 @@
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/bin/Debug/netcoreapp3.1/MisfitBot-MKII.dll",
-            // Parameters: debug dev clearDB
+            // Parameters: debug dev clearDB logtwitch
             "args": "clearDB debug",
             "cwd": "${workspaceFolder}",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console

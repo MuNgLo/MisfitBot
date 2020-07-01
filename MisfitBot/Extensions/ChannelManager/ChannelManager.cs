@@ -5,7 +5,7 @@ using System.Data.SQLite;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
-using MisfitBot_MKII.JuanEvents;
+using MisfitBot_MKII.MisfitBotEvents;
 using TwitchLib.Client.Events;
 using TwitchLib.Client.Models;
 
@@ -34,7 +34,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             TimerStuff.OnMinuteTick += OnMinuteTick;
         }// EO Constructor
 
-        private async void OnTwitchConnected(OnConnectedArgs args)
+        private async void OnTwitchConnected(string args)
         {
             await JoinAutojoinChannels();
         }
