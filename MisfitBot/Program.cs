@@ -22,13 +22,13 @@ using MisfitBot_MKII.MisfitBotEvents;
 
 namespace MisfitBot_MKII
 {
-    class Program
+    public class Program
     {
         private static DiscordSocketClient _DiscordClient;
         private static EventCatcherDiscord _DiscordEvents;
         private static IServiceProvider _services;
         private static IServiceCollection _map = new ServiceCollection();
-        public static CommandService _commands = new CommandService();
+        private static CommandService _commands = new CommandService();
 
         private static ITwitchClient _TwitchClient;
         private static EventCatcherTwitch _TwitchEvents;
@@ -42,9 +42,9 @@ namespace MisfitBot_MKII
         private static bool _Debugmode = false;
         private static bool _LogTwitch = false;
 
-        internal static DiscordSocketClient DiscordClient { get => _DiscordClient; private set => _DiscordClient = value; }
-        internal static ITwitchClient TwitchClient { get => _TwitchClient; private set => _TwitchClient = value; }
-        internal static ITwitchAPI TwitchAPI { get => _TwitchAPI; private set => _TwitchAPI = value; }
+        public static DiscordSocketClient DiscordClient { get => _DiscordClient; private set => _DiscordClient = value; }
+        public static ITwitchClient TwitchClient { get => _TwitchClient; private set => _TwitchClient = value; }
+        public static ITwitchAPI TwitchAPI { get => _TwitchAPI; private set => _TwitchAPI = value; }
         public static char CommandCharacter { get => config.CMDCharacter; private set => config.CMDCharacter = value; }
         public static ChannelManager Channels { get => _Channels; private set => _Channels = value; }
         public static UserManagerService Users { get => _Users; private set => _Users = value; }
@@ -417,5 +417,14 @@ namespace MisfitBot_MKII
         }
         #endregion
         
+        public static void TwitchSayMessage(string channel, string message){
+            TwitchClient.SendMessage(channel, message);
+        }
+
+        public static async Task DiscordSayMessage(string channel, string message)
+        {
+            await (DiscordClient.GetChannel(Core.StringToUlong(channel)) as ISocketMessageChannel).SendMessageAsync(message);
+        }
+
     }
 }

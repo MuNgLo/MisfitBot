@@ -10,15 +10,12 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            //"program": "${workspaceFolder}/bin/Debug/netcoreapp3.1/MisfitBot-MKII.dll",
-            "program": "F:/SharedProjects/Juan/bin/netcoreapp3.1/MisfitBot-MKII.dll",
-            //"cwd": "${workspaceFolder}",
-            "cwd": "F:/SharedProjects/Juan/bin/netcoreapp3.1/",
-            //"cwd": "${fileDirname}",
-            // Parameters: debug dev clearDB logtwitch
-            "args": "clearDB debug",
+            //"program": "${workspaceFolder}/MisfitBot/bin/Debug/netcoreapp3.1/MisfitBot-MKII.dll",
+            "program": "F:/SharedProjects/Juan/bin/netcoreapp3.1/MisfitBot-MKII.dll", 
+            "args": [],
+            "cwd": "${workspaceFolder}/MisfitBot",
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
-            "console": "integratedTerminal",
+            "console": "internalConsole",
             "stopAtEntry": false
         },
         {
