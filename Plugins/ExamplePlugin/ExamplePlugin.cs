@@ -1,5 +1,6 @@
 ﻿using System;
 using MisfitBot_MKII;
+
 namespace ExamplePlugin
 {
     public class ExamplePlugin : ServiceBase

@@ -19,6 +19,7 @@ using TwitchLib.Api.Interfaces;
 using TwitchLib.Api;
 using Newtonsoft.Json;
 using MisfitBot_MKII.MisfitBotEvents;
+using System.Reflection;
 
 namespace MisfitBot_MKII
 {
@@ -50,7 +51,7 @@ namespace MisfitBot_MKII
         public static UserManagerService Users { get => _Users; private set => _Users = value; }
         public static BotwideEvents BotEvents { get => _BotEvents; set => _BotEvents = value; }
 
-        public List<PingPong> _plugins;
+        public List<ServiceBase> _plugins;
 
         static void Main(string[] args)
         {
@@ -61,16 +62,18 @@ namespace MisfitBot_MKII
 
         public async Task MainAsync(List<string> args)
         {
+            _BotEvents = new BotwideEvents();
+
+            LoadPlugins();
             ReactToStartupArguments(args);
             InitCore();
             CreateNewDatabase();
             ConnectToDatabase();
-            _BotEvents = new BotwideEvents();
+
             _Channels = new ChannelManager();
             _Users = new UserManagerService();
 
             await VerifyFoldersAndStartupFiles();
-            LoadPlugins();
             StartTwitchClient();
             await StartDiscordClient();
             // Block the program until it is closed.
@@ -79,8 +82,26 @@ namespace MisfitBot_MKII
 
         private void LoadPlugins()
         {
-            _plugins = new List<PingPong>();
-            _plugins.Add(new PingPong());
+            _plugins = new List<ServiceBase>();
+
+            Assembly a = Assembly.LoadFile(@"D:\Dev\_Munglo\MisfitBot\Plugins\Juan\bin\juanplugins\netcoreapp3.1\ExamplePlugin");
+            // Get the type to use.
+            Type myType = a.GetType("ExamplePlugin.ExamplePlugin", true);
+            // Create an instance.
+            object obj = Activator.CreateInstance(myType);
+
+
+            // Execute the method.
+            //MethodInfo myMethod = myType.GetMethod("MethodA");
+            // Create an instance.
+            //object obj = Activator.CreateInstance(myType);
+            // Execute the method.
+            //myMethod.Invoke(obj, null);
+
+
+            var plugin = obj as ServiceBase;
+
+            _plugins.Add(plugin);
         }
 
         private void StartTwitchClient()
