@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\..\MisfitBot\MisfitBot-MKII.csproj" />
@@ -6,6 +6,8 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <OutputType>library</OutputType>
+    <OutputPath>../Juan/bin/juanplugins</OutputPath>
   </PropertyGroup>
 
 </Project>
