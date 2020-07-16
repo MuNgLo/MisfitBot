@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <OutputPath>../Juan/bin</OutputPath>
+    <OutputPath>../bin</OutputPath>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>MisfitBot_MKII</RootNamespace>
   </PropertyGroup>

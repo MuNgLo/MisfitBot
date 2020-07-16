@@ -3,6 +3,7 @@
     "tasks": [
         {
             "label": "build",
+            "dependsOn": "Compile Example Plugin", 
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -33,6 +34,18 @@
                 "watch",
                 "run",
                 "${workspaceFolder}/MisfitBot/MisfitBot-MKII.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Compile Example Plugin",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Plugins/ExamplePlugin/ExamplePlugin.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],

@@ -6,8 +6,9 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <OutputType>library</OutputType>
-    <OutputPath>../Juan/bin/juanplugins</OutputPath>
+    <OutputPath>../../bin/netcoreapp3.1/Plugins/ExamplePlugin</OutputPath>
   </PropertyGroup>
 
 </Project>

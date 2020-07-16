@@ -5,17 +5,17 @@
    "version": "0.2.0",
    "configurations": [
         {
-            "name": ".NET Core Launch (console)",
+            //"name": ".NET Core Launch (console)",
+            "name": "Build Bot",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            //"program": "${workspaceFolder}/MisfitBot/bin/Debug/netcoreapp3.1/MisfitBot-MKII.dll",
-            "program": "F:/SharedProjects/Juan/bin/netcoreapp3.1/MisfitBot-MKII.dll", 
-            "args": [],
-            "cwd": "${workspaceFolder}/MisfitBot",
+            "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
+            "cwd": "bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
+            "args": "clearDB debug", // HAs to be after CWD in this file because reasons
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
-            "console": "internalConsole",
+            "console": "integratedTerminal",
             "stopAtEntry": false
         },
         {

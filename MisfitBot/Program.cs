@@ -64,7 +64,6 @@ namespace MisfitBot_MKII
         {
             _BotEvents = new BotwideEvents();
 
-            LoadPlugins();
             ReactToStartupArguments(args);
             InitCore();
             CreateNewDatabase();
@@ -74,8 +73,12 @@ namespace MisfitBot_MKII
             _Users = new UserManagerService();
 
             await VerifyFoldersAndStartupFiles();
+
+
             StartTwitchClient();
             await StartDiscordClient();
+            LoadPlugins();
+            TwitchClient.JoinChannel("munglo"); // TODO this is temporary until we have otehr way of adding channels to join
             // Block the program until it is closed.
             await Task.Delay(Timeout.Infinite);
         }
@@ -84,24 +87,50 @@ namespace MisfitBot_MKII
         {
             _plugins = new List<ServiceBase>();
 
-            Assembly a = Assembly.LoadFile(@"D:\Dev\_Munglo\MisfitBot\Plugins\Juan\bin\juanplugins\netcoreapp3.1\ExamplePlugin");
-            // Get the type to use.
-            Type myType = a.GetType("ExamplePlugin.ExamplePlugin", true);
-            // Create an instance.
-            object obj = Activator.CreateInstance(myType);
+            string PluginFolder = "Plugins";
+            string[] FolderContent = Directory.GetDirectories(PluginFolder);
+            foreach (string fileName in FolderContent)
+            {
+                if (Directory.Exists(fileName))
+                {
+                    Core.LOG(new LogMessage(LogSeverity.Info, "PROGRAM", $"Found PluginFolder {fileName}"));
+
+                    if (File.Exists($"{fileName}/{fileName.Remove(0, 7)}.dll"))
+                    {
+                        Core.LOG(new LogMessage(LogSeverity.Info, "PROGRAM", $"Readyt to load {fileName.Remove(0, 8)} plugin."));
+
+                        Assembly a = Assembly.LoadFile($"F:/SharedProjects/Juan/bin/netcoreapp3.1/Plugins/ExamplePlugin/{fileName.Remove(0, 7)}.dll");
+                        Type myType = a.GetType("ExamplePlugin.ExamplePlugin", true);
+                        object obj = Activator.CreateInstance(myType);
+                        var plugin = obj as ServiceBase;
+
+                        _plugins.Add(plugin);
 
 
-            // Execute the method.
-            //MethodInfo myMethod = myType.GetMethod("MethodA");
-            // Create an instance.
-            //object obj = Activator.CreateInstance(myType);
-            // Execute the method.
-            //myMethod.Invoke(obj, null);
+                    }
+                }
+            }
+
+            /*
+                        Assembly a = Assembly.LoadFile(@"D:\Dev\_Munglo\MisfitBot\Plugins\Juan\bin\juanplugins\netcoreapp3.1\ExamplePlugin");
+                        // Get the type to use.
+                        Type myType = a.GetType("ExamplePlugin.ExamplePlugin", true);
+                        // Create an instance.
+                        object obj = Activator.CreateInstance(myType);
 
 
-            var plugin = obj as ServiceBase;
+                        // Execute the method.
+                        //MethodInfo myMethod = myType.GetMethod("MethodA");
+                        // Create an instance.
+                        //object obj = Activator.CreateInstance(myType);
+                        // Execute the method.
+                        //myMethod.Invoke(obj, null);
 
-            _plugins.Add(plugin);
+
+                        var plugin = obj as ServiceBase;
+
+                        _plugins.Add(plugin);
+                        */
         }
 
         private void StartTwitchClient()
@@ -124,7 +153,7 @@ namespace MisfitBot_MKII
             _TwitchClient.Connect();
         }
 
-        
+
 
         /// Makes sure Core is setup and have what it needs
         private void InitCore()
@@ -169,13 +198,18 @@ namespace MisfitBot_MKII
         // This runs verification and loading of existing stuff or a first start query session
         private async Task VerifyFoldersAndStartupFiles()
         {
-            
+
             await Task.Run(async () =>
             {
                 if (!Directory.Exists("Config"))
                 {
                     if (_Debugmode) { Console.WriteLine("Creating config folder!"); }
                     Directory.CreateDirectory("Config");
+                }
+                if (!Directory.Exists("Plugins"))
+                {
+                    if (_Debugmode) { Console.WriteLine("Creating plugins folder!"); }
+                    Directory.CreateDirectory("Plugins");
                 }
                 if (!LoadConfig())
                 {
@@ -214,7 +248,7 @@ namespace MisfitBot_MKII
             if (!config.UseDiscord) { return; }
             _DiscordClient = new DiscordSocketClient();
             _DiscordEvents = new EventCatcherDiscord(_DiscordClient);
-            
+
             InitCommands();
             // Tokens should be considered secret data, and never hard-coded.
             await _DiscordClient.LoginAsync(TokenType.Bot, DiscordToken());
@@ -408,9 +442,9 @@ namespace MisfitBot_MKII
         }
         #endregion
         #region Discord stuff
-        
-        
-        
+
+
+
         public static async void DiscordReconnect()
         {
             await _DiscordClient.StartAsync();
@@ -437,8 +471,9 @@ namespace MisfitBot_MKII
             Core.Data.Open();
         }
         #endregion
-        
-        public static void TwitchSayMessage(string channel, string message){
+
+        public static void TwitchSayMessage(string channel, string message)
+        {
             TwitchClient.SendMessage(channel, message);
         }
 
