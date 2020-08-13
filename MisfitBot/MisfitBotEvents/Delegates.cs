@@ -17,7 +17,12 @@ namespace MisfitBot_MKII.MisfitBotEvents
     // All Twitch events here all all need to start with Twitch and end with Event
     public delegate void TwitchConnectedEvent(string args);
     public delegate void TwitchConnectionErrorEvent(string msg);
+    public delegate void TwitchChannelChatCleared(string channel);
+    public delegate void TwitchChannelJoinLeave(string channel, string botname);
+    //public delegate void TwitchCommunitySubscription();
     public delegate void TwitchDisconnectedEvent();
+    public delegate void TwitchMessageSentEvent(string channel, string message);
+    public delegate void TwitchWhisperMessageEvent(string username, string message);
 
     // Botwide type events
     public delegate void MessageReceivedEvent(BotWideMessageArguments args);

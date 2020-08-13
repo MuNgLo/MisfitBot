@@ -1,4 +1,5 @@
 ﻿using System;
+using Discord.WebSocket;
 using MisfitBot_MKII;
 
 namespace ExamplePlugin
@@ -10,7 +11,21 @@ namespace ExamplePlugin
             Program.BotEvents.OnMessageReceived += OnMessageReceived;
             Program.BotEvents.OnTwitchConnected += OnTwitchConnected;
             Program.BotEvents.OnDiscordConnected += OnDiscordConnected;
+            //Program.BotEvents.OnDiscordGuildAvailable += OnDiscordGuildAvailable;
         }
+
+            /* Implement this in admin plugin   
+        private async void OnDiscordGuildAvailable(SocketGuild arg)
+        {
+            var user = arg.GetUser(Program.DiscordClient.CurrentUser.Id);
+            await user.ModifyAsync(
+                x=>{
+                    x.Nickname = Program.TwitchClient.TwitchUsername;
+                }
+
+            );
+        }
+            */
 
         private void OnDiscordConnected()
         {

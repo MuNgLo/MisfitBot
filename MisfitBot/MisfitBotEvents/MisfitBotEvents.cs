@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using TwitchLib.Client.Events;
+using TwitchLib.Client.Models;
 
 namespace MisfitBot_MKII.MisfitBotEvents
 {
@@ -22,7 +23,13 @@ namespace MisfitBot_MKII.MisfitBotEvents
         // Twitch
         public TwitchConnectedEvent OnTwitchConnected;
         public TwitchConnectionErrorEvent OnTwitchConnectionError;
+        public TwitchChannelChatCleared OnTwitchChannelChatCleared;
         public TwitchDisconnectedEvent OnTwitchDisconnected;
+        public TwitchChannelJoinLeave OnTwitchChannelLeft;
+        public TwitchChannelJoinLeave OnTwitchChannelJoined;
+        public TwitchMessageSentEvent OnTwitchMessageSent;
+        public TwitchWhisperMessageEvent OnTwitchWhisperReceived;
+
         // Botwide
         public MessageReceivedEvent OnMessageReceived;
 
@@ -56,12 +63,56 @@ namespace MisfitBot_MKII.MisfitBotEvents
         {
             OnDiscordConnected?.Invoke();
         }
+
+        internal async Task RaiseTwitchWhisperReceived(string username, string message)
+        {
+            await Task.Run(()=>{
+            OnTwitchWhisperReceived?.Invoke(username, message);
+            });
+        }
+
+        internal async Task RaiseOnTwitchMessageSent(string channel, string message)
+        {
+            await Task.Run(()=>{
+            OnTwitchMessageSent?.Invoke(channel, message);
+            });
+        }
+
+        internal async Task RaiseTwitchOnCommunitySubscription(string channel, CommunitySubscription giftedSubscription)
+        {
+            await Task.Run(()=>{
+            JsonDumper.DumpObjectToJson(giftedSubscription, channel);
+            });
+        }
+
+        internal async Task RaiseTwitchOnChannelLeave(string channel, string botname)
+        {
+            await Task.Run(()=>{
+                OnTwitchChannelLeft?.Invoke(channel, botname);
+            });
+        }
+        internal async Task RaiseTwitchOnChannelJoined(string channel, string botname)
+        {
+            await Task.Run(()=>{
+                OnTwitchChannelJoined?.Invoke(channel, botname);
+            });
+        }
         #region Twitch raisers pass 1
         internal async Task RaiseOnTwitchConnected(string msg)
         {
             await Core.LOG(new LogMessage(LogSeverity.Info, "Events", "Twitch Connected: " + msg));
             OnTwitchConnected?.Invoke(msg);
         }
+
+        
+
+        internal async Task RaiseTwitchOnChannelChatCleared(string channel)
+        {
+            await Task.Run(()=>{
+                OnTwitchChannelChatCleared?.Invoke(channel);
+            });
+        }
+
         internal async Task RaiseOnTwitchConnectionError(string msg)
         {
             await Core.LOG(new LogMessage(LogSeverity.Error, "Events", "Twitch Connection Error: " + msg));

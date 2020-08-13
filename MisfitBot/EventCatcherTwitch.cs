@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Discord;
 using TwitchLib.Client.Events;
 using TwitchLib.Client.Interfaces;
+using TwitchLib.Communication.Events;
 
 namespace MisfitBot_MKII
 {
@@ -12,36 +13,36 @@ namespace MisfitBot_MKII
         {
             //client.OnBeingHosted 
             //client.OnChannelStateChanged
-            //client.OnChatCleared
-            //client.OnChatColorChanged
+            client.OnChatCleared += TwitchOnChatCleared;
+            client.OnChatColorChanged += TwitchOnChatColorChanged;
             //client.OnChatCommandReceived
-            //client.OnCommunitySubscription
+            client.OnCommunitySubscription += TwitchOnCommunitySubscription;
             client.OnConnected += TwitchOnConnected;
             client.OnConnectionError += TwitchOnConnectionError;
             client.OnDisconnected += OnDisconnected;
-            //client.OnError
+            client.OnError += TwitchOnError;
             //client.OnExistingUsersDetected
             //client.OnGiftedSubscription
             //client.OnHostingStarted
             //client.OnHostingStopped
             //client.OnHostLeft
-            //client.OnIncorrectLogin
-            //client.OnJoinedChannel
-            //client.OnLeftChannel
+            client.OnIncorrectLogin += TwitchOnIncorrectLogin;
+            client.OnJoinedChannel += TwitchOnJoinedChannel;
+            client.OnLeftChannel += TwitchOnLeftChannel;
             if (doLog) { client.OnLog += OnLog; }
             //client.OnMessageCleared
             client.OnMessageReceived += OnMessageReceived;
-            //client.OnMessageSent
-            //client.OnMessageThrottled
+            client.OnMessageSent += TwitchOnMessageSent;
+            client.OnMessageThrottled += TwitchOnMessageThrottled;
             //client.OnModeratorJoined
             //client.OnModeratorLeft
             //client.OnModeratorsReceived
             //client.OnNewSubscriber
             //client.OnNowHosting
             client.OnRaidNotification += OnRaidNotification;
-            //client.OnReconnected
+            client.OnReconnected += TwitchOnReconnect;
             client.OnReSubscriber += TwitchOnReSubscriber;
-            //client.OnRitualNewChatter
+            client.OnRitualNewChatter += TwitchOnRitualNewChatter;
             //client.OnSendReceiveData
             client.OnUserBanned += TwitchOnUserBanned;
             client.OnUserJoined += TwitchOnUserJoined;
@@ -50,11 +51,83 @@ namespace MisfitBot_MKII
             //client.OnUserTimedout
             //client.OnVIPsReceived
             //client.OnWhisperCommandReceived
-            //client.OnWhisperReceived
+            client.OnWhisperReceived += TwitchWhisperReceived;
             //client.OnWhisperSent
-            //client.OnWhisperThrottled
+            client.OnWhisperThrottled += TwitchOnWhisperThrottled;
         }
 
+        private void TwitchOnReconnect(object sender, OnReconnectedEventArgs e)
+        {
+            Core.LOG(new LogMessage(
+                LogSeverity.Warning, "EventCatcherTwitch",  
+                $"Twitch reconnect!"));
+        }
+
+        private void TwitchOnChatColorChanged(object sender, OnChatColorChangedArgs e)
+        {
+            // WTF! Look into this WHy just channel? Whne does it fire?
+        }
+
+        private void TwitchOnError(object sender, OnErrorEventArgs e)
+        {
+            Core.LOG(new LogMessage(
+                LogSeverity.Error, "EventCatcherTwitch",  
+                $"Twitch Error! {e.Exception.Message}"));
+        }
+
+        private async void TwitchOnMessageSent(object sender, OnMessageSentArgs e)
+        {
+            await Program.BotEvents.RaiseOnTwitchMessageSent(e.SentMessage.Channel, e.SentMessage.Message);
+        }
+
+        private void TwitchOnIncorrectLogin(object sender, OnIncorrectLoginArgs e)
+        {
+            Core.LOG(new LogMessage(
+                LogSeverity.Error, "EventCatcherTwitch",  
+                $"Twitch login failed! {e.Exception.Message}"));
+        }
+
+        private void TwitchOnRitualNewChatter(object sender, OnRitualNewChatterArgs e)
+        {
+            JsonDumper.DumpObjectToJson(e, "TwitchOnRitualNewChatter");/// TODO look up when this fires
+        }
+
+        private void TwitchOnMessageThrottled(object sender, OnMessageThrottledEventArgs e)
+        {
+            Core.LOG(new LogMessage(LogSeverity.Warning, "EventCatcherTwitch",  $"Twitch Message Throttled!! {e.AllowedInPeriod}:Allowed {e.Period}:Period {e.SentMessageCount}:sent count"));
+        }
+
+        private void TwitchOnWhisperThrottled(object sender, OnWhisperThrottledEventArgs e)
+        {
+            Core.LOG(new LogMessage(LogSeverity.Warning, "EventCatcherTwitch",  $"Twitch Whisper Throttled!! {e.AllowedInPeriod}:Allowed {e.Period}:Period {e.SentWhisperCount}:sent count"));
+        }
+
+        private async void TwitchWhisperReceived(object sender, OnWhisperReceivedArgs e)
+        {
+            await Program.BotEvents.RaiseTwitchWhisperReceived(e.WhisperMessage.Username, e.WhisperMessage.Message);
+        }
+
+        private async void TwitchOnCommunitySubscription(object sender, OnCommunitySubscriptionArgs e)
+        {
+            await Program.BotEvents.RaiseTwitchOnCommunitySubscription(e.Channel, e.GiftedSubscription);
+        }
+
+        private async void TwitchOnLeftChannel(object sender, OnLeftChannelArgs e)
+        {
+            await Program.BotEvents.RaiseTwitchOnChannelLeave(e.Channel, e.BotUsername);
+        }
+
+        private async void TwitchOnJoinedChannel(object sender, OnJoinedChannelArgs e)
+        {
+            await Program.BotEvents.RaiseTwitchOnChannelJoined(e.Channel, e.BotUsername);
+        }
+
+        private async void TwitchOnChatCleared(object sender, OnChatClearedArgs e)
+        {
+            await Program.BotEvents.RaiseTwitchOnChannelChatCleared(e.Channel);
+        }
+
+        #region Need confirmation
         /// <summary>
         /// UNTESTED!!!!! TODO TEST THIS YOU LUMP OF SHIT
         /// </summary>
@@ -82,7 +155,7 @@ namespace MisfitBot_MKII
                 return;
             }
         }
-
+        #endregion
 
         #region pass 1
         /// <summary>

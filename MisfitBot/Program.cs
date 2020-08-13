@@ -79,6 +79,7 @@ namespace MisfitBot_MKII
             await StartDiscordClient();
             LoadPlugins();
             TwitchClient.JoinChannel("munglo"); // TODO this is temporary until we have otehr way of adding channels to join
+           
             // Block the program until it is closed.
             await Task.Delay(Timeout.Infinite);
         }
