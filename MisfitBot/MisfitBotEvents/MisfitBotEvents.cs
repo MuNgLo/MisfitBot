@@ -23,13 +23,17 @@ namespace MisfitBot_MKII.MisfitBotEvents
         // Twitch
         public TwitchConnectedEvent OnTwitchConnected;
         public TwitchConnectionErrorEvent OnTwitchConnectionError;
-        public TwitchChannelChatCleared OnTwitchChannelChatCleared;
+        public TwitchChannelChatClearedEvent OnTwitchChannelChatCleared;
+        public TwitchChannelJoinLeaveEvent OnTwitchChannelLeft;
+        public TwitchChannelJoinLeaveEvent OnTwitchChannelJoined;
         public TwitchDisconnectedEvent OnTwitchDisconnected;
-        public TwitchChannelJoinLeave OnTwitchChannelLeft;
-        public TwitchChannelJoinLeave OnTwitchChannelJoined;
+        public TwitchHostEvent OnTwitchHostEvent;
+        public TwitchMessageClearedEvent OnTwitchMessageCleared;
         public TwitchMessageSentEvent OnTwitchMessageSent;
+        public TwitchSubGiftEvent OnTwitchSubGift;
+        public TwitchUserJoinLeaveEvent OnTwitchUserJoin;
+        public TwitchUserJoinLeaveEvent OnTwitchUserLeave;
         public TwitchWhisperMessageEvent OnTwitchWhisperReceived;
-
         // Botwide
         public MessageReceivedEvent OnMessageReceived;
 
@@ -38,9 +42,8 @@ namespace MisfitBot_MKII.MisfitBotEvents
         public BitEvent OnBitEvent;
         public BotChannelMergeEvent OnBotChannelMerge;
         public DiscordUserStartsStreamEvent OnDiscordUserStartStream;
-        public HostEvent OnHostEvent;
         public RaidEvent OnRaidEvent;
-        public TwitchSubscriptionEvent OnTwitchSubEvent;
+        public TwitchSubGiftEvent OnTwitchSubEvent;
         public TwitchChannelGoesLiveEvent OnTwitchChannelGoesLive;
         public TwitchChannelGoesOfflineEvent OnTwitchChannelGoesOffline;
         public UnBanEvent OnUnBanEvent;
@@ -49,6 +52,27 @@ namespace MisfitBot_MKII.MisfitBotEvents
 
         private List<GenericTimeStamp> DiscordStreamerStamps;
 
+        internal async Task RaiseTwitchOnUserJoin(BotChannel bChan, UserEntry user){
+            await Task.Run(()=>{
+                if(bChan!=null && user != null){
+                    OnTwitchUserJoin?.Invoke(bChan, user);
+                }
+            });
+        }
+internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
+            await Task.Run(()=>{
+                if(bChan!=null && user != null){
+                    OnTwitchUserLeave?.Invoke(bChan, user);
+                }
+            });
+        }
+
+
+        internal async void RaiseTwitchOnSubGift(BotChannel bChan, TwitchSubGiftEventArguments args){
+            await Task.Run(()=>{
+                if(bChan != null){OnTwitchSubGift?.Invoke(bChan, args);}
+            });
+        }
 
         #region Botwide Events gets raised here
         internal void RaiseOnMessageReceived(BotWideMessageArguments args)
@@ -68,6 +92,21 @@ namespace MisfitBot_MKII.MisfitBotEvents
         {
             await Task.Run(()=>{
             OnTwitchWhisperReceived?.Invoke(username, message);
+            });
+        }
+
+        internal async Task RaiseTwitchOnBeingHosted(HostedEventArguments args)
+        {
+            BotChannel bchan = await Program.Channels.GetTwitchChannelByName(args.HostedChannel);
+            if(bchan!=null){
+                OnTwitchHostEvent?.Invoke(bchan, args);
+            }
+        }
+
+        internal async void RaiseonTwitchMessageCleared(BotChannel bChan, OnMessageClearedArgs e)
+        {
+            await Task.Run(()=>{
+                    OnTwitchMessageCleared?.Invoke(bChan, e);
             });
         }
 
@@ -259,14 +298,14 @@ namespace MisfitBot_MKII.MisfitBotEvents
             }
             OnBanEvent?.Invoke(e);
         }
-        internal void RaiseHostEvent(BotChannel bChan, HostEventArguments e)
+        internal void RaiseHostEvent(BotChannel bChan, HostedEventArguments e)
         {
             if (bChan == null || e == null)
             {
                 Core.LOG(new LogMessage(LogSeverity.Error, "Events", "RaiseHostEvent fed NULL parameter."));
                 return;
             }
-            OnHostEvent?.Invoke(bChan, e);
+            OnTwitchHostEvent?.Invoke(bChan, e);
         }
         internal void RaiseRaidEvent(BotChannel bChan, RaidEventArguments e)
         {
@@ -309,20 +348,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
             }
             OnViewercount?.Invoke(bChan, oldCount, newCount);
         }
-        internal void RaiseOnTwitchSubscription(BotChannel bChan, TwitchSubEventArguments e)
-        {
-            if (bChan == null || e == null)
-            {
-                Core.LOG(new LogMessage(LogSeverity.Error, "Events", "RaiseOnTwitchSubscription fed NULL parameter."));
-                return;
-            }
-            if (e.subContext == TWSUBCONTEXT.UNKNOWN)
-            {
-                Core.LOG(new LogMessage(LogSeverity.Error, "Events", "RaiseOnTwitchSubscription UKNOWN sub context."));
-                return;
-            }
-            OnTwitchSubEvent?.Invoke(bChan, e);
-        }
+
         internal void RaiseOnBotChannelMerge(BotChannel discordProfile, BotChannel twitchProfile)
         {
             if (discordProfile == null || twitchProfile == null)

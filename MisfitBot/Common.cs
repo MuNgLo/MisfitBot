@@ -5,7 +5,6 @@ using TwitchLib.PubSub.Enums;
 
 namespace MisfitBot_MKII
 {
-    public enum TWSUBCONTEXT {  UNKNOWN, SUB, RESUB, GIFTSUB, ANONSUBGIFT }
     public enum MESSAGESOURCE { DISCORD, TWITCH}
 
     public struct BotWideMessageArguments
@@ -66,13 +65,17 @@ namespace MisfitBot_MKII
     /// <summary>
     /// Botwide event argument class
     /// </summary>
-    public class HostEventArguments
+    public class HostedEventArguments
     {
-        public string Hostchannel, Moderator;
-        public HostEventArguments(string hostchannel, string moderator)
+        public string HostedChannel, HostChannel;
+        bool AutoHost;
+        int Viewers;
+        public HostedEventArguments(string hostedChannel, string hostChannel, bool isautohost, int viewers)
         {
-            Hostchannel = hostchannel;
-            Moderator = moderator;
+            HostedChannel = hostedChannel;
+            HostChannel = hostChannel;
+            AutoHost = isautohost;
+            Viewers = viewers;
         }
     }
     /// <summary>
@@ -92,7 +95,7 @@ namespace MisfitBot_MKII
     /// <summary>
     /// Botwide event argument class
     /// </summary>
-    public class TwitchSubEventArguments
+    public class TwitchSubGiftEventArguments
     {
         public int twitchUserID;
         public string username;
@@ -106,60 +109,27 @@ namespace MisfitBot_MKII
         public string twitchChannelname;
 
         public SubscriptionPlan subscriptionplan;
+        public string subscriptionplanName;
         public int months; // This seems highly unreliable
 
-        public TWSUBCONTEXT subContext;
-        public string subMessage;
+        public TwitchSubGiftEventArguments(TwitchLib.Client.Events.OnGiftedSubscriptionArgs args1){
 
-        public TwitchSubEventArguments(TwitchLib.PubSub.Events.OnChannelSubscriptionArgs args)
-        {
-            switch (args.Subscription.Context)
-            {
-                case "sub":
-                    MakeSub(args, TWSUBCONTEXT.SUB);
-                    break;
-                case "resub":
-                    MakeSub(args, TWSUBCONTEXT.RESUB);
-                    break;
-                case "subgift":
-                    if(args.Subscription.Username == "ananonymousgifter") { return; } // Twitsub sends both this and anonsubgift so ignore one
-                    MakeSub(args, TWSUBCONTEXT.GIFTSUB);
-                    break;
-                case "anonsubgift":
-                    MakeSub(args, TWSUBCONTEXT.ANONSUBGIFT);
-                    break;
-                case "unknown":
-                    Core.LOG(new LogMessage(LogSeverity.Error, $"TwitchEventArgument Constructor", $"Sub context is \"unknown\"! ({args.Subscription.Context.ToString()})"));
-                    JsonDumper.DumpObjectToJson(args, "TwitchEventArgument");
-                    break;
-                default:
-                    Core.LOG(new LogMessage(LogSeverity.Error, $"TwitchEventArgument", $"Sub context not recognized! ({args.Subscription.Context.ToString()})"));
-                    subContext = TWSUBCONTEXT.UNKNOWN;
-                    break;
-            }
+            int.TryParse(args1.GiftedSubscription.Id, out twitchUserID);
+            userDisplayname = args1.GiftedSubscription.DisplayName;
+            username = args1.GiftedSubscription.Login;
+
+            int.TryParse(args1.GiftedSubscription.MsgParamRecipientId, out recipientUserID);
+            recipientUsername = args1.GiftedSubscription.MsgParamRecipientUserName;
+            recipientDisplayname = args1.GiftedSubscription.MsgParamRecipientDisplayName;
+
+            twitchChannelname = args1.Channel;
+
+            subscriptionplan = (SubscriptionPlan)args1.GiftedSubscription.MsgParamSubPlan;
+            int.TryParse(args1.GiftedSubscription.MsgParamMonths, out months);
+
+            subscriptionplanName = args1.GiftedSubscription.MsgParamSubPlanName;
         }
-
-        private void MakeSub(TwitchLib.PubSub.Events.OnChannelSubscriptionArgs e, TWSUBCONTEXT context)
-        {
-            int.TryParse(e.Subscription.UserId, out twitchUserID);
-            username = e.Subscription.Username;
-            userDisplayname = e.Subscription.DisplayName;
-
-            int.TryParse(e.Subscription.RecipientId, out recipientUserID);
-            recipientUsername = e.Subscription.RecipientName;
-            recipientDisplayname = e.Subscription.RecipientDisplayName;
-
-            int.TryParse(e.Subscription.ChannelId, out twitchChannelID);
-            twitchChannelname = e.Subscription.ChannelName;
-
-            subscriptionplan = e.Subscription.SubscriptionPlan;
-            months = e.Subscription.Months != null ? (int)e.Subscription.Months : 0;
-
-            subContext = context;
-
-            subMessage = e.Subscription.SubMessage.Message;
-        }
-    }
+    }// EOF CLASS
     /// <summary>
     /// Botwide event argument class
     /// </summary>

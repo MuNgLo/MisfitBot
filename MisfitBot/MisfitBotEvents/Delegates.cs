@@ -15,28 +15,30 @@ namespace MisfitBot_MKII.MisfitBotEvents
     public delegate void DiscordMembersDownloadedEvent(SocketGuild arg);
     public delegate void DiscordReadyEvent();
     // All Twitch events here all all need to start with Twitch and end with Event
+    public delegate void TwitchHostEvent(BotChannel bChan, HostedEventArguments e);
+    public delegate void TwitchSubGiftEvent(BotChannel bChan, TwitchSubGiftEventArguments e);
+    
     public delegate void TwitchConnectedEvent(string args);
     public delegate void TwitchConnectionErrorEvent(string msg);
-    public delegate void TwitchChannelChatCleared(string channel);
-    public delegate void TwitchChannelJoinLeave(string channel, string botname);
+    public delegate void TwitchChannelChatClearedEvent(string channel);
+    public delegate void TwitchChannelJoinLeaveEvent(string channel, string botname);
     //public delegate void TwitchCommunitySubscription();
     public delegate void TwitchDisconnectedEvent();
+    public delegate void TwitchMessageClearedEvent(BotChannel botChannel, OnMessageClearedArgs e);
     public delegate void TwitchMessageSentEvent(string channel, string message);
     public delegate void TwitchWhisperMessageEvent(string username, string message);
-
+    public delegate void TwitchUserJoinLeaveEvent(BotChannel botChannel, UserEntry user);
     // Botwide type events
     public delegate void MessageReceivedEvent(BotWideMessageArguments args);
 
     // Below needs to be verified
+    public delegate void TwitchChannelGoesLiveEvent(BotChannel bChan, int delay);
+    public delegate void TwitchChannelGoesOfflineEvent(BotChannel bChan);
     public delegate void BanEvent(BanEventArguments e);
     public delegate void BitEvent(BitEventArguments e);
     public delegate void DiscordUserStartsStreamEvent(BotChannel bChan, UserEntry user, StreamingGame streaminfo);
-    public delegate void TwitchChannelGoesLiveEvent(BotChannel bChan, int delay);
-    public delegate void TwitchChannelGoesOfflineEvent(BotChannel bChan);
     public delegate void BotChannelMergeEvent(BotChannel discordBotChannel, BotChannel twitchBotChannel);
-    public delegate void HostEvent(BotChannel bChan, HostEventArguments e);
     public delegate void RaidEvent(BotChannel bChan, RaidEventArguments e);
-    public delegate void TwitchSubscriptionEvent(BotChannel bChan, TwitchSubEventArguments e);
     public delegate void UnBanEvent(UnBanEventArguments e);
     public delegate void UserEntryMergeEvents(UserEntry discordUser, UserEntry twitchUser);
     public delegate void ViewerCountEvent(BotChannel bChan, int oldCount, int newCount);

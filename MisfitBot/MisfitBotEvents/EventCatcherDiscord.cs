@@ -4,7 +4,7 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 
-namespace MisfitBot_MKII
+namespace MisfitBot_MKII.MisfitBotEvents
 {
     /// <summary>
     /// MKII v1.0

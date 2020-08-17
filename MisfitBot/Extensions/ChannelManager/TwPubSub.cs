@@ -54,7 +54,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             Client.OnBitsReceived += OnBitsReceived;
             Client.OnViewCount += OnViewCount;
             Client.OnChannelSubscription += OnChannelSubscription;
-            Client.OnHost += Client_OnHost;
+            Client.OnHost += Client_OnHost; // Fires when PubSub receives notice that the channel being listened to is hosting another channel.
             Client.OnStreamUp += Client_OnStreamUp;
             Client.OnStreamDown += Client_OnStreamDown;
             Client.OnPubSubServiceConnected += OnPubSubServiceConnected;
@@ -260,14 +260,14 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         }
         private async void OnChannelSubscription(object sender, OnChannelSubscriptionArgs e)
         {
-            //JsonDumper.DumpObjectToJson(e, "TwitchSUB"); // collect a few of these so we know what we are dealing with
+            JsonDumper.DumpObjectToJson(e, "TwitchSUB"); // collect a few of these so we know what we are dealing with
             BotChannel bChan = await Program.Channels.GetTwitchChannelByName(e.Subscription.ChannelName);
-            Program.BotEvents.RaiseOnTwitchSubscription(bChan, new TwitchSubEventArguments(e));
+            //Program.BotEvents.RaiseOnTwitchSubscription(bChan, new TwitchSubGiftEventArguments(e)); // TODO HOOK IT UP SILLY
         }
         private async void Client_OnHost(object sender, OnHostArgs e)
         {
             BotChannel bChan = await Program.Channels.GetTwitchChannelByID(_twitchChannelName);
-            Program.BotEvents.RaiseHostEvent(bChan, new HostEventArguments(e.HostedChannel, e.Moderator));
+            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, "PUBSUB", "Channel hosted another channel. This neds to be hooked up"));
         }
         private async void Client_OnFollow(object sender, OnFollowArgs e)
         {
