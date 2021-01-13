@@ -9,8 +9,9 @@ namespace MisfitBot_MKII
     /// </summary>
     public class UserEntry
     {
+        public bool locked = false;
         public bool linked = false;
-        public string _username = string.Empty;
+        public string _discordUsername = string.Empty;
         public int _lastseen = 0;
         public int _lastseenOnTwitch = 0;
         public string _twitchUID = string.Empty;
@@ -31,14 +32,14 @@ namespace MisfitBot_MKII
         }
         public UserEntry(string name, int lastseen, ulong discordID)
         {
-            _username = name;
+            _discordUsername = name;
             _lastseen = lastseen;
             _twitchUID = string.Empty;
             _discordUID = discordID;
         }
         public UserEntry(string name, int lastseen, string twitchID)
         {
-            _username = name;
+            _discordUsername = name;
             _lastseen = lastseen;
             _twitchUID = twitchID;
             _discordUID = 0;

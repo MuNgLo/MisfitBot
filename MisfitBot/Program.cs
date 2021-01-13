@@ -9,7 +9,6 @@ using Discord.Commands;
 using MisfitBot_MKII.Crypto;
 using Microsoft.Extensions.DependencyInjection;
 using System.Data.SQLite;
-using MisfitBot_MKII.Services;
 using MisfitBot_MKII.Extensions.ChannelManager;
 using TwitchLib.Client.Interfaces;
 using TwitchLib.Client;
@@ -20,6 +19,7 @@ using TwitchLib.Api;
 using Newtonsoft.Json;
 using MisfitBot_MKII.MisfitBotEvents;
 using System.Reflection;
+using MisfitBot_MKII.Extensions.UserManager;
 
 namespace MisfitBot_MKII
 {
@@ -43,15 +43,17 @@ namespace MisfitBot_MKII
         private static bool _Debugmode = false;
         private static bool _LogTwitch = false;
 
-        public static DiscordSocketClient DiscordClient { get => _DiscordClient; private set => _DiscordClient = value; }
-        public static ITwitchClient TwitchClient { get => _TwitchClient; private set => _TwitchClient = value; }
+        internal static DiscordSocketClient DiscordClient { get => _DiscordClient; private set => _DiscordClient = value; }
+        internal static ITwitchClient TwitchClient { get => _TwitchClient; private set => _TwitchClient = value; }
         public static ITwitchAPI TwitchAPI { get => _TwitchAPI; private set => _TwitchAPI = value; }
         public static char CommandCharacter { get => config.CMDCharacter; private set => config.CMDCharacter = value; }
+        public static string LOGChannel { get => config.LOGChannel; private set {} }
+        public static string BotName { get => config.TwitchUser; private set {} }
         public static ChannelManager Channels { get => _Channels; private set => _Channels = value; }
         public static UserManagerService Users { get => _Users; private set => _Users = value; }
         public static BotwideEvents BotEvents { get => _BotEvents; set => _BotEvents = value; }
 
-        public List<ServiceBase> _plugins;
+        public List<PluginBase> _plugins;
 
         static void Main(string[] args)
         {
@@ -75,10 +77,9 @@ namespace MisfitBot_MKII
             await VerifyFoldersAndStartupFiles();
 
 
+            LoadPlugins();
             StartTwitchClient();
             await StartDiscordClient();
-            LoadPlugins();
-            TwitchClient.JoinChannel("munglo"); // TODO this is temporary until we have otehr way of adding channels to join
            
             // Block the program until it is closed.
             await Task.Delay(Timeout.Infinite);
@@ -86,7 +87,7 @@ namespace MisfitBot_MKII
 
         private void LoadPlugins()
         {
-            _plugins = new List<ServiceBase>();
+            _plugins = new List<PluginBase>();
 
             string PluginFolder = "Plugins";
             string[] FolderContent = Directory.GetDirectories(PluginFolder);
@@ -94,45 +95,20 @@ namespace MisfitBot_MKII
             {
                 if (Directory.Exists(fileName))
                 {
-                    Core.LOG(new LogMessage(LogSeverity.Info, "PROGRAM", $"Found PluginFolder {fileName}"));
-
                     if (File.Exists($"{fileName}/{fileName.Remove(0, 7)}.dll"))
                     {
-                        Core.LOG(new LogMessage(LogSeverity.Info, "PROGRAM", $"Readyt to load {fileName.Remove(0, 8)} plugin."));
-
-                        Assembly a = Assembly.LoadFile($"F:/SharedProjects/Juan/bin/netcoreapp3.1/Plugins/ExamplePlugin/{fileName.Remove(0, 7)}.dll");
-                        Type myType = a.GetType("ExamplePlugin.ExamplePlugin", true);
+                        string directoryPath = System.IO.Directory.GetCurrentDirectory();
+                        Assembly a = Assembly.LoadFile($"{directoryPath}/{fileName}/{fileName.Remove(0, 7)}.dll");
+                        string nameClass = $"{fileName.Remove(0, 8)}.{fileName.Remove(0, 8)}";
+                        Type myType = a.GetType(nameClass, true);
                         object obj = Activator.CreateInstance(myType);
-                        var plugin = obj as ServiceBase;
-
+                        var plugin = obj as PluginBase;
                         _plugins.Add(plugin);
-
-
                     }
                 }
             }
-
-            /*
-                        Assembly a = Assembly.LoadFile(@"D:\Dev\_Munglo\MisfitBot\Plugins\Juan\bin\juanplugins\netcoreapp3.1\ExamplePlugin");
-                        // Get the type to use.
-                        Type myType = a.GetType("ExamplePlugin.ExamplePlugin", true);
-                        // Create an instance.
-                        object obj = Activator.CreateInstance(myType);
-
-
-                        // Execute the method.
-                        //MethodInfo myMethod = myType.GetMethod("MethodA");
-                        // Create an instance.
-                        //object obj = Activator.CreateInstance(myType);
-                        // Execute the method.
-                        //myMethod.Invoke(obj, null);
-
-
-                        var plugin = obj as ServiceBase;
-
-                        _plugins.Add(plugin);
-                        */
         }
+
 
         private void StartTwitchClient()
         {
@@ -250,7 +226,7 @@ namespace MisfitBot_MKII
             _DiscordClient = new DiscordSocketClient();
             _DiscordEvents = new EventCatcherDiscord(_DiscordClient);
 
-            InitCommands();
+            //InitCommands();
             // Tokens should be considered secret data, and never hard-coded.
             await _DiscordClient.LoginAsync(TokenType.Bot, DiscordToken());
             await _DiscordClient.StartAsync();
@@ -258,50 +234,7 @@ namespace MisfitBot_MKII
 
         public void InitCommands()
         {
-            // Repeat this for all the service classes
-            // and other dependencies that your commands might need.
-            //_map.AddSingleton(new TwitchService()); // Make sure this loads first
-            _map.AddSingleton(new UserManagerService());
-            //_map.AddSingleton(new ChannelManager());
-            /*_map.AddSingleton(new AdminService());
-            _map.AddSingleton(new TwitchCommandsService());
-            _map.AddSingleton(new TreasureService());
-            _map.AddSingleton(new MyPickService());
-            _map.AddSingleton(new BettingService());
-            _map.AddSingleton(new DeathCounterService());
-            _map.AddSingleton(new VotingService());
-            _map.AddSingleton(new RaffleService());
-            _map.AddSingleton(new PoorLifeChoicesService());
-            _map.AddSingleton(new CouchService());
-            _map.AddSingleton(new HelpService());
-            _map.AddSingleton(new MatchMakingService());
-            _map.AddSingleton(new QueueService());
-*/
-            //_map.AddSingleton(new GreeterService()); 
-            // When all your required services are in the collection, build the container.
-            // Tip: There's an overload taking in a 'validateScopes' bool to make sure
-            // you haven't made any mistakes in your dependency graph.
             _services = _map.BuildServiceProvider(true);
-            // Either search the program and add all Module classes that can be found.
-            // Module classes *must* be marked 'public' or they will be ignored.
-            //await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
-            // Or add Modules manually if you prefer to be a little more explicit:
-            //await _commands.AddModuleAsync<SomeModule>();
-            /*await _commands.AddModuleAsync<AdminModule>(_services);
-            await _commands.AddModuleAsync<TreasureModule>(_services);
-            await _commands.AddModuleAsync<MyPickModule>(_services);
-            await _commands.AddModuleAsync<BettingModule>(_services);
-            await _commands.AddModuleAsync<SimpleCommands>(_services);
-            await _commands.AddModuleAsync<DeathCounterModule>(_services);
-            await _commands.AddModuleAsync<VotingModule>(_services);
-            await _commands.AddModuleAsync<RaffleModule>(_services);
-            await _commands.AddModuleAsync<PoorLifeChoicesModule>(_services);
-            await _commands.AddModuleAsync<CouchModule>(_services);
-            await _commands.AddModuleAsync<HelpModule>(_services);
-            await _commands.AddModuleAsync<MatchMakingModule>(_services);
-            //await _commands.AddModuleAsync<GreeterModule>(_services);
-*/
-            // Note that the first one is 'Modules' (plural) and the second is 'Module' (singular).
         }
 
         #region First launch and console setup stuff
@@ -457,11 +390,11 @@ namespace MisfitBot_MKII
         {
             if (System.IO.File.Exists("DATABASE.sqlite"))
             {
-                Core.LOG(new LogMessage(LogSeverity.Info, "Misfitbot", "Database found."));
+                Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Misfitbot", "Database found."));
             }
             else
             {
-                Core.LOG(new LogMessage(LogSeverity.Warning, "Misfitbot", "Database not found. Creating a fresh victim."));
+                Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Misfitbot", "Database not found. Creating a fresh victim."));
                 SQLiteConnection.CreateFile("DATABASE.sqlite");
             }
         }
@@ -477,11 +410,18 @@ namespace MisfitBot_MKII
         {
             TwitchClient.SendMessage(channel, message);
         }
-
+        public static void TwitchResponse(BotWideResponseArguments args)
+        {
+            TwitchClient.SendMessage(args.twitchChannel, args.message);
+        }
         public static async Task DiscordSayMessage(string channel, string message)
         {
+            if(DiscordClient.ConnectionState != ConnectionState.Connected){return;}
             await (DiscordClient.GetChannel(Core.StringToUlong(channel)) as ISocketMessageChannel).SendMessageAsync(message);
         }
-
+        public static async Task DiscordResponse(BotWideResponseArguments args)
+        {
+            await (DiscordClient.GetChannel(args.discordChannel) as ISocketMessageChannel).SendMessageAsync(args.message);
+        }
     }
 }

@@ -13,60 +13,118 @@ using TwitchLib.Client.Events;
 
 namespace MisfitBot_MKII.Extensions.UserManager
 {
-    public class BotUsers
+    /// <summary>
+    /// This class handles the caching of userentries and the database access
+    /// Make sure nothing bypass this and access the user table
+    /// </summary>
+    internal class BotUsers
     {
-        private readonly string PLUGINNAME = "BotUsers";
-
-        #region DATA minapulation stuff
-        public async Task<UserEntry> GetDBUserByTwitchUserName(string twitchUsername)
-        {
-            UserEntry user = new UserEntry();
+        private readonly string EXTENSIONNAME = "BotUsers";
+        private List<UserEntry> _UserCache;
+        internal BotUsers(){
+            TimerStuff.OnMinuteTick += OnMinuteTick;
+            _UserCache = new List<UserEntry>();
             if (!TableExists())
             {
                 TableCreate();
             }
-            if (!await DBUserExistsTwitchName(twitchUsername))
+        }
+        private void OnMinuteTick(int minute){
+            int preCount = _UserCache.Count;
+            _UserCache.RemoveAll(p=>p._lastseen < Core.CurrentTime - 180);
+            if(preCount != _UserCache.Count){
+                Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME, $"UserCache Flushed of {preCount - _UserCache.Count} users. {_UserCache.Count} left."));
+            }
+        }
+        #region User getters
+        internal async Task<UserEntry> GetDBUserByTwitchUserName(string twitchUsername)
+        {
+            if(!_UserCache.Exists(p=>p._twitchUsername == twitchUsername))
+            {
+                await FetchDBUserByTwitchUserName(twitchUsername);
+            }
+            return _UserCache.Find(p=>p._twitchUsername == twitchUsername);
+        }
+        internal async Task<UserEntry> GetDBUserByTwitchDisplayName(string twitchDisplayName)
+        {
+            if(!_UserCache.Exists(p=>p._twitchDisplayname == twitchDisplayName))
+            {
+                return await FetchDBUserByTwitchDisplayName(twitchDisplayName);
+            }
+            return _UserCache.Find(p=>p._twitchDisplayname == twitchDisplayName);
+        }
+        internal async Task<UserEntry> GetDBUserByTwitchID(string uid)
+        {
+            if(!_UserCache.Exists(p=>p._twitchUID == uid))
+            {
+                await FetchDBUserByTwitchID(uid);
+                await Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME, $"User cache size {_UserCache.Count}. TWID({uid}) added."));
+            }
+            return _UserCache.Find(p=>p._twitchUID == uid);
+        }
+        internal async Task<UserEntry> GetDBUserByDiscordUID(ulong uid)
+        {
+            if(!_UserCache.Exists(p=>p._discordUID == uid))
+            {
+                await FetchDBUserByDiscordUID(uid);
+            }
+            return _UserCache.Find(p=>p._discordUID == uid);
+        }
+        #endregion
+        #region Database user getters
+        private async Task FetchDBUserByTwitchUserName(string twitchUsername)
+        {
+            UserEntry user = new UserEntry();
+            if (await DBUserExistsTwitchName(twitchUsername))
             {
                 await CreateNewTwitchUserFromName(twitchUsername, user);
             }
             if (await DBUserExistsTwitchName(twitchUsername))
             {
-                return await DBReadTwitchUserByName(twitchUsername);
+                user = DBReadTwitchUserByName(twitchUsername);
+            }
+            user._lastseen = Core.CurrentTime;
+            _UserCache.Add(user);
+        }
+        private async Task<UserEntry> FetchDBUserByTwitchDisplayName(string twitchDisplayName)
+        {
+            if (await DBUserExistsTwitchName(twitchDisplayName))
+            {
+                return DBReadTwitchUserByName(twitchDisplayName);
             }
             return null;
         }
-        public async Task<UserEntry> GetDBUserByDiscordUID(ulong uid)
-        {
-            //Cacheable locally and return cached vertsion here TODO!!!
-            UserEntry user = new UserEntry();
-            if (!TableExists())
-            {
-                TableCreate();
-            }
-            if (!await DBUserExistsDiscordUID(uid))
-            {
-                CreateNewDiscordUser(uid, user);
-            }
-            return await DBReadDiscordUser(uid);
-        }
-        public async Task<UserEntry> GetDBUserByTwitchID(string uid)
+        private async Task FetchDBUserByTwitchID(string uid)
         {
             UserEntry user = new UserEntry();
-            if (!TableExists())
-            {
-                TableCreate();
-            }
             if (!await DBUserExistsTwitchID(uid))
             {
                 CreateNewTwitchUserFromID(uid, user);
             }
             if (await DBUserExistsTwitchID(uid))
             {
-                return await DBReadTwitchUser(uid);
+                user = DBReadTwitchUser(uid);
             }
-            return null;
+            user._lastseen = Core.CurrentTime;
+            _UserCache.Add(user);
         }
-        
+        private async Task FetchDBUserByDiscordUID(ulong uid)
+        {
+            UserEntry user = new UserEntry();
+            if (!await DBUserExistsDiscordUID(uid))
+            {
+                CreateNewDiscordUser(uid, user);
+            }
+            user = DBReadDiscordUser(uid);
+            user._lastseen = Core.CurrentTime;
+            _UserCache.Add(user);
+        }
+        #endregion
+        #region DATABASE manipulation stuff
+        /// <summary>
+        /// Checks if User table exists and returns result
+        /// </summary>
+        /// <returns></returns>
         private bool TableExists()
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
@@ -74,7 +132,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
                 cmd.CommandText = "SELECT COUNT(*) AS QtRecords FROM sqlite_master WHERE type = 'table' AND name = @name";
-                cmd.Parameters.AddWithValue("@name", PLUGINNAME);
+                cmd.Parameters.AddWithValue("@name", EXTENSIONNAME);
                 if (Convert.ToInt32(cmd.ExecuteScalar()) == 0)
                 {
                     return false;
@@ -85,13 +143,16 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 }
             }
         }
+        /// <summary>
+        /// Creates the User table in the database
+        /// </summary>
         private void TableCreate()
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"CREATE TABLE BotUsers (" +
+                cmd.CommandText = $"CREATE TABLE \"{EXTENSIONNAME}\" (" +
                     $"linked BOOLEAN, " +
                     $"username VACHAR(30)," +
                     $"lastseen INTEGER, " +
@@ -111,13 +172,14 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 cmd.ExecuteNonQuery();
             }
         }
+
         private async Task<bool> DBUserExistsDiscordUID(ulong discordUID)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM {PLUGINNAME} WHERE discordUID IS @discordUID";
+                cmd.CommandText = $"SELECT * FROM \"{EXTENSIONNAME}\" WHERE discordUID IS @discordUID";
                 cmd.Parameters.AddWithValue("@discordUID", discordUID);
 
                 if (await cmd.ExecuteScalarAsync() == null)
@@ -136,7 +198,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM {PLUGINNAME} WHERE twitchUID IS @twitchUID";
+                cmd.CommandText = $"SELECT * FROM \"{EXTENSIONNAME}\" WHERE twitchUID IS @twitchUID";
                 cmd.Parameters.AddWithValue("@twitchUID", twitchUID);
 
                 if (await cmd.ExecuteScalarAsync() == null)
@@ -155,10 +217,11 @@ namespace MisfitBot_MKII.Extensions.UserManager
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM {PLUGINNAME} WHERE twitchUsername IS @name";
+                cmd.CommandText = $"SELECT * FROM \"{EXTENSIONNAME}\" WHERE twitchUsername IS @name";
                 cmd.Parameters.AddWithValue("@name", name);
 
-                if (await cmd.ExecuteScalarAsync() == null)
+                var asd = await cmd.ExecuteScalarAsync();
+                if (asd == null)
                 {
                     return false;
                 }
@@ -168,14 +231,14 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 }
             }
         }
-
-        private async Task<UserEntry> DBReadDiscordUser(ulong uid)
+        #region DB entries readers 
+        private UserEntry DBReadDiscordUser(ulong uid)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM {PLUGINNAME} WHERE discordUID IS @uid";
+                cmd.CommandText = $"SELECT * FROM \"{EXTENSIONNAME}\" WHERE discordUID IS @uid";
                 cmd.Parameters.AddWithValue("@uid", uid);
                 SQLiteDataReader result;
                 try
@@ -184,57 +247,13 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 }
                 catch (Exception)
                 {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
-                    throw;
-                }
-                result.Read();
-
-                //await Core.LOG(new LogMessage(LogSeverity.Error, "DEBUG", $"DiscordID to lookup {uid} "));
-
-                UserEntry user = new UserEntry
-                {
-                    linked = result.GetBoolean(0),
-                    _username = result.GetString(1),
-                    _lastseen = result.GetInt32(2),
-                    _lastseenOnTwitch = result.GetInt32(3),
-                    _twitchUID = result.GetString(4),
-                    _twitchUsername = result.GetString(5),
-                    _twitchDisplayname = result.GetString(6),
-                    _twitchColour = result.GetString(7),
-                    _twitchLogo = result.GetString(8),
-
-
-                    _discordUID = (ulong)result.GetInt64(11),
-
-                    lastChange = (int)result.GetInt64(13),
-                    lastSave = (int)result.GetInt64(14)
-                };
-                return user;
-            }
-        }
-        private async Task<UserEntry> DBReadTwitchUser(string uid)
-        {
-            using (SQLiteCommand cmd = new SQLiteCommand())
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM {PLUGINNAME} WHERE twitchUID IS @uid";
-                cmd.Parameters.AddWithValue("@uid", uid);
-                SQLiteDataReader result;
-                try
-                {
-                    result = cmd.ExecuteReader();
-                }
-                catch (Exception)
-                {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
                     throw;
                 }
                 result.Read();
                 UserEntry user = new UserEntry
                 {
                     linked = result.GetBoolean(0),
-                    _username = result.GetString(1),
+                    _discordUsername = result.GetString(1),
                     _lastseen = result.GetInt32(2),
                     _lastseenOnTwitch = result.GetInt32(3),
                     _twitchUID = result.GetString(4),
@@ -249,13 +268,49 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 return user;
             }
         }
-        private async Task<UserEntry> DBReadTwitchUserByName(string twitchname)
+        private UserEntry DBReadTwitchUser(string uid)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM {PLUGINNAME} WHERE twitchUsername IS @twitchname";
+                cmd.CommandText = $"SELECT * FROM \"{EXTENSIONNAME}\" WHERE twitchUID IS @uid";
+                cmd.Parameters.AddWithValue("@uid", uid);
+                SQLiteDataReader result;
+                try
+                {
+                    result = cmd.ExecuteReader();
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
+                result.Read();
+                UserEntry user = new UserEntry
+                {
+                    linked = result.GetBoolean(0),
+                    _discordUsername = result.GetString(1),
+                    _lastseen = result.GetInt32(2),
+                    _lastseenOnTwitch = result.GetInt32(3),
+                    _twitchUID = result.GetString(4),
+                    _twitchUsername = result.GetString(5),
+                    _twitchDisplayname = result.GetString(6),
+                    _twitchColour = result.GetString(7),
+                    _twitchLogo = result.GetString(8),
+                    _discordUID = (ulong)result.GetInt64(11),
+                    lastChange = (int)result.GetInt64(13),
+                    lastSave = (int)result.GetInt64(14)
+                };
+                return user;
+            }
+        }
+        private UserEntry DBReadTwitchUserByName(string twitchname)
+        {
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = $"SELECT * FROM \"{EXTENSIONNAME}\" WHERE twitchUsername IS @twitchname";
                 cmd.Parameters.AddWithValue("@twitchname", twitchname);
                 SQLiteDataReader result;
                 try
@@ -264,14 +319,50 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 }
                 catch (Exception)
                 {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
                     throw;
                 }
                 result.Read();
                 UserEntry user = new UserEntry
                 {
                     linked = result.GetBoolean(0),
-                    _username = result.GetString(1),
+                    _discordUsername = result.GetString(1),
+                    _lastseen = result.GetInt32(2),
+                    _lastseenOnTwitch = result.GetInt32(3),
+                    _twitchUID = result.GetString(4),
+                    _twitchUsername = result.GetString(5),
+                    _twitchDisplayname = result.GetString(6),
+                    _twitchColour = result.GetString(7),
+                    _twitchLogo = result.GetString(8),
+                    _discordUID = (ulong)result.GetInt64(11),
+                    lastChange = (int)result.GetInt64(13),
+                    lastSave = (int)result.GetInt64(14)
+                };
+                _UserCache.Add(user);
+                return _UserCache[_UserCache.Count - 1];
+            }
+        }
+        private UserEntry DBReadTwitchUserByDisplayName(string twitchDisplayName)
+        {
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = $"SELECT * FROM \"{EXTENSIONNAME}\" WHERE twitchDisplayname IS @twitchDisplayname";
+                cmd.Parameters.AddWithValue("@twitchDisplayname", twitchDisplayName);
+                SQLiteDataReader result;
+                try
+                {
+                    result = cmd.ExecuteReader();
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
+                result.Read();
+                UserEntry user = new UserEntry
+                {
+                    linked = result.GetBoolean(0),
+                    _discordUsername = result.GetString(1),
                     _lastseen = result.GetInt32(2),
                     _lastseenOnTwitch = result.GetInt32(3),
                     _twitchUID = result.GetString(4),
@@ -286,15 +377,15 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 return user;
             }
         }
-        private async Task<List<UserEntry>> DBSearchByName(string pattern)
+        #endregion
+        private async Task<List<UserEntry>> SearchDBUserByName(string pattern)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM {PLUGINNAME} WHERE twitchUsername LIKE @pattern";
+                cmd.CommandText = $"SELECT * FROM \"{EXTENSIONNAME}\" WHERE twitchUsername LIKE @pattern";
                 cmd.Parameters.AddWithValue("@pattern", "%"+pattern+"%");
-                //cmd.Parameters.AddWithValue("@tdnPattern", pattern);
                 SQLiteDataReader result;
                 try
                 {
@@ -302,7 +393,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 }
                 catch (Exception)
                 {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
+                    await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, EXTENSIONNAME, $"Database query failed hard. ({cmd.CommandText})"));
                     throw;
                 }
                 List<UserEntry> hits = new List<UserEntry>();
@@ -311,7 +402,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
                     UserEntry user = new UserEntry
                     {
                         linked = result.GetBoolean(0),
-                        _username = result.GetString(1),
+                        _discordUsername = result.GetString(1),
                         _lastseen = result.GetInt32(2),
                         _lastseenOnTwitch = result.GetInt32(3),
                         _twitchUID = result.GetString(4),
@@ -328,7 +419,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 return hits;
             }
         }
-
+        #region New User Creation
         private void CreateNewDiscordUser(ulong uid, UserEntry user)
         {
             SocketUser userinfo = Program.DiscordClient.GetUser(uid);
@@ -336,7 +427,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"INSERT INTO {PLUGINNAME} VALUES (" +
+                cmd.CommandText = $"INSERT INTO \"{EXTENSIONNAME}\" VALUES (" +
                     $"@linked, " +
                     $"@username, " +
                     $"@lastseen, " +
@@ -372,17 +463,6 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 //await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Created entry for Discord user {userinfo.Username}"));
             }
         }
-
-        public async Task<List<UserEntry>> SearchDBUserByName(string search)
-        {
-            UserEntry user = new UserEntry();
-            if (!TableExists())
-            {
-                TableCreate();
-            }
-            return await DBSearchByName(search);
-        }
-
         private async void CreateNewTwitchUserFromID(string uid, UserEntry user)
         {
             User userinfo = await Program.TwitchAPI.V5.Users.GetUserByIDAsync(uid);
@@ -394,7 +474,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
                     {
                         cmd.CommandType = CommandType.Text;
                         cmd.Connection = Core.Data;
-                        cmd.CommandText = $"INSERT INTO {PLUGINNAME} VALUES (" +
+                        cmd.CommandText = $"INSERT INTO \"{EXTENSIONNAME}\" VALUES (" +
                             $"@linked, " +
                             $"@username, " +
                             $"@lastseen, " +
@@ -412,7 +492,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
                             $"@lastSave" +
                             $")";
                         cmd.Parameters.AddWithValue("@linked", user.linked);
-                        cmd.Parameters.AddWithValue("@username", user._username);
+                        cmd.Parameters.AddWithValue("@username", user._discordUsername);
                         cmd.Parameters.AddWithValue("@lastseen", Core.CurrentTime);
                         cmd.Parameters.AddWithValue("@lastseenOnTwitch", Core.CurrentTime);
                         cmd.Parameters.AddWithValue("@twitchUID", userinfo.Id);
@@ -430,14 +510,14 @@ namespace MisfitBot_MKII.Extensions.UserManager
                     }
                     catch (Exception)
                     {
-                        await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
+                        await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, EXTENSIONNAME, $"Database query failed hard. ({cmd.CommandText})"));
                         throw;
                     }
                 }
             }
             else
             {
-                await Core.LOG(new LogMessage(LogSeverity.Warning, "BotUsers", "Twitch user lookup failed!"));
+                await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "BotUsers", "Twitch user lookup failed!"));
             }
         }
         private async Task CreateNewTwitchUserFromName(string twitchusername, UserEntry user)
@@ -454,7 +534,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
                     {
                         cmd.CommandType = CommandType.Text;
                         cmd.Connection = Core.Data;
-                        cmd.CommandText = $"INSERT INTO {PLUGINNAME} VALUES (" +
+                        cmd.CommandText = $"INSERT INTO \"{EXTENSIONNAME}\" VALUES (" +
                             $"@linked, " +
                             $"@username, " +
                             $"@lastseen, " +
@@ -506,17 +586,17 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 }
                 else
                 {
-                    await Core.LOG(new LogMessage(LogSeverity.Warning, "BotUsers", $"Twitch user lookup failed for {twitchusername}!"));
+                    await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "BotUsers", $"Twitch user lookup failed for {twitchusername}!"));
                 }
 
             }
             catch (Exception)
             {
-                await Core.LOG(new LogMessage(LogSeverity.Warning, "BotUsers", $"Twitch user lookup exception caught ({twitchusername})!"));
+                await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "BotUsers", $"Twitch user lookup exception caught ({twitchusername})!"));
             }
         }
-
-        public async void SaveUser(UserEntry user)
+        #endregion
+        private async void SaveUser(UserEntry user)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
@@ -524,7 +604,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 cmd.Connection = Core.Data;
                 if (user._twitchUID == string.Empty || user.linked)
                 {
-                    cmd.CommandText = $"UPDATE {PLUGINNAME} SET " +
+                    cmd.CommandText = $"UPDATE \"{EXTENSIONNAME}\" SET " +
                         $"linked = @linked, " +
                         $"username = @username, " +
                         $"lastseen = @lastseen, " +
@@ -545,7 +625,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 }
                 else
                 {
-                    cmd.CommandText = $"UPDATE {PLUGINNAME} SET " +
+                    cmd.CommandText = $"UPDATE {EXTENSIONNAME} SET " +
                         $"linked = @linked, " +
                         $"username = @username, " +
                         $"lastseen = @lastseen, " +
@@ -566,7 +646,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 }
 
                 cmd.Parameters.AddWithValue("@linked", user.linked);
-                cmd.Parameters.AddWithValue("@username", user._username);
+                cmd.Parameters.AddWithValue("@username", user._discordUsername);
                 cmd.Parameters.AddWithValue("@lastseen", user._lastseen);
                 cmd.Parameters.AddWithValue("@lastseenOnTwitch", user._lastseenOnTwitch);
                 cmd.Parameters.AddWithValue("@twitchUID", user._twitchUID);
@@ -586,24 +666,11 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 }
                 catch (Exception)
                 {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
+                    await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, EXTENSIONNAME, $"Database query failed hard. ({cmd.CommandText})"));
                     throw;
                 }
             }
         }
         #endregion
-
-
-        public async Task UpdateTwitchUserColour(OnMessageReceivedArgs e)
-        {
-            if (e == null) return;
-            UserEntry user = await GetDBUserByTwitchID(e.ChatMessage.UserId);
-            if (user == null) return;
-            user._twitchColour = e.ChatMessage.ColorHex;
-            user._lastseenOnTwitch = Core.CurrentTime;
-            SaveUser(user);
-        }
-
-
-    }
+    }// EOF CLASS
 }

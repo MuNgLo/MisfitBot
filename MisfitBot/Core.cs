@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
-using MisfitBot_MKII.Services;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -23,7 +22,7 @@ namespace MisfitBot_MKII
         public static int LastLaunchTime; // To keep track of how long the bot has been running
         public static int UpTime { private set { } get { return UnixTime() - LastLaunchTime; } }
         public static JuansLog LOGGER;
-        public static Func<LogMessage, Task> LOG;
+        public static Func<LogEntry, Task> LOG;
 
         public static JsonSerializer serializer = new JsonSerializer();
 

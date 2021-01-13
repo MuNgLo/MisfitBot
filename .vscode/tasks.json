@@ -3,7 +3,7 @@
     "tasks": [
         {
             "label": "build",
-            "dependsOn": "Compile Example Plugin", 
+            "dependsOn": ["Compile Admin Plugin", "Compile Example Plugin", "Compile Couch Plugin"],
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -40,12 +40,36 @@
             "problemMatcher": "$msCompile"
         },
         {
+            "label": "Compile Admin Plugin",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Plugins/AdminPlugin/AdminPlugin.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
             "label": "Compile Example Plugin",
             "command": "dotnet",
             "type": "process",
             "args": [
                 "build",
                 "${workspaceFolder}/Plugins/ExamplePlugin/ExamplePlugin.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Compile Couch Plugin",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Plugins/Couch/Couch.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],

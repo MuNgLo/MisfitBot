@@ -36,6 +36,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
         public TwitchWhisperMessageEvent OnTwitchWhisperReceived;
         // Botwide
         public MessageReceivedEvent OnMessageReceived;
+        public CommandReceivedEvent OnCommandReceived;
 
         // Below needs to be verified
         public BanEvent OnBanEvent;
@@ -78,6 +79,10 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
         internal void RaiseOnMessageReceived(BotWideMessageArguments args)
         {
             OnMessageReceived?.Invoke(args);
+        }
+        internal void RaiseOnCommandRecieved(BotWideCommandArguments args)
+        {
+            OnCommandReceived?.Invoke(args);
         }
         internal void RaiseOnDiscordReady()
         {
@@ -132,6 +137,7 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
         }
         internal async Task RaiseTwitchOnChannelJoined(string channel, string botname)
         {
+            if(Program.BotName == botname){return;}
             await Task.Run(()=>{
                 OnTwitchChannelJoined?.Invoke(channel, botname);
             });
@@ -139,7 +145,7 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
         #region Twitch raisers pass 1
         internal async Task RaiseOnTwitchConnected(string msg)
         {
-            await Core.LOG(new LogMessage(LogSeverity.Info, "Events", "Twitch Connected: " + msg));
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Events", "Twitch Connected: " + msg));
             OnTwitchConnected?.Invoke(msg);
         }
 
@@ -154,20 +160,20 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
 
         internal async Task RaiseOnTwitchConnectionError(string msg)
         {
-            await Core.LOG(new LogMessage(LogSeverity.Error, "Events", "Twitch Connection Error: " + msg));
+            await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "Events", "Twitch Connection Error: " + msg));
             OnTwitchConnectionError?.Invoke(msg);
         }
         internal async Task RaiseOnTwitchDisconnected(string msg)
         {
-            await Core.LOG(new LogMessage(LogSeverity.Error, "Events", "Twitch Disconnected: " + msg));
+            await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "Events", "Twitch Disconnected: " + msg));
             OnTwitchDisconnected?.Invoke();
         }
         #endregion
 
-        internal Task RaiseOnDiscordGuildAvailable(SocketGuild arg)
+        internal async Task RaiseOnDiscordGuildAvailable(SocketGuild arg)
         {
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Events", "Discord Guild Available: " + arg.Name));
             OnDiscordGuildAvailable?.Invoke(arg);
-            return Task.CompletedTask;
         }
         internal void RaiseOnDiscordNewMember(BotChannel bChan, UserEntry user)
         {
@@ -202,7 +208,7 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
 
             if (arg1 == null || arg1 == null)
             {
-                await Core.LOG(new LogMessage(LogSeverity.Error, "Events", "RaiseDiscordUserUpdated fed NULL parameter."));
+                await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "Events", "RaiseDiscordUserUpdated fed NULL parameter."));
                 return;
             }
             if (arg1.IsBot) { return; }
@@ -239,7 +245,7 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
 
         internal async Task RaiseOnDiscordDisconnected(Exception e)
         {
-            await Core.LOG(new LogMessage(LogSeverity.Error, "BotwideEvents", $"ClientDisconnected:{e.Message}"));
+            await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "BotwideEvents", $"ClientDisconnected:{e.Message}"));
             OnDiscordDisConnected?.Invoke();
         }
 
@@ -273,7 +279,7 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
         {
             if (discordProfile == null || twitchProfile == null)
             {
-                Core.LOG(new LogMessage(LogSeverity.Error, "Events", "RaiseUserLinkEvent fed NULL parameter."));
+                Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "Events", "RaiseUserLinkEvent fed NULL parameter."));
 
                 return;
             }
@@ -283,7 +289,7 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
         {
             if (e == null)
             {
-                Core.LOG(new LogMessage(LogSeverity.Error, "Events", "RaiseBitEvent fed NULL parameter."));
+                Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "Events", "RaiseBitEvent fed NULL parameter."));
 
                 return;
             }
@@ -293,7 +299,7 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
         {
             if (e == null)
             {
-                Core.LOG(new LogMessage(LogSeverity.Error, "Events", "RaiseBanEvent fed NULL parameter."));
+                Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "Events", "RaiseBanEvent fed NULL parameter."));
                 return;
             }
             OnBanEvent?.Invoke(e);
@@ -302,7 +308,7 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
         {
             if (bChan == null || e == null)
             {
-                Core.LOG(new LogMessage(LogSeverity.Error, "Events", "RaiseHostEvent fed NULL parameter."));
+                Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "Events", "RaiseHostEvent fed NULL parameter."));
                 return;
             }
             OnTwitchHostEvent?.Invoke(bChan, e);
@@ -311,10 +317,10 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
         {
             if (bChan == null || e == null)
             {
-                Core.LOG(new LogMessage(LogSeverity.Error, "Events", "RaiseRaidEvent fed NULL parameter."));
+                Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "Events", "RaiseRaidEvent fed NULL parameter."));
                 return;
             }
-            Core.LOG(new LogMessage(LogSeverity.Error, "Events", $"RaiseRaidEvent for {e.TargetChannel}. Coming from {e.SourceChannel} with {e.RaiderCount} raiders."));
+            Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "Events", $"RaiseRaidEvent for {e.TargetChannel}. Coming from {e.SourceChannel} with {e.RaiderCount} raiders."));
 
             OnRaidEvent?.Invoke(bChan, e);
         }
@@ -343,7 +349,7 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
         {
             if (bChan == null)
             {
-                Core.LOG(new LogMessage(LogSeverity.Error, "Events", "RaiseOnViewerCount fed NULL bChan."));
+                Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "Events", "RaiseOnViewerCount fed NULL bChan."));
                 return;
             }
             OnViewercount?.Invoke(bChan, oldCount, newCount);
@@ -353,7 +359,7 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
         {
             if (discordProfile == null || twitchProfile == null)
             {
-                Core.LOG(new LogMessage(LogSeverity.Error, "Events", "RaiseOnBotChannelMerge fed NULL parameter."));
+                Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "Events", "RaiseOnBotChannelMerge fed NULL parameter."));
                 return;
             }
             OnBotChannelMerge?.Invoke(discordProfile, twitchProfile);

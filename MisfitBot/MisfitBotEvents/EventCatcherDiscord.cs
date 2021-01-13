@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -23,9 +24,9 @@ namespace MisfitBot_MKII.MisfitBotEvents
             client.GuildAvailable += Program.BotEvents.RaiseOnDiscordGuildAvailable;
             client.GuildMembersDownloaded += Program.BotEvents.RaiseOnDiscordMembersDownloaded;
             client.GuildMemberUpdated += GuildMemberUpdated;
-            client.GuildUnavailable += (guild) => { Core.LOG(new LogMessage(LogSeverity.Warning, "EventCatcherDiscord", $"Discord guild \"{guild.Name}\" unavailable.")); return Task.CompletedTask; };
+            client.GuildUnavailable += (guild) => { Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "EventCatcherDiscord", $"Discord guild \"{guild.Name}\" unavailable.")); return Task.CompletedTask; };
             //client.GuildUpdated += GuildUpdated;
-            client.JoinedGuild += (guild) => { Core.LOG(new LogMessage(LogSeverity.Info, "EventCatcherDiscord", $"Joined Discord guild \"{guild.Name}\".")); return Task.CompletedTask; }; ;
+            client.JoinedGuild += (guild) => { Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherDiscord", $"Joined Discord guild \"{guild.Name}\".")); return Task.CompletedTask; }; ;
             //client.LatencyUpdated += LatencyUpdated;
             //client.LeftGuild += LeftGuild;
             client.Log += LogAsync;
@@ -59,44 +60,50 @@ namespace MisfitBot_MKII.MisfitBotEvents
         {
             SocketUserMessage msg = arg as SocketUserMessage;
             if (msg == null) return;
+            if(msg.Content == string.Empty) return;
+            if (msg.Author.Id == Program.DiscordClient.CurrentUser.Id || msg.Author.IsBot) return;
 
             UserEntry usr = await Program.Users.GetUserByDiscordID(msg.Author.Id);
             if (usr == null) return;
 
-            Program.BotEvents.RaiseOnMessageReceived(new BotWideMessageArguments(){
-                source = MESSAGESOURCE.DISCORD, 
-                channel = msg.Channel.Id.ToString(),
-                user = usr, 
-                message = msg.Content
-            });
-            // TODO below
+            // Create a command context
+            SocketCommandContext context = new SocketCommandContext(Program.DiscordClient, msg);
+            // Create permissions list
+            ChannelPermissions asd = (context.User as SocketGuildUser).GetPermissions(arg.Channel as IGuildChannel);
 
-            // We don't want the bot to respond to itself or other bots.
-            // NOTE: Selfbots should invert this first check and remove the second
-            // as they should ONLY be allowed to respond to messages from the same account.
-            if (msg.Author.Id == Program.DiscordClient.CurrentUser.Id || msg.Author.IsBot) return;
 
-            // Create a number to track where the prefix ends and the command begins
-            int pos = 0;
-            // Replace the '!' with whatever character
-            // you want to prefix your commands with.
-            // Uncomment the second half if you also want
-            // commands to be invoked by mentioning the bot instead.
-            if (msg.HasCharPrefix(Program.CommandCharacter, ref pos) /* || msg.HasMentionPrefix(_client.CurrentUser, ref pos) */)
-            {
-                // Create a Command Context.
-                var context = new SocketCommandContext(Program.DiscordClient, msg);
 
-                // Execute the command. (result does not indicate a return value, 
-                // rather an object stating if the command executed succesfully).
-                //var result = await _commands.ExecuteAsync(context, pos, _services); // TODO Make your own command structure
-
-                // Uncomment the following lines if you want the bot
-                // to send a message if it failed (not advised for most situations).
-                //if (!result.IsSuccess && result.Error != CommandError.UnknownCommand)
-                //    await msg.Channel.SendMessageAsync(result.ErrorReason);
+            if(msg.Content[0] == Program.CommandCharacter){
+                List<string> args = new List<string>();
+                args.AddRange( msg.Content.Split(' '));
+                string cmd = args[0];
+                cmd = cmd.Remove(0,1);
+                args.RemoveAt(0);
+                Program.BotEvents.RaiseOnCommandRecieved(new BotWideCommandArguments(){
+                    source = MESSAGESOURCE.DISCORD, 
+                    channel = msg.Channel.Id.ToString(),
+                    guildID = context.Guild.Id, 
+                    isBroadcaster = false,
+                    isModerator = false, 
+                    canManageMessages = asd.ManageMessages, 
+                    user = usr, 
+                    userDisplayName = arg.Author.Username,
+                    command = cmd,
+                    message = msg.Content,
+                    arguments = args
+                });
+            }else{
+                Program.BotEvents.RaiseOnMessageReceived(new BotWideMessageArguments(){
+                    source = MESSAGESOURCE.DISCORD, 
+                    channel = msg.Channel.Id.ToString(),
+                    isBroadcaster = false,
+                    isModerator = false, 
+                    canManageMessages = asd.ManageMessages, 
+                    user = usr, 
+                    userDisplayName = arg.Author.Username,
+                    message = msg.Content
+                });
             }
-            return;
         }
         #endregion
 
@@ -167,7 +174,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
         /// <returns></returns>
         private async Task ReadyAsync()
         {
-            await Core.LOG(new LogMessage(LogSeverity.Info, "EventCatcherDiscord", $"Connected to Discord as {Program.DiscordClient.CurrentUser}."));
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherDiscord", $"Connected to Discord as {Program.DiscordClient.CurrentUser}."));
             Program.BotEvents.RaiseOnDiscordReady();
         }
         /// <summary>
@@ -177,7 +184,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
         /// <returns></returns>
         private async Task LogAsync(LogMessage log)
         {
-            await Core.LOG(new LogMessage(LogSeverity.Info, "EventCatcherDiscord", log.ToString()));
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherDiscord", log.ToString()));
         }
         #endregion
     }// EOC

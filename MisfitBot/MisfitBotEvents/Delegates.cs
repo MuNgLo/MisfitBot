@@ -30,6 +30,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
     public delegate void TwitchUserJoinLeaveEvent(BotChannel botChannel, UserEntry user);
     // Botwide type events
     public delegate void MessageReceivedEvent(BotWideMessageArguments args);
+    public delegate void CommandReceivedEvent(BotWideCommandArguments args);
 
     // Below needs to be verified
     public delegate void TwitchChannelGoesLiveEvent(BotChannel bChan, int delay);

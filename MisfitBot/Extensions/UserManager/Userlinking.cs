@@ -31,7 +31,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 Tokens = cleaned;
                 if(removed > 0)
                 {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, "UserLinking", $"Dumping old tokens. ({removed})"));
+                    await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "UserLinking", $"Dumping old tokens. ({removed})"));
                 }
             }
         }

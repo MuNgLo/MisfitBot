@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord;
 using TwitchLib.Client.Events;
@@ -15,7 +16,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
             client.OnChannelStateChanged += TwitchChannelStateChanged;
             client.OnChatCleared += TwitchOnChatCleared;
             client.OnChatColorChanged += TwitchOnChatColorChanged;
-            //client.OnChatCommandReceived
+            client.OnChatCommandReceived += TwitchOnChatCommandRecieved;
             client.OnCommunitySubscription += TwitchOnCommunitySubscription;
             client.OnConnected += TwitchOnConnected;
             client.OnConnectionError += TwitchOnConnectionError;
@@ -56,6 +57,25 @@ namespace MisfitBot_MKII.MisfitBotEvents
             client.OnWhisperThrottled += TwitchOnWhisperThrottled;
         }
 
+        private async void TwitchOnChatCommandRecieved(object sender, OnChatCommandReceivedArgs e)
+        {
+                if(e.Command.ChatMessage.IsMe){return;}
+                UserEntry usr = await Program.Users.GetUserByTwitchID(e.Command.ChatMessage.UserId);
+                if (usr == null) return;
+
+                Program.BotEvents.RaiseOnCommandRecieved(new BotWideCommandArguments(){
+                    source = MESSAGESOURCE.TWITCH, 
+                    channel = e.Command.ChatMessage.Channel,
+                    isBroadcaster = e.Command.ChatMessage.IsBroadcaster,
+                    isModerator = e.Command.ChatMessage.IsModerator, 
+                    user = usr, 
+                    userDisplayName = e.Command.ChatMessage.DisplayName,
+                    command = e.Command.CommandText,
+                    message = e.Command.ChatMessage.Message,
+                    arguments = e.Command.ArgumentsAsList
+                });
+        }
+
         private async void TwitchOnMessageCleared(object sender, OnMessageClearedArgs e)
         {
             BotChannel bChan = await Program.Channels.GetTwitchChannelByName(e.Channel);
@@ -72,7 +92,21 @@ namespace MisfitBot_MKII.MisfitBotEvents
 
         private void TwitchChannelStateChanged(object sender, OnChannelStateChangedArgs e)
         {
-            JsonDumper.DumpObjectToJson(e, "TwChannelStateChange");
+            /* Structure Example
+                "ChannelState": {
+                    "BroadcasterLanguage": null,
+                    "Channel": "munglo",
+                    "EmoteOnly": false,
+                    "FollowersOnly": null,
+                    "Mercury": false,
+                    "R9K": false,
+                    "Rituals": false,
+                    "RoomId": "42172284",
+                    "SlowMode": 0,
+                    "SubOnly": false
+                    },
+                "Channel": "munglo"
+            */
         }
 
         private async void TwitchOnBeingHosted(object sender, OnBeingHostedArgs e)
@@ -86,8 +120,8 @@ namespace MisfitBot_MKII.MisfitBotEvents
 
         private void TwitchOnReconnect(object sender, OnReconnectedEventArgs e)
         {
-            Core.LOG(new LogMessage(
-                LogSeverity.Warning, "EventCatcherTwitch",  
+            Core.LOG(new LogEntry(LOGSEVERITY.WARNING,
+                "EventCatcherTwitch",  
                 $"Twitch reconnect!"));
         }
 
@@ -98,8 +132,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
 
         private void TwitchOnError(object sender, OnErrorEventArgs e)
         {
-            Core.LOG(new LogMessage(
-                LogSeverity.Error, "EventCatcherTwitch",  
+            Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "EventCatcherTwitch",  
                 $"Twitch Error! {e.Exception.Message}"));
         }
 
@@ -110,8 +143,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
 
         private void TwitchOnIncorrectLogin(object sender, OnIncorrectLoginArgs e)
         {
-            Core.LOG(new LogMessage(
-                LogSeverity.Error, "EventCatcherTwitch",  
+            Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "EventCatcherTwitch",  
                 $"Twitch login failed! {e.Exception.Message}"));
         }
 
@@ -122,12 +154,12 @@ namespace MisfitBot_MKII.MisfitBotEvents
 
         private void TwitchOnMessageThrottled(object sender, OnMessageThrottledEventArgs e)
         {
-            Core.LOG(new LogMessage(LogSeverity.Warning, "EventCatcherTwitch",  $"Twitch Message Throttled!! {e.AllowedInPeriod}:Allowed {e.Period}:Period {e.SentMessageCount}:sent count"));
+            Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "EventCatcherTwitch",  $"Twitch Message Throttled!! {e.AllowedInPeriod}:Allowed {e.Period}:Period {e.SentMessageCount}:sent count"));
         }
 
         private void TwitchOnWhisperThrottled(object sender, OnWhisperThrottledEventArgs e)
         {
-            Core.LOG(new LogMessage(LogSeverity.Warning, "EventCatcherTwitch",  $"Twitch Whisper Throttled!! {e.AllowedInPeriod}:Allowed {e.Period}:Period {e.SentWhisperCount}:sent count"));
+            Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "EventCatcherTwitch",  $"Twitch Whisper Throttled!! {e.AllowedInPeriod}:Allowed {e.Period}:Period {e.SentWhisperCount}:sent count"));
         }
 
         private async void TwitchWhisperReceived(object sender, OnWhisperReceivedArgs e)
@@ -168,11 +200,11 @@ namespace MisfitBot_MKII.MisfitBotEvents
             {
                 string twitchID = user.Id;
             }*/
-            await Core.LOG(new LogMessage(LogSeverity.Info, "EventCatcherTwitch", $"TwitchOnExistingUsersDetected"));
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherTwitch", $"TwitchOnExistingUsersDetected"));
         }
         private async void TwitchOnReSubscriber(object sender, OnReSubscriberArgs e)
         {
-            await Core.LOG(new LogMessage(LogSeverity.Info, "EventCatcherTwitch", $"{e.ReSubscriber.DisplayName} resubscribed to channel {e.Channel}."));
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherTwitch", $"{e.ReSubscriber.DisplayName} resubscribed to channel {e.Channel}."));
         }
         private async void TwitchOnUserLeft(object sender, OnUserLeftArgs e)
         {
@@ -234,7 +266,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
         /// <returns></returns>
         private async void OnLog(object sender, OnLogArgs e)
         {
-            await Core.LOG(new LogMessage(LogSeverity.Info, "EventCatcherTwitch", $"LOG:{e.Data}"));
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherTwitch", $"LOG:{e.Data}"));
         }
         /// <summary>
         /// Reformats any message recieved and raises the botwide event.

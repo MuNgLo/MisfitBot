@@ -3,52 +3,54 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Newtonsoft.Json;
 using TwitchLib.Api.V5.Models.Users;
-using MisfitBot_MKII.Extensions.UserManager;
+using TwitchLib.Client.Events;
 
-namespace MisfitBot_MKII.Services
+namespace MisfitBot_MKII.Extensions.UserManager
 {
     /// <summary>
-    /// Handles the Userentries that represnets the users.
+    /// This handles all userentry load/saves. Returns userentriers as references so make sure to follow the lock in the entry.
     /// </summary>
     public class UserManagerService
     {
-        private readonly string PLUGINNAME = "UserManager";
         private BotUsers UserList = new BotUsers();
         private Userlinking userlinking = new Userlinking();
-
         // CONSTRUCTOR
-        public UserManagerService()
+        internal UserManagerService()
         {
-            Program.BotEvents.OnDiscordNewMember += DiscordNewMember;
-            Program.BotEvents.OnDiscordMemberLeft += DiscordMemberLeft;
-            Program.BotEvents.OnDiscordMemberUpdated += DiscordMemberUpdated;
-            Program.BotEvents.OnDiscordMembersDownloaded += GuildMembersDownloaded;
-            Program.BotEvents.OnDiscordReady += Ready;
-            //Program.DiscordClient._client.UserUpdated += ClientUserUpdated;
-            //Program.DiscordClient._client.CurrentUserUpdated += _client_CurrentUserUpdated;
-
-            if (Program.TwitchClient != null)
-            {
-                Program.TwitchClient.OnUserJoined += TwitchUserJoined;
-                Program.TwitchClient.OnUserLeft += TwitchUserLeft;
-                Program.TwitchClient.OnMessageReceived += TwitchOnMessageReceived;
-            }
-            TimerStuff.OnMinuteTick += OnMinuteTick;
+            Program.BotEvents.OnDiscordMembersDownloaded += OnGuildMembersDownloaded;
+            Program.BotEvents.OnDiscordMemberLeft += OnDiscordMemberLeft;
+            Program.BotEvents.OnDiscordMemberUpdated += OnDiscordMemberUpdated;
+            Program.BotEvents.OnDiscordNewMember += OnDiscordNewMember;
+            Program.BotEvents.OnDiscordReady += OnDiscordReady;
+            Program.BotEvents.OnTwitchUserJoin += OnTwitchUserJoined;
+            Program.BotEvents.OnTwitchUserLeave += OnTwitchUserLeft;
         }// EO CONSTRUCTOR
 
+        internal async Task UpdateTwitchUserColour(OnMessageReceivedArgs e)
+        {
+            if (e == null) return;
+            UserEntry user = await UserList.GetDBUserByTwitchID(e.ChatMessage.UserId);
+            if (user == null) return;
+            user._twitchColour = e.ChatMessage.ColorHex;
+            user._lastseenOnTwitch = Core.CurrentTime;
+        }
+
+
+        #region Discord Event Listeners
         /// <summary>
         /// New user joins a guild
         /// </summary>
         /// <param name="arg"></param>
         /// <returns></returns>
-        private void DiscordNewMember(BotChannel bChan, UserEntry user)
+        private void OnDiscordNewMember(BotChannel bChan, UserEntry user)
         {
-            Core.LOG(new LogMessage(LogSeverity.Info, "UserManagerService", $"UserJoined({user._username}) {bChan.GuildName}"));
+            Core.LOG(new LogEntry(LOGSEVERITY.INFO, "UserManagerService", $"UserJoined({user._discordUsername}) {bChan.GuildName}"));
             UpdateDiscordUserEntry(user);
 
         }
@@ -57,30 +59,70 @@ namespace MisfitBot_MKII.Services
         /// </summary>
         /// <param name="arg"></param>
         /// <returns></returns>
-        private void DiscordMemberLeft(BotChannel bChan, UserEntry user)
+        private void OnDiscordMemberLeft(BotChannel bChan, UserEntry user)
         {
-            Core.LOG(new LogMessage(LogSeverity.Info, "UserManagerService", $"UserLeft({user._username}) from {bChan.GuildName}"));
+            Core.LOG(new LogEntry(LOGSEVERITY.INFO, "UserManagerService", $"UserLeft({user._discordUsername}) from {bChan.GuildName}"));
             UpdateDiscordUserEntry(user);
         }
-        private void DiscordMemberUpdated(BotChannel botChannel, UserEntry currentUser, UserEntry oldUser){
+        private void OnDiscordMemberUpdated(BotChannel botChannel, UserEntry currentUser, UserEntry oldUser){
 
         }
-        
-        
-        
-        
-        private async void TwitchOnMessageReceived(object sender, TwitchLib.Client.Events.OnMessageReceivedArgs e)
+        /// <summary>
+        /// Fires when discord client is connected and ready.
+        /// </summary>
+        /// <returns></returns>
+        private async void OnDiscordReady()
         {
-            try
+            // When we are ready we request user lists for the guilds we are connected to.
+            await Program.DiscordClient.DownloadUsersAsync(Program.DiscordClient.Guilds);
+        }
+        /// <summary>
+        /// Fires as we get response from DownloadUsersAsync() (VERIFY)
+        /// </summary>
+        /// <param name="arg"></param>
+        /// <returns></returns>
+        private async void OnGuildMembersDownloaded(SocketGuild arg)
+        {
+            foreach (IGuildUser user in arg.Users)
             {
-                await UserList.UpdateTwitchUserColour(e); // TODO don't do this all the time
-            }
-            catch (Exception error)
-            {
-                await Core.LOG(new LogMessage(LogSeverity.Error, PLUGINNAME, error.Message));
+                if (user.Status == UserStatus.Online && !user.IsBot)
+                {
+                    await UpdateDiscordUserEntry(user as SocketUser);
+                }
             }
         }
-
+        #endregion Discord Events
+        #region Twitch Event Listeners
+        /// <summary>
+        /// User leaves a twitch channel
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void OnTwitchUserLeft(BotChannel botChannel, UserEntry user)
+        {
+            await Task.Run(()=>{
+                while(user.locked){
+                    Thread.Sleep(50);
+                }
+            user._lastseenOnTwitch = Core.CurrentTime;
+            });
+        }
+        /// <summary>
+        /// User join a twitch channel
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void OnTwitchUserJoined(BotChannel botChannel, UserEntry user)
+        {
+            await Task.Run(()=>{
+                while(user.locked){
+                    Thread.Sleep(50);
+                }
+            user._lastseenOnTwitch = Core.CurrentTime;
+            });
+        }
+        #endregion
+        #region User Linking related
         public async Task LinkTokenRequest(ulong discordID, IMessageChannel discordChannel)
         {
             UserEntry user = await GetUserByDiscordID(discordID);
@@ -109,16 +151,13 @@ namespace MisfitBot_MKII.Services
             discordProfile._twitchColour = twitchProfile._twitchColour;
             discordProfile.linked = true;
             discordProfile.lastSave = 0;
-            UserList.SaveUser(discordProfile);
             SocketUser u = Program.DiscordClient.GetUser(discordProfile._discordUID);
             await u.SendMessageAsync("Your userprofile is now the same one for both Twitch and Discord.");
             Program.TwitchClient.SendWhisper(discordProfile._twitchUsername, "Your userprofile is now the same one for both Twitch and Discord.");
         }
+        #endregion
 
-
-
-        #region WTF!!! QUARANTINE THIS SHIT What is wroing here!
-
+        #region Get User Methods
         /// <summary>
         /// Get UserEntry from twitch UserName. Create a new entry if none exist.
         /// </summary>
@@ -126,12 +165,16 @@ namespace MisfitBot_MKII.Services
         /// <returns></returns>
         public async Task<UserEntry> GetUserByTwitchUserName(string twitchName)
         {
-            if (twitchName != twitchName.ToLower())
-            {
-                return null;
-            }
-
             return await UserList.GetDBUserByTwitchUserName(twitchName);
+        }
+        /// <summary>
+        /// Get UserEntry from twitch DisplayName. Return NULL if cant be found
+        /// </summary>
+        /// <param name="twitchDisplayName"></param>
+        /// <returns></returns>
+        public async Task<UserEntry> GetUserByTwitchDisplayName(string twitchDisplayName)
+        {
+            return await UserList.GetDBUserByTwitchDisplayName(twitchDisplayName);
         }
         /// <summary>
         /// This can return null
@@ -142,9 +185,6 @@ namespace MisfitBot_MKII.Services
         {
             return await UserList.GetDBUserByTwitchID(twitchID);
         }
-
-        #endregion
-
         /// <summary>
         /// Get UserEntry from Discord user ID. Create a new entry if none exist.
         /// </summary>
@@ -155,78 +195,11 @@ namespace MisfitBot_MKII.Services
             return await UserList.GetDBUserByDiscordUID(discordID);
             //return await UserList.GetUserByDiscordID(discordID);
         }
-        private void OnMinuteTick(int minute)
-        {
-            //if (minute % FLUSHINTERVAL == 0) FlushUsers();
-        }
-        #region User Join/Left
-        
-        /// <summary>
-        /// User join a twitch channel
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private async void TwitchUserJoined(object sender, TwitchLib.Client.Events.OnUserJoinedArgs e)
-        {
-
-            UserEntry user = await UserList.GetDBUserByTwitchUserName(e.Username);
-            if (user == null)
-            {
-                return;
-            }
-            user._lastseenOnTwitch = Core.CurrentTime;
-            UserList.SaveUser(user);
-        }
-        
-        /// <summary>
-        /// User leaves a twitch channel
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private async void TwitchUserLeft(object sender, TwitchLib.Client.Events.OnUserLeftArgs e)
-        {
-            UserEntry user = await UserList.GetDBUserByTwitchUserName(e.Username);
-            if (user != null)
-            {
-                user._lastseenOnTwitch = Core.CurrentTime;
-                //user.RemoveTwitchChannel(e.Channel);
-            }
-        }
         #endregion
 
-        #region Discord Events
-        /// <summary>
-        /// Unsure. Betting it is firing when a user has their guild access changed.
-        /// </summary>
-        /// <param name="arg1"></param>
-        /// <param name="arg2"></param>
-        /// <returns></returns>
         
-        /// <summary>
-        /// Fires when discord client is connected and ready.
-        /// </summary>
-        /// <returns></returns>
-        private async void Ready()
-        {
-            // When we are ready we request user lists for the guilds we are connected to.
-            await Program.DiscordClient.DownloadUsersAsync(Program.DiscordClient.Guilds);
-        }
-        /// <summary>
-        /// Fires as we get response from DownloadUsersAsync() (VERIFY)
-        /// </summary>
-        /// <param name="arg"></param>
-        /// <returns></returns>
-        private async void GuildMembersDownloaded(SocketGuild arg)
-        {
-            foreach (IGuildUser user in arg.Users)
-            {
-                if (user.Status == UserStatus.Online && !user.IsBot)
-                {
-                    await UpdateDiscordUserEntry(user as SocketUser);
-                }
-            }
-        }
-        #endregion Discord Events
+
+        
 
 
 
@@ -243,7 +216,6 @@ namespace MisfitBot_MKII.Services
         {
             freshUser._lastseen = Core.CurrentTime;
             freshUser.lastChange = Core.CurrentTime;
-            UserList.SaveUser(freshUser);
         }
         private async Task UpdateDiscordUserEntry(SocketUser freshUser)
         {
@@ -252,51 +224,39 @@ namespace MisfitBot_MKII.Services
         }
 
         #region MISC
-        public string GetUSerStats() // TODO FIX later on
+        internal string GetUSerStats() // TODO FIX later on
         {
             int linked = 0, discord = 0, twitch = 0;
             return $"   Users in memory: [Discord]{discord}  [Twitch]{twitch}  [Linked]{linked}";
         }
-
-        /*
-       internal void SetPluginUserValues(string pLUGINNAME, string userID, string twitchchannelID, object entry)
-        {
-            
-        }
-        internal void SetPluginUserValues(string pLUGINNAME, ulong userID, ulong twitchchannelID, object entry)
-        {
-
-        }
-        internal void SetPluginUserValues(string pLUGINNAME, UserEntry userID, BotChannel twitchchannelID, object entry)
-        {
-
-        }
-        */
         #endregion
+
+        #region UNUSED
         /// <summary>
         /// Not entirely sure when this is called
         /// </summary>
         /// <param name="arg1"></param>
         /// <param name="arg2"></param>
         /// <returns></returns>
-        private async Task ClientUserUpdated(SocketUser arg1, SocketUser arg2)
+        /*private async Task ClientUserUpdated(SocketUser arg1, SocketUser arg2)
         {
-            await Core.LOG(new LogMessage(LogSeverity.Info, PLUGINNAME, "_client_UserUpdated")); // might be a staller
-        }
+            await Core.LOG(new LogMessage(LogSeverity.Info, EXTENSIONNAME, "_client_UserUpdated")); // might be a staller
+        }*/
         /// <summary>
         /// Duuno when this fires really
         /// </summary>
         /// <param name="arg1"></param>
         /// <param name="arg2"></param>
         /// <returns></returns>
-        private async Task _client_CurrentUserUpdated(SocketSelfUser arg1, SocketSelfUser arg2)
+        /*private async Task _client_CurrentUserUpdated(SocketSelfUser arg1, SocketSelfUser arg2)
         {
-            await Core.LOG(new LogMessage(LogSeverity.Info, PLUGINNAME, "CurrentUserUpdated"));
-        }
+            await Core.LOG(new LogMessage(LogSeverity.Info, EXTENSIONNAME, "CurrentUserUpdated"));
+        }*/
 
-        internal async Task<List<UserEntry>> SearchUserName(string search)
+        /*internal async Task<List<UserEntry>> SearchUserName(string search)
         {
             return await UserList.SearchDBUserByName(search);
-        }
-    }// END of UserManagerService
+        }*/
+        #endregion
+    }// EOF CLASS
 }

@@ -114,7 +114,7 @@ namespace MisfitBot_MKII.Components
                 }
                 catch (Exception)
                 {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME + "DatabseStrings", $"Database query failed hard. ({cmd.CommandText})"));
+                    await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME + "DatabseStrings", $"Database query failed hard. ({cmd.CommandText})"));
                     throw;
                 }
                 result.Read();
@@ -222,6 +222,22 @@ namespace MisfitBot_MKII.Components
             }
         }
         /// <summary>
+        /// This gets a random line from the DB and replaces the [REPLACE] with replace string.
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <param name="topic"></param>
+        /// <param name="victims"></param>
+        /// <returns></returns>
+        public string GetRandomLine(BotChannel bChan, string topic, string victims){
+            string msg = GetRandomLine(bChan, topic);
+            if(msg.Contains("[REPLACE]")){
+                return msg.Replace("[REPLACE]", victims);
+            }
+            return msg + " " + victims;
+        }
+
+
+        /// <summary>
         /// Gets a random string from DB table TableName(bChan.Key) under topic that are INUSE.
         /// </summary>
         /// <param name="bChan"></param>
@@ -243,7 +259,7 @@ namespace MisfitBot_MKII.Components
                 }
                 catch (Exception)
                 {
-                    Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME+"DatabseStrings", $"Database query failed hard. ({cmd.CommandText})"));
+                    Core.LOG(new LogEntry(LOGSEVERITY.ERROR, PLUGINNAME+"DatabseStrings", $"Database query failed hard. ({cmd.CommandText})"));
                     throw;
                 }
                 result.Read();
@@ -284,9 +300,14 @@ namespace MisfitBot_MKII.Components
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"PRAGMA foreign_keys = OFF" +
+                /*cmd.CommandText = $"PRAGMA foreign_keys = OFF" +
                     $" DROP TABLE IF EXISTS \"{TableName(bChan.Key)}\"" +
                     $" PRAGMA foreign_keys = ON";
+                */
+                //cmd.CommandText = $"PRAGMA foreign_keys = OFF DROP TABLE [IF EXISTS] \"{TableName(bChan.Key)}\" PRAGMA foreign_keys = ON";
+
+                cmd.CommandText = $"PRAGMA foreign_keys = OFF, DROP TABLE \"{TableName(bChan.Key)}\", PRAGMA foreign_keys = ON";
+                
                 try
                 {
                    int i = await cmd.ExecuteNonQueryAsync();
@@ -343,7 +364,7 @@ namespace MisfitBot_MKII.Components
         /// <returns></returns>
         private string TableName(string chanKey)
         {
-            return chanKey + "_" + PLUGINNAME;
+            return chanKey + "_" + PLUGINNAME + "_strings";
         }
         #endregion
     }//END of DatabaseStrings

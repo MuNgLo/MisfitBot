@@ -36,7 +36,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
 
         private async void OnTwitchConnected(string args)
         {
-            await JoinAutojoinChannels();
+            await JoinAllAutoJoinTwitchChannels();
         }
 
         /// <summary>
@@ -64,13 +64,13 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                 TwitchLib.Api.V5.Models.Users.Users channelEntry = await Program.TwitchAPI.V5.Users.GetUserByNameAsync(channelName.ToLower());
                 if (channelEntry.Matches.Length < 1)
                 {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Error, PLUGINNAME, $"Twitch channel lookup failed! Couldn't find channel. Not connecting to \"{channelName.ToLower()}\""));
+                    await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, PLUGINNAME, $"Twitch channel lookup failed! Couldn't find channel. Not connecting to \"{channelName.ToLower()}\""));
                     return false;
                 }
             }
             catch (Exception)
             {
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Error, PLUGINNAME, $"Twitch channel lookup failed! Couldn't find channel. Not connecting to \"{channelName.ToLower()}\""));
+                await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, PLUGINNAME, $"Twitch channel lookup failed! Couldn't find channel. Not connecting to \"{channelName.ToLower()}\""));
                 return false;
             }
             Program.TwitchClient.JoinChannel(channelName);
@@ -117,13 +117,13 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                     {
                         if (isLive)
                         {
-                            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, PLUGINNAME, $"Twitch channel \"{channels.Matches[0].Name}\" went live!!"));
+                            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, PLUGINNAME, $"Twitch channel \"{channels.Matches[0].Name}\" went live!!"));
                             bChan.isLive = true;
                             ChannelSave(bChan);
                         }
                         else
                         {
-                            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, PLUGINNAME, $"Twitch channel \"{channels.Matches[0].Name}\" is now offline."));
+                            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, PLUGINNAME, $"Twitch channel \"{channels.Matches[0].Name}\" is now offline."));
                             bChan.isLive = false;
                             ChannelSave(bChan);
                         }
@@ -135,6 +135,20 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                 await GetDiscordGuildbyID(guild.Id);
             }
         }// END of UpdateChannelStatuses
+
+        /// <summary>
+        /// Returns true if we are connected to the channel
+        /// </summary>
+        /// <param name="twitchChannelName"></param>
+        /// <returns></returns>
+        public bool CheckIfInTwitchChannel(string twitchChannelName)
+        {
+            foreach (JoinedChannel channel in Program.TwitchClient.JoinedChannels){
+                if(channel.Channel == twitchChannelName) {return true;}
+            }
+            return false;
+        }
+
         /// <summary>
         /// Listens for when a Discord Guild is available so we can make sure we have a valid entry for it.
         /// </summary>
@@ -263,32 +277,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         #endregion
 
 
-        /// <summary>
-        /// Makes sure we create a valid botchannel entry for the autojoin channel we gave when connecting to Twitch. Then calls JoinAllAutoJoinTwitchChannels().
-        /// </summary>
-        /// <returns></returns>
-        public async Task JoinAutojoinChannels()
-        {
-            foreach (JoinedChannel chan in Program.TwitchClient.JoinedChannels)
-            {
-                TwitchLib.Api.V5.Models.Users.Users channelEntry = await Program.TwitchAPI.V5.Users.GetUserByNameAsync(chan.Channel);
-                if (channelEntry.Matches.Length > 0)
-                {
-                    TwitchLib.Api.V5.Models.Channels.Channel c = await Program.TwitchAPI.V5.Channels.GetChannelByIDAsync(channelEntry.Matches[0].Id);
-                    if (!await ChannelDataExists(c.Name))
-                    {
-                        BotChannel newChannel = new BotChannel(c.Name, c.Id)
-                        {
-                            TwitchChannelID = c.Id,
-                            isTwitch = true,
-                            TwitchAutojoin = true
-                        };
-                        ChannelSave(newChannel);
-                    }
-                }
-            }
-            await JoinAllAutoJoinTwitchChannels();
-        }
+        
         /// <summary>
         /// Gets all channels from DB. Looksup all flagged as autojoin channels against Twitch.API. Then checks if we are in the valid channels. If not we join them.
         /// </summary>
@@ -330,7 +319,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         /// <returns></returns>
         public async Task RestartPubSub(BotChannel bChan)
         {
-            await Core.LOG(new LogMessage(LogSeverity.Warning, PLUGINNAME, "RestartPubSub"));
+            await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, "RestartPubSub"));
             if (bChan.TwitchChannelID == null || bChan.TwitchChannelID == string.Empty)
             {
                 return;
@@ -343,7 +332,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             }
             else
             {
-                await Core.LOG(new LogMessage(LogSeverity.Warning, PLUGINNAME, "RestartPubSub::Not a valid TwitchID."));
+                await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, "RestartPubSub::Not a valid TwitchID."));
             }
         }
         /// <summary>
@@ -368,7 +357,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             {
                 if (!PubSubClients.ContainsKey(bChan.TwitchChannelID))
                 {
-                    await Core.LOG(new LogMessage(LogSeverity.Info, PLUGINNAME, $"Pubsub starting for {bChan.TwitchChannelName}."));
+                    await Core.LOG(new LogEntry(LOGSEVERITY.INFO, PLUGINNAME, $"Pubsub starting for {bChan.TwitchChannelName}."));
                     PubSubClients[bChan.TwitchChannelID] = new TwPubSub(bChan.pubsubOauth, bChan.TwitchChannelID, bChan.TwitchChannelName, verbose);
                 }
                 else
@@ -464,7 +453,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                 }
                 catch (Exception)
                 {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
+                    await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
                     throw;
                 }
                 result.Read();
@@ -487,7 +476,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                 }
                 catch (Exception)
                 {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
+                    await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
                     throw;
                 }
                 result.Read();
@@ -510,7 +499,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                 }
                 catch (Exception)
                 {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
+                    await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
                     throw;
                 }
                 result.Read();
@@ -533,7 +522,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                 }
                 catch (Exception)
                 {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
+                    await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
                     throw;
                 }
                 result.Read();
@@ -557,7 +546,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                 }
                 catch (Exception)
                 {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
+                    await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
                     throw;
                 }
                 while (result.Read())
@@ -680,15 +669,15 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                 cmd.ExecuteNonQuery();
                 if (bChan.isLinked)
                 {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Created linked entry for Discord Guild {bChan.GuildName} and Twitchchannel {bChan.TwitchChannelName}"));
+                    await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, $"Created linked entry for Discord Guild {bChan.GuildName} and Twitchchannel {bChan.TwitchChannelName}"));
                 }
                 else if (bChan.isTwitch)
                 {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Created entry for Twitch channel {bChan.TwitchChannelName}"));
+                    await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, $"Created entry for Twitch channel {bChan.TwitchChannelName}"));
                 }
                 else
                 {
-                    await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Created entry for Discord Guild {bChan.GuildName}"));
+                    await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, $"Created entry for Discord Guild {bChan.GuildName}"));
                 }
             }
         }

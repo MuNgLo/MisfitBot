@@ -1,20 +1,78 @@
 ﻿using Discord;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using TwitchLib.PubSub.Enums;
 
 namespace MisfitBot_MKII
 {
     public enum MESSAGESOURCE { DISCORD, TWITCH}
+    public enum LOGSEVERITY {CRITICAL, ERROR, WARNING, INFO, VERBOSE, DEBUG}
 
     public struct BotWideMessageArguments
     {
         public MESSAGESOURCE source;
         public string channel;
+        public bool isBroadcaster;
+        public bool isModerator;
+        public bool canManageMessages;
         public UserEntry user;
+        public string userDisplayName;
         public string message;
     }
+    public struct BotWideCommandArguments
+    {
+        public MESSAGESOURCE source;
+        public string channel;
+        public ulong guildID;
+        public bool isBroadcaster;
+        public bool isModerator;
+        public bool canManageMessages;
+        public UserEntry user;
+        public string userDisplayName;
+        public string command;
+        public string message;
+        public List<string> arguments;
+    }
+    public class BotWideResponseArguments
+    {
+        public MESSAGESOURCE source;
+        public string twitchChannel;
+        public ulong discordChannel;
+        public UserEntry user;
+        public UserEntry victim;
+        public string message;
+        public bool parseMessage;
+        public BotWideResponseArguments(BotWideMessageArguments args){
+            source = args.source;
+            user = args.user;
+            parseMessage = false;
+            if(source == MESSAGESOURCE.TWITCH){twitchChannel = args.channel;}
+            if(source == MESSAGESOURCE.DISCORD){discordChannel = Core.StringToUlong(args.channel);}
+        }
+        public BotWideResponseArguments(BotWideCommandArguments args){
+            source = args.source;
+            user = args.user;
+            parseMessage = false;
+            if(source == MESSAGESOURCE.TWITCH){twitchChannel = args.channel;}
+            if(source == MESSAGESOURCE.DISCORD){discordChannel = Core.StringToUlong(args.channel);}
+        }
+    }
 
+public struct LogEntry
+    {
+        public LogEntry(LOGSEVERITY severity, string source, string message, Exception exception = null)
+        {
+            Severity = severity;
+            Source = source;
+            Message = message;
+            Exception = exception;
+        }
+        public readonly LOGSEVERITY Severity { get; }
+        public readonly string Source { get; }
+        public readonly string Message { get; }
+        public readonly Exception Exception { get; }
+    }
 
     public struct GenericTimeStamp
     {
@@ -229,22 +287,20 @@ namespace MisfitBot_MKII
             //throw new NotImplementedException();
         }
     }
-}// EO Namespace
 
 
-namespace MisfitBot2.Services
-{
-    interface IService
+
+    public interface IService
     {
         void OnSecondTick(int seconds);
         void OnMinuteTick(int minutes);
         void OnUserEntryMergeEvent(MisfitBot_MKII.UserEntry discordUser, MisfitBot_MKII.UserEntry twitchUser);
         void OnBotChannelEntryMergeEvent(MisfitBot_MKII.BotChannel discordGuild, MisfitBot_MKII.BotChannel twitchChannel);
     }
-}
 
 
-namespace MisfitBot_MKII{
+
+
     internal class MainConfig {
         public bool UseDiscord;
         public bool UseTwitch;
@@ -253,5 +309,6 @@ namespace MisfitBot_MKII{
         public string TwitchClientID;
         public string TwitchToken;
         public string TwitchUser;
+        public string LOGChannel;
     }
-}
+}// EO Namespace

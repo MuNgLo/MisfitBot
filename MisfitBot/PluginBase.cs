@@ -7,8 +7,41 @@ namespace MisfitBot_MKII
     /// <summary>
     /// Any service class should inherit from this class
     /// </summary>
-    public class ServiceBase : ServiceBaseDB
+    public class PluginBase : PluginBaseDB
     {
+        public char CMC { get { return Program.CommandCharacter; } set {}}
+
+        public async Task MakeConfig<T>(BotChannel bChan, string plugin, T obj){
+            await Core.Configs.ConfigSetup<T>(bChan, plugin, obj);
+        }
+
+        public async Task<T> Settings<T>(BotChannel bChan, string plugin)
+        {
+            T settings = await Core.Configs.GetConfig<T>(bChan, plugin);
+            return settings;
+        }
+
+        public async void Respond(BotChannel bChan, BotWideResponseArguments args)
+        {
+            if(args.parseMessage){
+                args.message = StringFormatter.ConvertMessage(ref args);
+            }
+
+            if(args.discordChannel != 0){
+                await Program.DiscordResponse(args);
+            }
+            if(args.twitchChannel != null){
+                Program.TwitchResponse(args);
+            }
+        }
+
+        public async Task<BotChannel> GetBotChannel(BotWideCommandArguments args){
+            if(args.source == MESSAGESOURCE.TWITCH){
+               return await Program.Channels.GetTwitchChannelByName(args.channel);
+            }
+            return await Program.Channels.GetDiscordGuildbyID(args.guildID);
+        }
+
         public async Task SayOnDiscord(BotChannel bChan, string message)
         {
             if (bChan.discordDefaultBotChannel != 0)
@@ -16,6 +49,10 @@ namespace MisfitBot_MKII
                 await (Program.DiscordClient.GetChannel(bChan.discordDefaultBotChannel) as ISocketMessageChannel).SendMessageAsync(message);
                 return;
             }
+        }
+        public async Task SayOnDiscord(string message, string discordChannel)
+        {
+            await SayOnDiscord(message, Core.StringToUlong(discordChannel));
         }
         public async Task SayOnDiscord(string message, ulong discordChannel)
         {
@@ -26,7 +63,7 @@ namespace MisfitBot_MKII
             // check if we are connected to discord first
             if(Program.DiscordClient.Status != UserStatus.Online)
             {
-                await Core.LOG(new LogMessage(LogSeverity.Error, "ServiceBase", $"SayOnDiscordAdmin({bChan.discordAdminChannel},  {message}) failed because online check failed."));
+                await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "ServiceBase", $"SayOnDiscordAdmin({bChan.discordAdminChannel},  {message}) failed because online check failed."));
                 return;
             }
 

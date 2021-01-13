@@ -69,7 +69,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
 
         private void OnLog(object sender, OnLogArgs e)
         {
-            Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, "PUBSUB", $"Exception : {e.Data}"));
+            Core.LOG(new LogEntry(LOGSEVERITY.INFO, "PUBSUB", $"Exception : {e.Data}"));
         }
 
         public void Close()
@@ -95,19 +95,19 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         #region untested
         private void Client_OnWhisper(object sender, OnWhisperArgs e)
         {
-            Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
+            Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                 $"{_twitchChannelName} :: OnWhisper. {e.Whisper.ToString()}"
                 ));
         }
         private void Client_OnR9kBetaOff(object sender, OnR9kBetaOffArgs e)
         {
-            Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
+            Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                 $"{_twitchChannelName} :: OnR9kBetaOff."
                 ));
         }
         private void Client_OnR9kBeta(object sender, OnR9kBetaArgs e)
         {
-            Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
+            Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                 $"{_twitchChannelName} :: OnR9kBeta."
                 ));
         }
@@ -126,25 +126,25 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         }
         private void Client_OnEmoteOnlyOff(object sender, OnEmoteOnlyOffArgs e)
         {
-            Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
+            Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                 $"{_twitchChannelName} :: OnEmoteOnlyOff."
                 ));
         }
         private void Client_OnEmoteOnly(object sender, OnEmoteOnlyArgs e)
         {
-            Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
+            Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                 $"{_twitchChannelName} :: OnEmoteOnly."
                 ));
         }
         private void Client_OnChannelExtensionBroadcast(object sender, OnChannelExtensionBroadcastArgs e)
         {
-            Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
+            Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                 $"{_twitchChannelName} :: OnChannelExtensionBroadcast."
                 ));
         }
         private void Client_OnChannelCommerceReceived(object sender, OnChannelCommerceReceivedArgs e)
         {
-            Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
+            Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                 $"{_twitchChannelName} :: OnChannelCommerceReceived."
                 ));
         }
@@ -158,7 +158,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             UserEntry BannedUser = await Program.Users.GetUserByTwitchID(e.UnbannedUserId);
             if (BannedUser != null)
             {
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
+                await Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                     $"{_twitchChannelName} :: {e.UnbannedBy} removed ban on {BannedUser._twitchDisplayname}"
                     ));
             }
@@ -179,7 +179,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             UserEntry BannedUser = await Program.Users.GetUserByTwitchID(e.BannedUserId);
             if (BannedUser != null)
             {
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
+                await Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                     $"{_twitchChannelName} :: {e.BannedBy} banned {BannedUser._twitchDisplayname} for \"{e.BanReason}\""
                     ));
             }
@@ -199,7 +199,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             UserEntry user = await Program.Users.GetUserByTwitchID(e.UntimeoutedUserId);
             if (user != null)
             {
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
+                await Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                     $"{_twitchChannelName} :: {e.UntimeoutedBy} removed timeout on {user._twitchDisplayname}"
                     ));
             }
@@ -209,26 +209,26 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             UserEntry user = await Program.Users.GetUserByTwitchID(e.TimedoutUserId);
             if (user != null)
             {
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
+                await Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                     $"{_twitchChannelName} :: {e.TimedoutBy} timedout {user._twitchDisplayname} for {e.TimeoutDuration} because \"{e.TimeoutReason}\""
                     ));
             }
         }
         private void Client_OnSubscribersOnlyOff(object sender, OnSubscribersOnlyOffArgs e)
         {
-            Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
+            Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                 $"{_twitchChannelName} :: OnSubscribersOnlyOff."
                 ));
         }
         private void Client_OnSubscribersOnly(object sender, OnSubscribersOnlyArgs e)
         {
-            Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
+            Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                 $"{_twitchChannelName} :: OnSubscribersOnly."
                 ));
         }
         private void Client_OnClear(object sender, OnClearArgs e)
         {
-            Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
+            Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                 $"{_twitchChannelName} :: OnClear."
                 ));
         }
@@ -236,7 +236,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         {
             if (_closing) { return; }
             BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, EXTENSIONNAME,
+            await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, EXTENSIONNAME,
                 $"OnPubSubServiceError({_twitchChannelName}). {e?.Exception.Message}"
                 ));
             if(bChan.discordAdminChannel != 0 && _verbose)
@@ -267,7 +267,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         private async void Client_OnHost(object sender, OnHostArgs e)
         {
             BotChannel bChan = await Program.Channels.GetTwitchChannelByID(_twitchChannelName);
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, "PUBSUB", "Channel hosted another channel. This neds to be hooked up"));
+            await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "PUBSUB", "Channel hosted another channel. This neds to be hooked up"));
         }
         private async void Client_OnFollow(object sender, OnFollowArgs e)
         {
@@ -275,7 +275,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             UserEntry user = await Program.Users.GetUserByTwitchID(e.UserId);
             if (bChan != null && user != null)
             {
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME, $"New twitch follower:{e.DisplayName}"));
+                await Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME, $"New twitch follower:{e.DisplayName}"));
                 if (bChan.discordAdminChannel != 0)
                 {
                     await (Program.DiscordClient.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
@@ -289,7 +289,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             // SendTopics accepts an oauth optionally, which is necessary for some topics
             //Client.SendTopics(Crypto.Cipher.Decrypt(_oauth));
             Client.SendTopics("syfu784cl6x248veumbpccpluo7ur2");
-            await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                 $"PubSub connected for {_twitchChannelName}."
                 ));
             BotChannel bChan = await Program.Channels.GetTwitchChannelByID(_twitchID);
@@ -310,7 +310,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             if (!e.Successful)
             {
 
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
+                await Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                 $"Failed to listen to {e.Topic}! Response: {e.Response.Error}"
                 ));
                 if (bChan != null)
@@ -326,7 +326,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             }
             else
             {
-                await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Info, EXTENSIONNAME,
+                await Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                     $"Listening to {e.Topic} for {_twitchChannelName}."
                     ));
                 if (_verbose)
