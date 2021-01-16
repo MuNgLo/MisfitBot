@@ -92,6 +92,11 @@ namespace MisfitBot_MKII.Extensions.PubSub
             //Client.ListenToWhispers(botUser._twitchUID);
             Client.Connect();
         }
+
+        internal string Status()
+        {
+            return Client.ToString();
+        }
         #region untested
         private void Client_OnWhisper(object sender, OnWhisperArgs e)
         {

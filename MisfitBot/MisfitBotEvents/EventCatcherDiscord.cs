@@ -83,6 +83,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
                     source = MESSAGESOURCE.DISCORD, 
                     channel = msg.Channel.Id.ToString(),
                     guildID = context.Guild.Id, 
+                    messageID = context.Message.Id,
                     isBroadcaster = false,
                     isModerator = false, 
                     canManageMessages = asd.ManageMessages, 
@@ -92,6 +93,8 @@ namespace MisfitBot_MKII.MisfitBotEvents
                     message = msg.Content,
                     arguments = args
                 });
+
+
             }else{
                 Program.BotEvents.RaiseOnMessageReceived(new BotWideMessageArguments(){
                     source = MESSAGESOURCE.DISCORD, 
@@ -184,7 +187,9 @@ namespace MisfitBot_MKII.MisfitBotEvents
         /// <returns></returns>
         private async Task LogAsync(LogMessage log)
         {
-            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherDiscord", log.ToString()));
+            if(Program.Debugmode){
+                await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherDiscord", log.ToString()));
+            }
         }
         #endregion
     }// EOC

@@ -153,7 +153,12 @@ namespace Couch
                 return;
             }
             // Check so we are connected to the twitch channel
-            if (!Program.Channels.CheckIfInTwitchChannel(bChan.TwitchChannelName)) { return; }
+            if (!Program.Channels.CheckIfInTwitchChannel(bChan.TwitchChannelName)) 
+            { 
+                response.message = "Couch needs a twitch channel connection. See \"twitch\" command.";
+                Respond(bChan, response);
+                return; 
+            }
             CouchSettings settings = await Settings<CouchSettings>(bChan, PLUGINNAME);
             if (!settings._couches.ContainsKey(bChan.Key))
             {
@@ -422,11 +427,12 @@ namespace Couch
                         {
                             if (RollIncident(15))
                             {
-                                string victim = GetRNGSitter(bChan, settings);
-                                if (victim != null)
+                                string rngSitter = GetRNGSitter(bChan, settings);
+                                if (rngSitter != null)
                                 {
-                                    UserEntry markuser = await Program.Users.GetUserByTwitchDisplayName(victim);
-                                    if(markuser != null){
+                                    UserEntry victim = await Program.Users.GetUserByTwitchDisplayName(rngSitter);
+                                    if(victim != null){
+                                        settings._couches[bChan.Key].TwitchUsernames.RemoveAll(p => p == victim._twitchUsername);
                                         if (!await UserStatsExists(bChan.Key, args.user.Key))
                                         {
                                             UserStatsCreate(bChan.Key, args.user.Key);
@@ -435,18 +441,19 @@ namespace Couch
                                         userStats1.CountSeated++;
                                         UserStatsSave(bChan, userStats1);
 
-                                        if (!await UserStatsExists(bChan.Key, markuser.Key))
+                                        if (!await UserStatsExists(bChan.Key, victim.Key))
                                         {
                                             UserStatsCreate(bChan.Key, args.user.Key);
                                         }
-                                        CouchUserStats markUserStats = await UserStatsRead(bChan.Key, markuser.Key);
+                                        CouchUserStats markUserStats = await UserStatsRead(bChan.Key, victim.Key);
                                         markUserStats.CountBooted++;
                                         UserStatsSave(bChan, markUserStats);
 
-                                        Program.TwitchSayMessage(args.channel,
-                                            $"{dbStrings.GetRandomLine(bChan, "INCIDENT").Replace("[USER]", markuser._twitchDisplayname)}"
-                                            );
-                                        settings._couches[bChan.Key].TwitchUsernames.RemoveAll(p => p == markuser._twitchUsername);
+                                        response.victim = victim;
+                                        response.message = dbStrings.GetRandomLine(bChan, "INCIDENT");
+                                        response.parseMessage = true;
+                                        Respond(bChan, response);
+                                        
                                         SaveBaseSettings(bChan, PLUGINNAME, settings);
                                     }
                                 }
@@ -589,7 +596,7 @@ namespace Couch
             settings._couches[bChan.Key].couchOpen = false;
             SaveBaseSettings(bChan, PLUGINNAME, settings);
             Program.TwitchSayMessage(bChan.TwitchChannelName, $"Couch is now closed.");
-            await SayOnDiscordAdmin(bChan, $"Couch is now closed. Join https://twitch.tv/{bChan.TwitchChannelName} and get in line for a {Program.CommandCharacter}seat next time.");
+            await SayOnDiscordAdmin(bChan, $"Couch is now closed.");
         }
         private void RegisterTimedMessage(BotChannel bChan, CouchSettings settings)
         {

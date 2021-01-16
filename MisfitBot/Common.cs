@@ -25,6 +25,7 @@ namespace MisfitBot_MKII
         public MESSAGESOURCE source;
         public string channel;
         public ulong guildID;
+        public ulong messageID;
         public bool isBroadcaster;
         public bool isModerator;
         public bool canManageMessages;

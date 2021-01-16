@@ -32,11 +32,13 @@ namespace MisfitBot_MKII
             SetConsoleColour(entry.Severity);
             Console.WriteLine($"{DateTime.Now,-19} {entry.Message}");
             Console.ForegroundColor = defCol;
-            if (Program.DiscordClient != null)
-            {
-                if (Program.DiscordClient.Status == Discord.UserStatus.Online)
+            if(Program.Debugmode) {
+                if (Program.DiscordClient != null && Core.UpTime > 30)
                 {
-                    await Program.DiscordSayMessage(Program.LOGChannel, entry.Message);
+                    if (Program.DiscordClient.Status == Discord.UserStatus.Online)
+                    {
+                        await Program.DiscordSayMessage(Program.LOGChannel, entry.Message);
+                    }
                 }
             }
         }

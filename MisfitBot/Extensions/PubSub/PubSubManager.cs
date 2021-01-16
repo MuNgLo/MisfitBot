@@ -77,5 +77,11 @@ namespace MisfitBot_MKII.Extensions.PubSub
                 PubSubClients.Remove(bChan.TwitchChannelID);
             }
         }
+        internal string PubSubStatus(BotChannel bChan) {
+            if(PubSubClients[bChan.TwitchChannelID] != null){
+                return PubSubClients[bChan.TwitchChannelID].Status();
+            }
+            return "No pubsub instance running.";
+        }
     }// EOF CLASS
 }

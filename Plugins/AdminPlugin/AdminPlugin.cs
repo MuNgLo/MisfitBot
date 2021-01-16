@@ -140,6 +140,7 @@ namespace AdminPlugin
                                 Program.Channels.ChannelSave(bChan);
                                 response.message = "Token set. Engaging PubSub Connection!";
                                 Program.PubSubStart(bChan);
+                                Program.DiscordRemoveMessage(Core.StringToUlong(args.channel), args.messageID);
                             }else{
                                 response.message = "Did you forget the token?";
                             }
@@ -152,6 +153,17 @@ namespace AdminPlugin
                                 Program.PubSubStop(bChan);
                                 Respond(bChan, response);
                                 return;
+                            case "start":
+                                Program.PubSubStart(bChan);
+                                return;
+                            case "stop":
+                                Program.PubSubStop(bChan);
+                                return;
+                            /*case "status":
+                                response.message = Program.PubSubStatus(bChan);
+                                Respond(bChan, response);
+                                return;
+                                */
                         }
                         break;
                         case "setadminchannel":

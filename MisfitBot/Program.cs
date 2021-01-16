@@ -126,7 +126,8 @@ namespace MisfitBot_MKII
             TwitchAPI.Settings.ClientId = TwitchClientID();
             TwitchAPI.Settings.AccessToken = "";
 
-            ConnectionCredentials cred = new ConnectionCredentials(TwitchUserName(), TwitchOAUTHToken());
+            //ConnectionCredentials cred = new ConnectionCredentials(TwitchUserName(), TwitchOAUTHToken());
+            ConnectionCredentials cred = new ConnectionCredentials(TwitchUserName(), "");
             _TwitchClient = new TwitchClient();
             _TwitchClient.Initialize(cred, TwitchUserName());
             _TwitchClient.RemoveChatCommandIdentifier('!');
@@ -181,6 +182,12 @@ namespace MisfitBot_MKII
             }
 
         }
+
+        public static async void DiscordRemoveMessage(ulong channelID, ulong messageID)
+        {
+            await (DiscordClient.GetChannel(channelID) as Discord.WebSocket.ISocketMessageChannel).DeleteMessageAsync(messageID);
+        }
+
         // This runs verification and loading of existing stuff or a first start query session
         private async Task VerifyFoldersAndStartupFiles()
         {
@@ -285,7 +292,7 @@ namespace MisfitBot_MKII
 
             if (!config.UseDiscord) { return; }
 
-            Console.WriteLine("Enter your Discord Token.");
+            Console.WriteLine(System.Environment.NewLine + "Enter your Discord Token.");
             string inToken;
             do
             {
@@ -319,8 +326,8 @@ namespace MisfitBot_MKII
             } while (inKey.Key != ConsoleKey.Y && inKey.Key != ConsoleKey.N);
             config.UseTwitch = inKey.Key == ConsoleKey.Y;
             if (!config.UseTwitch) { return; }
-
-            Console.WriteLine($"To use PubSub events like subscriber, bits and such you need a token from this link https://twitchtokengenerator.com/quick/YfuRoOx9WW " +
+            
+            Console.WriteLine(System.Environment.NewLine + $"To use PubSub events like subscriber, bits and such you need a token from this link https://twitchtokengenerator.com/quick/YfuRoOx9WW " +
                         $"It is to generate a token specific for your Twitch channel. To later remove access through this token you remove it on Twitch under " +
                         $"settings>Connections. It will be called \"Twitch Token Generator by swiftyspiffy\".");
             Console.WriteLine("");
@@ -338,8 +345,9 @@ namespace MisfitBot_MKII
                     }
                 }
             } while (inOATHToken == null);
+            
             Console.WriteLine("");
-            Console.WriteLine("Enter the Bot Client ID.");
+            Console.WriteLine("Enter the Bot Discord Client ID.");
             string inClientID;
             do
             {
@@ -437,6 +445,9 @@ namespace MisfitBot_MKII
         }
         public static void PubSubStop(BotChannel bChan){
             PubSubs.PubSubStop(bChan);
+        }
+        public static string PubSubStatus(BotChannel bChan){
+            return PubSubs.PubSubStatus(bChan);
         }
     }
 }
