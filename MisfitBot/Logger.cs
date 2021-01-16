@@ -28,19 +28,12 @@ namespace MisfitBot_MKII
         }
         private async Task AddLogLine(LogEntry entry)
         {
-            ConsoleColor defCol = Console.ForegroundColor;
-            SetConsoleColour(entry.Severity);
-            Console.WriteLine($"{DateTime.Now,-19} {entry.Message}");
-            Console.ForegroundColor = defCol;
-            if(Program.Debugmode) {
-                if (Program.DiscordClient != null && Core.UpTime > 30)
-                {
-                    if (Program.DiscordClient.Status == Discord.UserStatus.Online)
-                    {
-                        await Program.DiscordSayMessage(Program.LOGChannel, entry.Message);
-                    }
-                }
-            }
+            await Task.Run(()=>{
+                ConsoleColor defCol = Console.ForegroundColor;
+                SetConsoleColour(entry.Severity);
+                Console.WriteLine($"{DateTime.Now,-19} {entry.Message}");
+                Console.ForegroundColor = defCol;
+            });
         }
 
         /// <summary>

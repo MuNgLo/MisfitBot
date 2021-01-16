@@ -50,7 +50,6 @@ namespace MisfitBot_MKII
         public static ITwitchAPI TwitchAPI { get => _TwitchAPI; private set => _TwitchAPI = value; }
         internal static PubSubManager PubSubs { get => _PubSubs; private set => _PubSubs = value; }
         public static char CommandCharacter { get => config.CMDCharacter; private set => config.CMDCharacter = value; }
-        public static string LOGChannel { get => config.LOGChannel; private set {} }
         public static string BotName { get => config.TwitchUser; private set {} }
         public static ChannelManager Channels { get => _Channels; private set => _Channels = value; }
         public static UserManagerService Users { get => _Users; private set => _Users = value; }
@@ -126,8 +125,7 @@ namespace MisfitBot_MKII
             TwitchAPI.Settings.ClientId = TwitchClientID();
             TwitchAPI.Settings.AccessToken = "";
 
-            //ConnectionCredentials cred = new ConnectionCredentials(TwitchUserName(), TwitchOAUTHToken());
-            ConnectionCredentials cred = new ConnectionCredentials(TwitchUserName(), "");
+            ConnectionCredentials cred = new ConnectionCredentials(TwitchUserName(), TwitchOAUTHToken());
             _TwitchClient = new TwitchClient();
             _TwitchClient.Initialize(cred, TwitchUserName());
             _TwitchClient.RemoveChatCommandIdentifier('!');
@@ -347,7 +345,7 @@ namespace MisfitBot_MKII
             } while (inOATHToken == null);
             
             Console.WriteLine("");
-            Console.WriteLine("Enter the Bot Discord Client ID.");
+            Console.WriteLine("Enter the Bot Twitch Client ID.");
             string inClientID;
             do
             {

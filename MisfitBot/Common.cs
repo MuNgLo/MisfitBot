@@ -374,6 +374,5 @@ public struct LogEntry
         public string TwitchClientID;
         public string TwitchToken;
         public string TwitchUser;
-        public string LOGChannel;
     }
 }// EO Namespace
