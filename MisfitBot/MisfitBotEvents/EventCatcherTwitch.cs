@@ -17,13 +17,11 @@ namespace MisfitBot_MKII.MisfitBotEvents
             client.OnChatCleared += TwitchOnChatCleared;
             client.OnChatColorChanged += TwitchOnChatColorChanged;
             client.OnChatCommandReceived += TwitchOnChatCommandRecieved;
-            client.OnCommunitySubscription += TwitchOnCommunitySubscription;
             client.OnConnected += TwitchOnConnected;
             client.OnConnectionError += TwitchOnConnectionError;
             client.OnDisconnected += OnDisconnected;
             client.OnError += TwitchOnError;
             //client.OnExistingUsersDetected // Maybe only the twitch user extension should listen to this
-            client.OnGiftedSubscription += TwitchOnGiftedSubscription;
             //client.OnHostingStarted
             //client.OnHostingStopped
             //client.OnHostLeft
@@ -38,11 +36,9 @@ namespace MisfitBot_MKII.MisfitBotEvents
             //client.OnModeratorJoined
             //client.OnModeratorLeft
             //client.OnModeratorsReceived
-            //client.OnNewSubscriber
             //client.OnNowHosting
             client.OnRaidNotification += OnRaidNotification;
             client.OnReconnected += TwitchOnReconnect;
-            client.OnReSubscriber += TwitchOnReSubscriber;
             client.OnRitualNewChatter += TwitchOnRitualNewChatter;
             //client.OnSendReceiveData
             client.OnUserBanned += TwitchOnUserBanned;
@@ -55,12 +51,19 @@ namespace MisfitBot_MKII.MisfitBotEvents
             client.OnWhisperReceived += TwitchWhisperReceived;
             //client.OnWhisperSent
             client.OnWhisperThrottled += TwitchOnWhisperThrottled;
+
+            client.OnCommunitySubscription += TwitchOnCommunitySubscription;
+            client.OnGiftedSubscription += TwitchOnGiftedSubscription;
+            client.OnNewSubscriber += TwitchOnNewSubscriber;
+            client.OnReSubscriber += TwitchOnReSubscriber;
         }
+
+      
 
         private async void TwitchOnChatCommandRecieved(object sender, OnChatCommandReceivedArgs e)
         {
                 if(e.Command.ChatMessage.IsMe){return;}
-                UserEntry usr = await Program.Users.GetUserByTwitchID(e.Command.ChatMessage.UserId);
+                UserEntry usr = await Program.Users.GetUserByTwitchUserName(e.Command.ChatMessage.Username);
                 if (usr == null) return;
 
                 Program.BotEvents.RaiseOnCommandRecieved(new BotWideCommandArguments(){
@@ -128,6 +131,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
         private void TwitchOnChatColorChanged(object sender, OnChatColorChangedArgs e)
         {
             // WTF! Look into this WHy just channel? Whne does it fire?
+            
         }
 
         private void TwitchOnError(object sender, OnErrorEventArgs e)
@@ -169,7 +173,8 @@ namespace MisfitBot_MKII.MisfitBotEvents
 
         private async void TwitchOnCommunitySubscription(object sender, OnCommunitySubscriptionArgs e)
         {
-            await Program.BotEvents.RaiseTwitchOnCommunitySubscription(e.Channel, e.GiftedSubscription);
+            BotChannel bChan = await Program.Channels.GetTwitchChannelByName(e.Channel);
+            await Program.BotEvents.RaiseTwitchOnCommunitySubscription(bChan, e.GiftedSubscription.SystemMsgParsed);
         }
 
         private async void TwitchOnLeftChannel(object sender, OnLeftChannelArgs e)
@@ -202,9 +207,15 @@ namespace MisfitBot_MKII.MisfitBotEvents
             }*/
             await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherTwitch", $"TwitchOnExistingUsersDetected"));
         }
+        private async void TwitchOnNewSubscriber(object sender, OnNewSubscriberArgs e)
+        {
+            BotChannel bChan = await Program.Channels.GetTwitchChannelByName(e.Channel);
+            await Program.BotEvents.RaiseTwitchOnNewSubscriber(bChan, new TwitchNewSubArguments(e));
+        }
         private async void TwitchOnReSubscriber(object sender, OnReSubscriberArgs e)
         {
-            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherTwitch", $"{e.ReSubscriber.DisplayName} resubscribed to channel {e.Channel}."));
+            BotChannel bChan = await Program.Channels.GetTwitchChannelByName(e.Channel);
+            await Program.BotEvents.RaiseTwitchOnReSubscriber(bChan, new TwitchReSubArguments(e));
         }
         private async void TwitchOnUserLeft(object sender, OnUserLeftArgs e)
         {
@@ -276,7 +287,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
         /// <returns></returns>
         private async void OnMessageReceived(object sender, OnMessageReceivedArgs e)
         {
-            UserEntry usr = await Program.Users.GetUserByTwitchID(e.ChatMessage.UserId);
+            UserEntry usr = await Program.Users.GetUserByTwitchUserName(e.ChatMessage.Username);
             Program.BotEvents.RaiseOnMessageReceived(new BotWideMessageArguments()
             {
                 source = MESSAGESOURCE.TWITCH,

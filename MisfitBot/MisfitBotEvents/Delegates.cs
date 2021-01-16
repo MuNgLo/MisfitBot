@@ -22,7 +22,10 @@ namespace MisfitBot_MKII.MisfitBotEvents
     public delegate void TwitchConnectionErrorEvent(string msg);
     public delegate void TwitchChannelChatClearedEvent(string channel);
     public delegate void TwitchChannelJoinLeaveEvent(string channel, string botname);
-    //public delegate void TwitchCommunitySubscription();
+    public delegate void TwitchCommunitySubscriptionEvent(BotChannel bChan, string message);
+    public delegate void TwitchNewFollowerEvent(BotChannel botChannel, UserEntry user);
+    public delegate void TwitchResubscriberEvent(BotChannel botChannel, TwitchReSubArguments e);
+    public delegate void TwitchNewsubscriberEvent(BotChannel botChannel, TwitchNewSubArguments e);
     public delegate void TwitchDisconnectedEvent();
     public delegate void TwitchMessageClearedEvent(BotChannel botChannel, OnMessageClearedArgs e);
     public delegate void TwitchMessageSentEvent(string channel, string message);

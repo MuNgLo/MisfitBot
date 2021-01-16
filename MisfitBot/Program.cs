@@ -20,6 +20,7 @@ using Newtonsoft.Json;
 using MisfitBot_MKII.MisfitBotEvents;
 using System.Reflection;
 using MisfitBot_MKII.Extensions.UserManager;
+using MisfitBot_MKII.Extensions.PubSub;
 
 namespace MisfitBot_MKII
 {
@@ -34,6 +35,7 @@ namespace MisfitBot_MKII
         private static ITwitchClient _TwitchClient;
         private static EventCatcherTwitch _TwitchEvents;
         private static ITwitchAPI _TwitchAPI;
+        private static PubSubManager _PubSubs;
 
         private static ChannelManager _Channels;
         private static UserManagerService _Users;
@@ -46,12 +48,14 @@ namespace MisfitBot_MKII
         internal static DiscordSocketClient DiscordClient { get => _DiscordClient; private set => _DiscordClient = value; }
         internal static ITwitchClient TwitchClient { get => _TwitchClient; private set => _TwitchClient = value; }
         public static ITwitchAPI TwitchAPI { get => _TwitchAPI; private set => _TwitchAPI = value; }
+        internal static PubSubManager PubSubs { get => _PubSubs; private set => _PubSubs = value; }
         public static char CommandCharacter { get => config.CMDCharacter; private set => config.CMDCharacter = value; }
         public static string LOGChannel { get => config.LOGChannel; private set {} }
         public static string BotName { get => config.TwitchUser; private set {} }
         public static ChannelManager Channels { get => _Channels; private set => _Channels = value; }
         public static UserManagerService Users { get => _Users; private set => _Users = value; }
         public static BotwideEvents BotEvents { get => _BotEvents; set => _BotEvents = value; }
+        public static bool Debugmode { get => _Debugmode; private set => _Debugmode = value; }
 
         public List<PluginBase> _plugins;
 
@@ -80,7 +84,8 @@ namespace MisfitBot_MKII
             LoadPlugins();
             StartTwitchClient();
             await StartDiscordClient();
-           
+
+            await StartPubSubManager();
             // Block the program until it is closed.
             await Task.Delay(Timeout.Infinite);
         }
@@ -130,7 +135,11 @@ namespace MisfitBot_MKII
             _TwitchClient.Connect();
         }
 
-
+        private async Task StartPubSubManager()
+        {
+            _PubSubs = new PubSubManager();
+            await _PubSubs.LaunchAllPubSubs();
+        }
 
         /// Makes sure Core is setup and have what it needs
         private void InitCore()
@@ -147,7 +156,7 @@ namespace MisfitBot_MKII
             if (args.Exists(p => p.Trim().ToLower() == "debug"))
             {
                 Console.WriteLine("!!!!RUNNING IN DEBUGMODE!!!!");
-                _Debugmode = true;
+                Debugmode = true;
             }
             if (args.Exists(p => p.Trim().ToLower() == "logtwitch"))
             {
@@ -180,12 +189,12 @@ namespace MisfitBot_MKII
             {
                 if (!Directory.Exists("Config"))
                 {
-                    if (_Debugmode) { Console.WriteLine("Creating config folder!"); }
+                    if (Debugmode) { Console.WriteLine("Creating config folder!"); }
                     Directory.CreateDirectory("Config");
                 }
                 if (!Directory.Exists("Plugins"))
                 {
-                    if (_Debugmode) { Console.WriteLine("Creating plugins folder!"); }
+                    if (Debugmode) { Console.WriteLine("Creating plugins folder!"); }
                     Directory.CreateDirectory("Plugins");
                 }
                 if (!LoadConfig())
@@ -422,6 +431,12 @@ namespace MisfitBot_MKII
         public static async Task DiscordResponse(BotWideResponseArguments args)
         {
             await (DiscordClient.GetChannel(args.discordChannel) as ISocketMessageChannel).SendMessageAsync(args.message);
+        }
+        public static void PubSubStart(BotChannel bChan){
+            PubSubs.StartPubSub(bChan, true);
+        }
+        public static void PubSubStop(BotChannel bChan){
+            PubSubs.PubSubStop(bChan);
         }
     }
 }

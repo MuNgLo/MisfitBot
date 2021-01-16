@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
 using System.Threading.Tasks;
-using Discord;
 using Discord.WebSocket;
 using MisfitBot_MKII.MisfitBotEvents;
-using TwitchLib.Client.Events;
 using TwitchLib.Client.Models;
 
 namespace MisfitBot_MKII.Extensions.ChannelManager
@@ -20,7 +18,6 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         private bool debug = false;
         public TwitchChannelGoesOfflineEvent OnBotChannelGoesOffline;
         private volatile bool apiQueryLock = false; // This is true when we have an active channel request towards Twitch API running
-        public Dictionary<string, TwPubSub> PubSubClients = new Dictionary<string, TwPubSub>();
         /// CONSTRUCTOR
         public ChannelManager()
         {
@@ -285,7 +282,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         public async Task JoinAllAutoJoinTwitchChannels()
         {
             List<string> chansToLookup = new List<string>();
-            foreach (BotChannel chan in await Program.Channels.GetChannels())
+            foreach (BotChannel chan in await GetChannels())
             {
                 if (chan.TwitchChannelName != string.Empty && chan.TwitchAutojoin)
                 {
@@ -311,67 +308,8 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             }
             //await LaunchAllPubSubs(); // TODO eneable pubsubs somehow later
         }
-        #region pubsub stuff
-        /// <summary>
-        /// Tries to restart PubSub listener for given Botchannel if there is one.
-        /// </summary>
-        /// <param name="bChan"></param>
-        /// <returns></returns>
-        public async Task RestartPubSub(BotChannel bChan)
-        {
-            await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, "RestartPubSub"));
-            if (bChan.TwitchChannelID == null || bChan.TwitchChannelID == string.Empty)
-            {
-                return;
-            }
-            if (PubSubClients.ContainsKey(bChan.TwitchChannelID))
-            {
-                PubSubClients[bChan.TwitchChannelID].Close();
-                PubSubClients.Remove(bChan.TwitchChannelID);
-                StartPubSub(bChan, debug);
-            }
-            else
-            {
-                await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, "RestartPubSub::Not a valid TwitchID."));
-            }
-        }
-        /// <summary>
-        /// Tries to start a PubSub listener for every botchannel in DB.
-        /// </summary>
-        /// <returns></returns>
-        private async Task LaunchAllPubSubs()
-        {
-            foreach (BotChannel bChan in await GetChannels())
-            {
-                StartPubSub(bChan, debug);
-            }
-        }
-        /// <summary>
-        /// Launches individual PubSub for given Botchannel if it has a token.
-        /// </summary>
-        /// <param name="bChan"></param>
-        public async void StartPubSub(BotChannel bChan, bool verbose=false)
-        {
-            // Debug end
-            if (bChan.pubsubOauth != string.Empty)
-            {
-                if (!PubSubClients.ContainsKey(bChan.TwitchChannelID))
-                {
-                    await Core.LOG(new LogEntry(LOGSEVERITY.INFO, PLUGINNAME, $"Pubsub starting for {bChan.TwitchChannelName}."));
-                    PubSubClients[bChan.TwitchChannelID] = new TwPubSub(bChan.pubsubOauth, bChan.TwitchChannelID, bChan.TwitchChannelName, verbose);
-                }
-                else
-                {
-                    if (bChan.discordAdminChannel != 0)
-                    {
-                        await (Program.DiscordClient.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
-                            $"A pubsub client for that channel already exists. Use \"{Program.CommandCharacter}pubsub restart\" to restart it with updated token."
-                            );
-                    }
-                }
-            }
-        }
-        #endregion
+        
+        
         #region Database stuff
         private async Task<bool> ChannelDataExists(ulong GuildID)
         {

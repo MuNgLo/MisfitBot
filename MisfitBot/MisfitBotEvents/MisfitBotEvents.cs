@@ -11,6 +11,16 @@ namespace MisfitBot_MKII.MisfitBotEvents
 {
     public class BotwideEvents
     {
+        // Muchos Importante tings first
+        public TwitchNewFollowerEvent OnTwitchFollow; // Hooked up in AdminPlugin
+        public TwitchSubGiftEvent OnTwitchSubGift; // Hooked up in AdminPlugin
+        public RaidEvent OnRaidEvent; // Hooked up in AdminPlugin
+        public TwitchResubscriberEvent OnTwitchReSubscriber; // Hooked up in AdminPlugin
+        public TwitchNewsubscriberEvent OnTwitchNewSubscriber; // Hooked up in AdminPlugin
+        public TwitchCommunitySubscriptionEvent OnTwitchCommunitySubscription;
+        //public TwitchSubGiftEvent OnTwitchSubEvent;
+
+
         // Discord
         public DiscordConnectedEvent OnDiscordConnected;
         public DiscordDisConnectedEvent OnDiscordDisConnected;
@@ -30,7 +40,6 @@ namespace MisfitBot_MKII.MisfitBotEvents
         public TwitchHostEvent OnTwitchHostEvent;
         public TwitchMessageClearedEvent OnTwitchMessageCleared;
         public TwitchMessageSentEvent OnTwitchMessageSent;
-        public TwitchSubGiftEvent OnTwitchSubGift;
         public TwitchUserJoinLeaveEvent OnTwitchUserJoin;
         public TwitchUserJoinLeaveEvent OnTwitchUserLeave;
         public TwitchWhisperMessageEvent OnTwitchWhisperReceived;
@@ -43,8 +52,6 @@ namespace MisfitBot_MKII.MisfitBotEvents
         public BitEvent OnBitEvent;
         public BotChannelMergeEvent OnBotChannelMerge;
         public DiscordUserStartsStreamEvent OnDiscordUserStartStream;
-        public RaidEvent OnRaidEvent;
-        public TwitchSubGiftEvent OnTwitchSubEvent;
         public TwitchChannelGoesLiveEvent OnTwitchChannelGoesLive;
         public TwitchChannelGoesOfflineEvent OnTwitchChannelGoesOffline;
         public UnBanEvent OnUnBanEvent;
@@ -60,18 +67,35 @@ namespace MisfitBot_MKII.MisfitBotEvents
                 }
             });
         }
-internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
+        internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
             await Task.Run(()=>{
                 if(bChan!=null && user != null){
                     OnTwitchUserLeave?.Invoke(bChan, user);
                 }
             });
         }
-
-
+        internal async Task RaiseTwitchOnReSubscriber(BotChannel bChan, TwitchReSubArguments args)
+        {
+            await Task.Run(()=>{
+                if(bChan!=null && args != null){
+                    OnTwitchReSubscriber?.Invoke(bChan, args);
+                }
+            });
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EVENTS", $"{args.userDisplayname} resubscribed to channel {bChan.TwitchChannelName}."));
+        }
+        internal async Task RaiseTwitchOnNewSubscriber(BotChannel bChan, TwitchNewSubArguments args)
+        {
+            await Task.Run(()=>{
+                if(bChan!=null && args != null){
+                    OnTwitchNewSubscriber?.Invoke(bChan, args);
+                }
+            });
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EVENTS", $"{args.userDisplayname} subscribed to channel {bChan.TwitchChannelName}."));
+        }
         internal async void RaiseTwitchOnSubGift(BotChannel bChan, TwitchSubGiftEventArguments args){
             await Task.Run(()=>{
                 if(bChan != null){OnTwitchSubGift?.Invoke(bChan, args);}
+                if(Program.Debugmode){ Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EVENTS", args.LogString)); }
             });
         }
 
@@ -122,10 +146,10 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
             });
         }
 
-        internal async Task RaiseTwitchOnCommunitySubscription(string channel, CommunitySubscription giftedSubscription)
+        internal async Task RaiseTwitchOnCommunitySubscription(BotChannel bChan, string message)
         {
             await Task.Run(()=>{
-            JsonDumper.DumpObjectToJson(giftedSubscription, channel);
+                OnTwitchCommunitySubscription?.Invoke(bChan, message);
             });
         }
 
@@ -243,6 +267,8 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
             }
         }
 
+        
+
         internal async Task RaiseOnDiscordDisconnected(Exception e)
         {
             await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "BotwideEvents", $"ClientDisconnected:{e.Message}"));
@@ -290,9 +316,9 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
             if (e == null)
             {
                 Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "Events", "RaiseBitEvent fed NULL parameter."));
-
                 return;
             }
+            if(Program.Debugmode){ Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EVENTS", $"Twitch channel {e.bChan.TwitchChannelName} BITS {e.bitsGiven} from {e.user._twitchDisplayname}. Total {e.bitsTotal}")); }
             OnBitEvent?.Invoke(e);
         }
         internal void RaiseBanEvent(BanEventArguments e)
@@ -304,6 +330,16 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
             }
             OnBanEvent?.Invoke(e);
         }
+
+        internal void RaiseOnTwitchFollow(BotChannel bChan, UserEntry user)
+        {
+            if (bChan != null && user != null)
+            {
+                Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Events", $"New twitch follower:{user._twitchDisplayname}"));
+                OnTwitchFollow?.Invoke(bChan, user);
+            }
+        }
+
         internal void RaiseHostEvent(BotChannel bChan, HostedEventArguments e)
         {
             if (bChan == null || e == null)
@@ -311,6 +347,8 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
                 Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "Events", "RaiseHostEvent fed NULL parameter."));
                 return;
             }
+            if(Program.Debugmode){ Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EVENTS", $"Twitch channel {e.HostedChannel} hosted by {e.HostChannel}")); }
+
             OnTwitchHostEvent?.Invoke(bChan, e);
         }
         internal void RaiseRaidEvent(BotChannel bChan, RaidEventArguments e)
@@ -337,21 +375,24 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
         {
             if (bChan == null) { return; }
             bChan.isLive = true;
+            if(Program.Debugmode){ Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EVENTS", $"Twitch channel {bChan.TwitchChannelName} went live")); }
             OnTwitchChannelGoesLive?.Invoke(bChan, delay);
         }
         internal void RaiseOnTwitchChannelGoesOffline(BotChannel bChan)
         {
             if (bChan == null) { return; }
             bChan.isLive = false;
+            if(Program.Debugmode){ Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EVENTS", $"Twitch channel {bChan.TwitchChannelName} went offline")); }
             OnTwitchChannelGoesOffline?.Invoke(bChan);
         }
         internal void RaiseOnViewerCount(BotChannel bChan, int oldCount, int newCount)
         {
             if (bChan == null)
             {
-                Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "Events", "RaiseOnViewerCount fed NULL bChan."));
+                Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "EVENTS", "RaiseOnViewerCount fed NULL bChan."));
                 return;
             }
+            if(Program.Debugmode){ Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EVENTS", $"{bChan.TwitchChannelName} has {newCount} viewers. ({newCount - oldCount})")); }
             OnViewercount?.Invoke(bChan, oldCount, newCount);
         }
 
@@ -359,9 +400,10 @@ internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
         {
             if (discordProfile == null || twitchProfile == null)
             {
-                Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "Events", "RaiseOnBotChannelMerge fed NULL parameter."));
+                Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "EVENTS", "RaiseOnBotChannelMerge fed NULL parameter."));
                 return;
             }
+            if(Program.Debugmode){ Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EVENTS", $"BotChannel Merge between D:{discordProfile.GuildName} and TW:{twitchProfile.TwitchChannelName}")); }
             OnBotChannelMerge?.Invoke(discordProfile, twitchProfile);
         }
         #endregion

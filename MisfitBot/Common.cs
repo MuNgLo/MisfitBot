@@ -153,6 +153,68 @@ public struct LogEntry
     /// <summary>
     /// Botwide event argument class
     /// </summary>
+    public class TwitchNewSubArguments
+    {
+        public int userID;
+        public string username;
+        public string userDisplayname;
+
+        public string Channelname;
+
+        public SubscriptionPlan subscriptionplan;
+        public string subscriptionplanName;
+        public int monthsTotal; 
+        public int monthsStreak; 
+
+        public TwitchNewSubArguments(TwitchLib.Client.Events.OnNewSubscriberArgs e){
+            
+            int.TryParse(e.Subscriber.UserId, out userID);
+            username = e.Subscriber.Login;
+            userDisplayname = e.Subscriber.DisplayName;
+
+            Channelname = e.Channel;
+
+            subscriptionplan = (SubscriptionPlan)e.Subscriber.SubscriptionPlan;
+            subscriptionplanName = e.Subscriber.SubscriptionPlanName;
+
+            int.TryParse(e.Subscriber.MsgParamCumulativeMonths, out monthsTotal);
+            int.TryParse(e.Subscriber.MsgParamStreakMonths, out monthsStreak);
+        }
+    }// EOF CLASS
+    /// <summary>
+    /// Botwide event argument class
+    /// </summary>
+    public class TwitchReSubArguments
+    {
+        public int userID;
+        public string username;
+        public string userDisplayname;
+
+        public string Channelname;
+
+        public SubscriptionPlan subscriptionplan;
+        public string subscriptionplanName;
+        public int monthsTotal; 
+        public int monthsStreak; 
+
+        public TwitchReSubArguments(TwitchLib.Client.Events.OnReSubscriberArgs e){
+            
+            int.TryParse(e.ReSubscriber.UserId, out userID);
+            username = e.ReSubscriber.Login;
+            userDisplayname = e.ReSubscriber.DisplayName;
+
+            Channelname = e.Channel;
+
+            subscriptionplan = (SubscriptionPlan)e.ReSubscriber.SubscriptionPlan;
+            subscriptionplanName = e.ReSubscriber.SubscriptionPlanName;
+
+            int.TryParse(e.ReSubscriber.MsgParamCumulativeMonths, out monthsTotal);
+            int.TryParse(e.ReSubscriber.MsgParamStreakMonths, out monthsStreak);
+        }
+    }// EOF CLASS
+    /// <summary>
+    /// Botwide event argument class
+    /// </summary>
     public class TwitchSubGiftEventArguments
     {
         public int twitchUserID;
@@ -170,23 +232,25 @@ public struct LogEntry
         public string subscriptionplanName;
         public int months; // This seems highly unreliable
 
-        public TwitchSubGiftEventArguments(TwitchLib.Client.Events.OnGiftedSubscriptionArgs args1){
+        public TwitchSubGiftEventArguments(TwitchLib.Client.Events.OnGiftedSubscriptionArgs e){
+            
+            int.TryParse(e.GiftedSubscription.Id, out twitchUserID);
+            userDisplayname = e.GiftedSubscription.DisplayName;
+            username = e.GiftedSubscription.Login;
 
-            int.TryParse(args1.GiftedSubscription.Id, out twitchUserID);
-            userDisplayname = args1.GiftedSubscription.DisplayName;
-            username = args1.GiftedSubscription.Login;
+            int.TryParse(e.GiftedSubscription.MsgParamRecipientId, out recipientUserID);
+            recipientUsername = e.GiftedSubscription.MsgParamRecipientUserName;
+            recipientDisplayname = e.GiftedSubscription.MsgParamRecipientDisplayName;
 
-            int.TryParse(args1.GiftedSubscription.MsgParamRecipientId, out recipientUserID);
-            recipientUsername = args1.GiftedSubscription.MsgParamRecipientUserName;
-            recipientDisplayname = args1.GiftedSubscription.MsgParamRecipientDisplayName;
+            twitchChannelname = e.Channel;
 
-            twitchChannelname = args1.Channel;
+            subscriptionplan = (SubscriptionPlan)e.GiftedSubscription.MsgParamSubPlan;
+            int.TryParse(e.GiftedSubscription.MsgParamMonths, out months);
 
-            subscriptionplan = (SubscriptionPlan)args1.GiftedSubscription.MsgParamSubPlan;
-            int.TryParse(args1.GiftedSubscription.MsgParamMonths, out months);
-
-            subscriptionplanName = args1.GiftedSubscription.MsgParamSubPlanName;
+            subscriptionplanName = e.GiftedSubscription.MsgParamSubPlanName;
         }
+
+        internal string LogString { get {return $"SubGift in {twitchChannelname} from {userDisplayname} to {recipientDisplayname}";} private set{} }
     }// EOF CLASS
     /// <summary>
     /// Botwide event argument class

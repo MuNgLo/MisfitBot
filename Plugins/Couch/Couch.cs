@@ -60,7 +60,7 @@ namespace Couch
             /// EOF OLD STUFF
 
             _tardy.Add("[USER] is late to get a seat in the couch. It isn't full but the people in it have spread out and refuse to move.");
-            _tardy.Add("Sorry [USER]. Couch is closerd for business.");
+            _tardy.Add("Sorry [USER]. Couch is closed for business.");
             _tardy.Add("As the couch is racing towards the horizon, [USER] gets left in the dust.");
 
             _shakeF.Add($"The couch is shaking! Luckily everybody on the couch manages to bite the pillows and hold on for dear life.");
@@ -420,30 +420,35 @@ namespace Couch
                     {
                         if (settings._couches[bChan.Key].TwitchUsernames.Count != 0)
                         {
-                            if (RollIncident())
+                            if (RollIncident(15))
                             {
                                 string victim = GetRNGSitter(bChan, settings);
                                 if (victim != null)
                                 {
-                                    //UserEntry failuser = await Program.Users.GetUserByTwitchUserName(e.Command.ChatMessage.Username);
-                                    UserEntry markuser = await Program.Users.GetUserByTwitchUserName(victim);
+                                    UserEntry markuser = await Program.Users.GetUserByTwitchDisplayName(victim);
+                                    if(markuser != null){
+                                        if (!await UserStatsExists(bChan.Key, args.user.Key))
+                                        {
+                                            UserStatsCreate(bChan.Key, args.user.Key);
+                                        }
+                                        CouchUserStats userStats1 = await UserStatsRead(bChan.Key, args.user.Key);
+                                        userStats1.CountSeated++;
+                                        UserStatsSave(bChan, userStats1);
 
-                                    if (!await UserStatsExists(bChan.Key, args.user.Key))
-                                    {
-                                        UserStatsCreate(bChan.Key, args.user.Key);
+                                        if (!await UserStatsExists(bChan.Key, markuser.Key))
+                                        {
+                                            UserStatsCreate(bChan.Key, args.user.Key);
+                                        }
+                                        CouchUserStats markUserStats = await UserStatsRead(bChan.Key, markuser.Key);
+                                        markUserStats.CountBooted++;
+                                        UserStatsSave(bChan, markUserStats);
+
+                                        Program.TwitchSayMessage(args.channel,
+                                            $"{dbStrings.GetRandomLine(bChan, "INCIDENT").Replace("[USER]", markuser._twitchDisplayname)}"
+                                            );
+                                        settings._couches[bChan.Key].TwitchUsernames.RemoveAll(p => p == markuser._twitchUsername);
+                                        SaveBaseSettings(bChan, PLUGINNAME, settings);
                                     }
-                                    CouchUserStats failUserStats = await UserStatsRead(bChan.Key, args.user.Key);
-                                    failUserStats.CountSeated++;
-                                    UserStatsSave(bChan, failUserStats);
-                                    CouchUserStats markUserStats = await UserStatsRead(bChan.Key, markuser.Key);
-                                    markUserStats.CountBooted++;
-                                    UserStatsSave(bChan, markUserStats);
-
-                                    Program.TwitchSayMessage(args.channel,
-                                        $"{dbStrings.GetRandomLine(bChan, "INCIDENT").Replace("[USER]", markuser._twitchDisplayname)}"
-                                        );
-                                    settings._couches[bChan.Key].TwitchUsernames.RemoveAll(p => p == markuser._twitchUsername);
-                                    SaveBaseSettings(bChan, PLUGINNAME, settings);
                                 }
                             }
                         }
@@ -657,9 +662,9 @@ namespace Couch
                 }
             });
         }
-        private bool RollIncident(int chance = 0)
+        private bool RollIncident(int chance)
         {
-            return rng.Next(0, 100) + chance >= 50;
+            return rng.Next(0, 100) < chance;
         }
         private string GetRNGSitter(BotChannel bChan, CouchSettings settings)
         {

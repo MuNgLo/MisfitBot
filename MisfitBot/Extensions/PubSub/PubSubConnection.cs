@@ -5,13 +5,13 @@ using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using TwitchLib.PubSub;
 using TwitchLib.PubSub.Events;
-
-namespace MisfitBot_MKII.Extensions.ChannelManager
+using MisfitBot_MKII.Crypto;
+namespace MisfitBot_MKII.Extensions.PubSub
 {
     /// <summary>
     /// TwitchLib PubSub wrapper. Connects on creation.
     /// </summary>
-    public class TwPubSub
+    internal class PubSubConnection
     {
         private TwitchPubSub Client;
         private readonly string EXTENSIONNAME = "TwPubSub";
@@ -21,7 +21,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         private bool _verbose = false;
         private bool _closing = false;
 
-        public TwPubSub(string OAuth, string twitchID, string twitchChannelName, bool verbose)
+        internal PubSubConnection(string OAuth, string twitchID, string twitchChannelName, bool verbose)
         {
             _oauth = OAuth;
             _twitchID = twitchID;
@@ -29,7 +29,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             _verbose = verbose;
             Client = new TwitchPubSub();
 
-            Client.OnLog += OnLog;
+            //Client.OnLog += OnLog;
 
             #region untested
             Client.OnBan += Client_OnBan;
@@ -72,24 +72,24 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             Core.LOG(new LogEntry(LOGSEVERITY.INFO, "PUBSUB", $"Exception : {e.Data}"));
         }
 
-        public void Close()
+        internal void Close()
         {
             _closing = true;
             Client.Disconnect();
         }
-        public async void Connect()
+        internal async void Connect()
         {
             UserEntry botUser = await Program.Users.GetUserByTwitchUserName("juanthebot");
             int botClientID = -1;
             int.TryParse(botUser._twitchUID, out botClientID);
 
-            Client.ListenToFollows(_twitchID);// Don't need OAUTH
-            Client.ListenToVideoPlayback(_twitchChannelName);// Don't need OAUTH
-            Client.ListenToSubscriptions(_twitchID);// Don't need OAUTH
-            Client.ListenToBitsEvents(_twitchID);// Don't need OAUTH
-            
-            //Client.ListenToChannelExtensionBroadcast(_twitchID, _twitchID);// Needs OAUTH
-            Client.ListenToChatModeratorActions("8ku2p031bud14h8lbvj5jevqc2gyi3", _twitchID);// Needs OAUTH
+            Client.ListenToFollows(_twitchID);
+            Client.ListenToVideoPlayback(_twitchChannelName);
+            Client.ListenToSubscriptions(_twitchID);
+            Client.ListenToBitsEvents(_twitchID);
+            // Verify
+            //Client.ListenToRaid(_twitchID);
+            //Client.ListenToWhispers(botUser._twitchUID);
             Client.Connect();
         }
         #region untested
@@ -260,7 +260,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         }
         private async void OnChannelSubscription(object sender, OnChannelSubscriptionArgs e)
         {
-            JsonDumper.DumpObjectToJson(e, "TwitchSUB"); // collect a few of these so we know what we are dealing with
+            JsonDumper.DumpObjectToJson(e, "PUBSUB_OnChannelSub"); // collect a few of these so we know what we are dealing with
             BotChannel bChan = await Program.Channels.GetTwitchChannelByName(e.Subscription.ChannelName);
             //Program.BotEvents.RaiseOnTwitchSubscription(bChan, new TwitchSubGiftEventArguments(e)); // TODO HOOK IT UP SILLY
         }
@@ -273,22 +273,14 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         {
             BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
             UserEntry user = await Program.Users.GetUserByTwitchID(e.UserId);
-            if (bChan != null && user != null)
-            {
-                await Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME, $"New twitch follower:{e.DisplayName}"));
-                if (bChan.discordAdminChannel != 0)
-                {
-                    await (Program.DiscordClient.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
-                        $"Hey we got a new Twitch follower! {e.DisplayName}");
-                }
-            }
+            Program.BotEvents.RaiseOnTwitchFollow(bChan, user);
         }
 
         private async void OnPubSubServiceConnected(object sender, EventArgs e)
         {
             // SendTopics accepts an oauth optionally, which is necessary for some topics
-            //Client.SendTopics(Crypto.Cipher.Decrypt(_oauth));
-            Client.SendTopics("syfu784cl6x248veumbpccpluo7ur2");
+            Client.SendTopics(Crypto.Cipher.Decrypt(_oauth));
+            //Client.SendTopics();
             await Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                 $"PubSub connected for {_twitchChannelName}."
                 ));

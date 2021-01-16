@@ -32,8 +32,12 @@ namespace MisfitBot_MKII
             SetConsoleColour(entry.Severity);
             Console.WriteLine($"{DateTime.Now,-19} {entry.Message}");
             Console.ForegroundColor = defCol;
-            if(Program.DiscordClient.Status == Discord.UserStatus.Online){
-                await Program.DiscordSayMessage(Program.LOGChannel, entry.Message);
+            if (Program.DiscordClient != null)
+            {
+                if (Program.DiscordClient.Status == Discord.UserStatus.Online)
+                {
+                    await Program.DiscordSayMessage(Program.LOGChannel, entry.Message);
+                }
             }
         }
 
@@ -61,7 +65,7 @@ namespace MisfitBot_MKII
                     break;
             }
         }
-  
+
 
         #region ILogger compliance
         public bool IsEnabled(LogLevel logLevel)
