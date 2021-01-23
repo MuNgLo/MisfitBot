@@ -355,16 +355,6 @@ public struct LogEntry
 
 
 
-    public interface IService
-    {
-        void OnSecondTick(int seconds);
-        void OnMinuteTick(int minutes);
-        void OnUserEntryMergeEvent(MisfitBot_MKII.UserEntry discordUser, MisfitBot_MKII.UserEntry twitchUser);
-        void OnBotChannelEntryMergeEvent(MisfitBot_MKII.BotChannel discordGuild, MisfitBot_MKII.BotChannel twitchChannel);
-    }
-
-
-
 
     internal class MainConfig {
         public bool UseDiscord;

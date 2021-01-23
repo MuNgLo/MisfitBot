@@ -28,9 +28,6 @@ namespace AdminPlugin
             "AdminPlugin loaded."));
         }
 
-        
-
-
         #region Listeners to announce shiite
         #region Twitch Subscription methods
         private async void OnTwitchCommunitySubscription(BotChannel bChan, string message)
@@ -114,9 +111,13 @@ namespace AdminPlugin
                                     bChan.TwitchChannelName = args.arguments[1].ToLower();
                                     bChan.TwitchChannelID = users.Matches[0].Id;
                                     bChan.TwitchAutojoin = true;
-                                    response.message = $"This Discord is now tied to the Twitch channel \"{bChan.TwitchChannelName}\"";
+                                    response.message = $"This Discord is now tied to the Twitch channel \"{bChan.TwitchChannelName}\".";
                                     Program.Channels.ChannelSave(bChan);
-                                    await Program.Channels.JoinAllAutoJoinTwitchChannels();
+                                    if(Program.TwitchConnected){
+                                        await Program.Channels.JoinAllAutoJoinTwitchChannels();
+                                    }else{
+                                        response.message += " Not connected to Twitch so can't join the channel right now.";
+                                    }
                                     Respond(bChan, response);
                                 }
                                 break;
@@ -246,6 +247,22 @@ namespace AdminPlugin
                     await Program.DiscordSayMessage(args.channel, "PONG! arrrgh");
                 }
             }
+        }
+        public override void OnSecondTick(int seconds)
+        {
+            throw new NotImplementedException();
+        }
+        public override void OnMinuteTick(int minutes)
+        {
+            throw new NotImplementedException();
+        }
+        public override void OnUserEntryMergeEvent(UserEntry discordUser, UserEntry twitchUser)
+        {
+            throw new NotImplementedException();
+        }
+        public override void OnBotChannelEntryMergeEvent(BotChannel discordGuild, BotChannel twitchChannel)
+        {
+            throw new NotImplementedException();
         }
     }
 }

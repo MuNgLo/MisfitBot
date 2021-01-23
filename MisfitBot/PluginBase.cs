@@ -7,8 +7,13 @@ namespace MisfitBot_MKII
     /// <summary>
     /// Any service class should inherit from this class
     /// </summary>
-    public class PluginBase : PluginBaseDB
+    public abstract class PluginBase : PluginBaseDB
     {
+        abstract public void OnSecondTick(int seconds);
+        abstract public void OnMinuteTick(int minutes);
+        abstract public void OnUserEntryMergeEvent(MisfitBot_MKII.UserEntry discordUser, MisfitBot_MKII.UserEntry twitchUser);
+        abstract public void OnBotChannelEntryMergeEvent(MisfitBot_MKII.BotChannel discordGuild, MisfitBot_MKII.BotChannel twitchChannel);
+
         public char CMC { get { return Program.CommandCharacter; } set {}}
 
         public async Task MakeConfig<T>(BotChannel bChan, string plugin, T obj){

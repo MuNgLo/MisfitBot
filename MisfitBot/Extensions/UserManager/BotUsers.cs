@@ -344,6 +344,12 @@ namespace MisfitBot_MKII.Extensions.UserManager
                     lastSave = (int)result.GetInt64(14)
                 };
                 _UserCache.Add(user);
+
+                if(_UserCache[_UserCache.Count - 1]._twitchUsername != twitchname){
+                    Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "BotUsers", $"Found DB username {twitchname}, read it and added to cache but last cache entry did not match!"));
+                    return null;
+                }
+
                 return _UserCache[_UserCache.Count - 1];
             }
         }

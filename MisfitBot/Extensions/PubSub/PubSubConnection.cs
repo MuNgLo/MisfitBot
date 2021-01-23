@@ -28,9 +28,6 @@ namespace MisfitBot_MKII.Extensions.PubSub
             _twitchChannelName = twitchChannelName;
             _verbose = verbose;
             Client = new TwitchPubSub();
-
-            //Client.OnLog += OnLog;
-
             #region untested
             Client.OnBan += Client_OnBan;
             Client.OnChannelCommerceReceived += Client_OnChannelCommerceReceived;
@@ -39,6 +36,7 @@ namespace MisfitBot_MKII.Extensions.PubSub
             Client.OnEmoteOnly += Client_OnEmoteOnly;
             Client.OnEmoteOnlyOff += Client_OnEmoteOnlyOff;
             Client.OnFollow += Client_OnFollow;
+            Client.OnHost += Client_OnHost; // Fires when PubSub receives notice that the channel being listened to is hosting another channel.
             Client.OnPubSubServiceClosed += OnPubSubServiceClosed;
             Client.OnPubSubServiceError += OnPubSubServiceError;
             Client.OnR9kBeta += Client_OnR9kBeta;
@@ -50,23 +48,79 @@ namespace MisfitBot_MKII.Extensions.PubSub
             Client.OnUntimeout += Client_OnUntimeout;
             Client.OnWhisper += Client_OnWhisper;
             #endregion
-            #region works
+            #region NuJuan Verified
             Client.OnBitsReceived += OnBitsReceived;
             Client.OnViewCount += OnViewCount;
-            Client.OnChannelSubscription += OnChannelSubscription;
-            Client.OnHost += Client_OnHost; // Fires when PubSub receives notice that the channel being listened to is hosting another channel.
             Client.OnStreamUp += Client_OnStreamUp;
             Client.OnStreamDown += Client_OnStreamDown;
             Client.OnPubSubServiceConnected += OnPubSubServiceConnected;
             Client.OnListenResponse += OnListenResponse;
-
+            #endregion
+            #region Unused Events
+            //Client.OnLog += OnLog;
+            //Client.OnChannelSubscription += OnChannelSubscription; // We are letting the twitch chat connection do teh sub events
             //Client.ListenToChannelExtensionBroadcast
             //Client.ListenToCommerce
-
-            Connect();
             #endregion
+            Connect();
         }
 
+        /// <summary>
+        /// NuJuan Verification in progress TODO!
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private async void Client_OnFollow(object sender, OnFollowArgs e)
+        {
+            BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
+            UserEntry user = await Program.Users.GetUserByTwitchID(e.UserId);
+            await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "PUBSUB", $"Channel {_twitchChannelName} New follower {e.DisplayName} (PubSub Listener)"));
+            Program.BotEvents.RaiseOnTwitchFollow(bChan, user);
+        }
+        /// <summary>
+        /// NuJuan Verification in progress TODO!
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private async void OnPubSubServiceClosed(object sender, EventArgs e)
+        {
+            BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
+            if (bChan != null)
+            {
+                if (bChan.discordAdminChannel != 0)
+                {
+                    await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "PubSub", $"PubSub({_twitchChannelName}) Service CLOSED!!"));
+                }
+            }
+        }
+        /// <summary>
+        /// NuJuan Verification in progress TODO!
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private async void OnBitsReceived(object sender, OnBitsReceivedArgs e)
+        {
+            BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
+            UserEntry user = await Program.Users.GetUserByTwitchID(e.UserId);
+            if (user != null && bChan != null)
+            {
+                BitEventArguments bitEvent = new BitEventArguments(
+                    bChan,
+                    user,
+                    Core.CurrentTime,
+                    e.BitsUsed,
+                    e.TotalBitsUsed,
+                    e.Context,
+                    e.ChatMessage
+                );
+                await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "PubSub", $"OnBitsReceived({_twitchChannelName}) {e.BitsUsed} from {user._twitchDisplayname}"));
+                Program.BotEvents.RaiseBitEvent(bitEvent);
+            }
+        }
+        #region The control methods
         private void OnLog(object sender, OnLogArgs e)
         {
             Core.LOG(new LogEntry(LOGSEVERITY.INFO, "PUBSUB", $"Exception : {e.Data}"));
@@ -92,11 +146,8 @@ namespace MisfitBot_MKII.Extensions.PubSub
             //Client.ListenToWhispers(botUser._twitchUID);
             Client.Connect();
         }
+        #endregion
 
-        internal string Status()
-        {
-            return Client.ToString();
-        }
         #region untested
         private void Client_OnWhisper(object sender, OnWhisperArgs e)
         {
@@ -115,19 +166,6 @@ namespace MisfitBot_MKII.Extensions.PubSub
             Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                 $"{_twitchChannelName} :: OnR9kBeta."
                 ));
-        }
-        private async void OnPubSubServiceClosed(object sender, EventArgs e)
-        {
-            BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
-            if (bChan != null)
-            {
-                if (bChan.discordAdminChannel != 0)
-                {
-                    await(Program.DiscordClient.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
-                        $"PubSub Service CLOSED!!"
-                        );
-                }
-            }
         }
         private void Client_OnEmoteOnlyOff(object sender, OnEmoteOnlyOffArgs e)
         {
@@ -153,9 +191,6 @@ namespace MisfitBot_MKII.Extensions.PubSub
                 $"{_twitchChannelName} :: OnChannelCommerceReceived."
                 ));
         }
-        #endregion
-
-        #region Works fine
         private async void Client_OnUnban(object sender, OnUnbanArgs e)
         {
             BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
@@ -244,7 +279,7 @@ namespace MisfitBot_MKII.Extensions.PubSub
             await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, EXTENSIONNAME,
                 $"OnPubSubServiceError({_twitchChannelName}). {e?.Exception.Message}"
                 ));
-            if(bChan.discordAdminChannel != 0 && _verbose)
+            if (bChan.discordAdminChannel != 0 && _verbose)
             {
                 await (Program.DiscordClient.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
                     $"PubSub ERROR: Channel({_twitchChannelName}) {e?.Exception.Message}"
@@ -263,24 +298,28 @@ namespace MisfitBot_MKII.Extensions.PubSub
                 }
             }
         }
+        /*
+        THIS IS HANDLED THROUGH THE NORMAL TWITCH CLIENT
         private async void OnChannelSubscription(object sender, OnChannelSubscriptionArgs e)
         {
             JsonDumper.DumpObjectToJson(e, "PUBSUB_OnChannelSub"); // collect a few of these so we know what we are dealing with
             BotChannel bChan = await Program.Channels.GetTwitchChannelByName(e.Subscription.ChannelName);
             //Program.BotEvents.RaiseOnTwitchSubscription(bChan, new TwitchSubGiftEventArguments(e)); // TODO HOOK IT UP SILLY
-        }
+        }*/
         private async void Client_OnHost(object sender, OnHostArgs e)
         {
             BotChannel bChan = await Program.Channels.GetTwitchChannelByID(_twitchChannelName);
             await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "PUBSUB", "Channel hosted another channel. This neds to be hooked up"));
         }
-        private async void Client_OnFollow(object sender, OnFollowArgs e)
-        {
-            BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
-            UserEntry user = await Program.Users.GetUserByTwitchID(e.UserId);
-            Program.BotEvents.RaiseOnTwitchFollow(bChan, user);
-        }
+        #endregion
 
+        #region Works fine
+        /// <summary>
+        /// NuJuan Verified
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <returns></returns>
         private async void OnPubSubServiceConnected(object sender, EventArgs e)
         {
             // SendTopics accepts an oauth optionally, which is necessary for some topics
@@ -294,13 +333,19 @@ namespace MisfitBot_MKII.Extensions.PubSub
             {
                 if (bChan.discordAdminChannel != 0 && Program.DiscordClient != null)
                 {
-                    if((Program.DiscordClient.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel) == null) { return; }
-                    await(Program.DiscordClient.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
+                    if ((Program.DiscordClient.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel) == null) { return; }
+                    await (Program.DiscordClient.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
                         $"PubSub Service connected."
-                        ); 
+                        );
                 }
             }
         }
+        /// <summary>
+        /// NuJuan Verified
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <returns></returns>
         private async void OnListenResponse(object sender, OnListenResponseArgs e)
         {
             BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
@@ -338,34 +383,27 @@ namespace MisfitBot_MKII.Extensions.PubSub
                 }
             }
         }
-
-        private async void OnBitsReceived(object sender, OnBitsReceivedArgs e)
-        {
-            BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
-            UserEntry user = await Program.Users.GetUserByTwitchID(e.UserId);
-            if (user != null && bChan != null)
-            {
-                BitEventArguments bitEvent = new BitEventArguments(
-                    bChan,
-                    user,
-                    Core.CurrentTime,
-                    e.BitsUsed,
-                    e.TotalBitsUsed,
-                    e.Context,
-                    e.ChatMessage
-                );
-                Program.BotEvents.RaiseBitEvent(bitEvent);
-            }
-        }
+        /// <summary>
+        /// NuJuan Verified
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <returns></returns>
         private async void Client_OnStreamDown(object sender, OnStreamDownArgs e)
         {
             BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
             Program.BotEvents.RaiseOnTwitchChannelGoesOffline(bChan);
         }
+        /// <summary>
+        /// NuJuan Verified
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <returns></returns>
         private async void Client_OnStreamUp(object sender, OnStreamUpArgs e)
         {
             BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
-            Program.BotEvents.RaiseOnTwitchChannelGoesLive(bChan,  e.PlayDelay);
+            Program.BotEvents.RaiseOnTwitchChannelGoesLive(bChan, e.PlayDelay);
         }
         #endregion
     }

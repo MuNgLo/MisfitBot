@@ -8,7 +8,7 @@ using System.Data;
 
 namespace Couch
 {
-    public class Couch : PluginBase, IService
+    public class Couch : PluginBase
     {
         #region old fields
         public readonly string PLUGINNAME = "Couch";
@@ -25,119 +25,27 @@ namespace Couch
         private List<TimedMessage> _timedMessages = new List<TimedMessage>();
         #endregion
 
-
         public Couch()
         {
-            /// <summary>
-            ///  OLD STUFF
-            /// </summary>
-            // Successes
-            _success.Add("[USER] takes a seat on the couch.");
-            _success.Add("[USER] backflips onto the couch.");
-            _success.Add("[USER] manages to escape the restraints and takes a seat on the couch.");
-            _success.Add("[USER] suddenly materializes on the couch with a hint of a smirk.");
-            _success.Add("[USER] claws their way up from the void between the cushions.");
-            _success.Add("[USER] does an impressive herolanding then proceeds to stumble to the couch with intense knee pain.");
-            _success.Add("[USER] accepts their fate as a decoration on the couch.");
-            _success.Add("[USER] stridently claims their seat on the couch and act very smug about it.");
-
-            // Fails
-            _fail.Add("[USER] is left standing.");
-            _fail.Add("[USER] rolls into fetal position as they don't fit on the couch.");
-            _fail.Add("[USER] creates a tsunami with their tears of despair.");
-            _fail.Add("[USER] hair catches fire from rage and others reach for the marshmallows.");
-            _fail.Add("[USER] is carried away by a flock of chairs to the land of standing space.");
-            _fail.Add("[USER] lacks the basic understanding of how to couch so they end up on the table.");
-            _fail.Add("[USER] storms in with a cavelry, but misses the couch.");
-            _fail.Add("[USER] eagerly runs towards the couch but trips and slides under it only to come out on the other side covered in dustbunnies.");
-
-            // Incidents
-            _incident.Add("[USER] catches [VICTIM] a couch cushion and leave their spot from embarrassment.");
-            _incident.Add("[VICTIM] by pure chance ends up quantum entangling with the couch and disappears back into the void. [USER] Materializes in the same spot.");
-            _incident.Add("[VICTIM] gets bumped out of the couch as [USER] take their seat.");
-            _incident.Add("[VICTIM] becomes the victim of EjectorZeat 3000™. Who is playing with the buttons? [USER]?");
-            _incident.Add("[USER] feeds the couch beans and [VICTIM] gets launched by a rocket fart. [USER] smugly takes the spot.");
-            /// EOF OLD STUFF
-
-            _tardy.Add("[USER] is late to get a seat in the couch. It isn't full but the people in it have spread out and refuse to move.");
-            _tardy.Add("Sorry [USER]. Couch is closed for business.");
-            _tardy.Add("As the couch is racing towards the horizon, [USER] gets left in the dust.");
-
-            _shakeF.Add($"The couch is shaking! Luckily everybody on the couch manages to bite the pillows and hold on for dear life.");
-            _shakeF.Add($"A tremor travels through the couch. Watch out for grabboids.");
-            _shakeF.Add($"The couch frolic in the green pasture. Everyone on it is overcome by bliss.");
-
-            _shakeS.Add($"The couch is shaking! [REPLACE] couldn't hold on.");
-            _shakeS.Add($"A stampede of angry coasters make the couch flip! [REPLACE] couldn't hold on.");
-            _shakeS.Add($"A cheesewheel falls of the couch! [REPLACE] starts chasing it.");
-
-            _greets.Add("Welcome back [USER]. You truly are a proper couch potato. BloodTrail");
-            _greets.Add("❤️❤️❤️ Senpai [USER] ❤️❤️❤️");
-            _greets.Add("/me twitches nervously as [USER] enters the room.");
-
-
-
+            DBDefaultLines();
             Program.BotEvents.OnMessageReceived += OnMessageReceived;
             Program.BotEvents.OnCommandReceived += OnCommandRecieved;
-            Program.BotEvents.OnTwitchConnected += OnTwitchConnected;
             Program.BotEvents.OnTwitchChannelJoined += OnTwitchChannelJoined;
-            Program.BotEvents.OnDiscordConnected += OnDiscordConnected;
-            //Program.BotEvents.OnDiscordGuildAvailable += OnDiscordGuildAvailable;
-
-            if (dbStrings == null)
-            {
-                dbStrings = new DatabaseStrings(PLUGINNAME, "couch");
-            }
-
+            Program.BotEvents.OnTwitchChannelGoesLive += OnTwitchChannelGoesLive;
+            dbStrings = new DatabaseStrings(PLUGINNAME, "couch");
             Core.LOG(new LogEntry(LOGSEVERITY.INFO,
             "PLUGIN",
             "Couch loaded."));
         }
 
+        
 
+        
 
-        private void OnCommandRecieved(BotWideCommandArguments args)
-        {
-            if (args.source == MESSAGESOURCE.TWITCH)
-            {
-                if (_timedMessages.Exists(p => p.twitchChannelName == args.channel))
-                {
-                    _timedMessages.Find(p => p.twitchChannelName == args.channel).msgSinceLastused++;
-                }
-            }
-            CommandResolve(args);
-        }
+        
 
-        private void OnMessageReceived(BotWideMessageArguments args)
-        {
-            if (args.source == MESSAGESOURCE.TWITCH)
-            {
-                if (_timedMessages.Exists(p => p.twitchChannelName == args.channel))
-                {
-                    _timedMessages.Find(p => p.twitchChannelName == args.channel).msgSinceLastused++;
-                }
-            }
-        }
-
-        private async void OnTwitchChannelJoined(string channel, string botname)
-        {
-            if (channel == botname) { return; }
-            // Make sure we have all couch database tables for any twitch channel we join
-            BotChannel bChan = null;
-            while (bChan == null)
-            {
-                bChan = await Program.Channels.GetTwitchChannelByName(channel);
-            }
-            if (bChan == null) { return; }
-            if (!await dbStrings.TableInit(bChan))
-            {
-                await DBStringsFirstSetup(bChan);
-            }
-            if (!StatsTableExists(bChan)) { StatsTableCreate(bChan, PLUGINSTATS); }
-            await Core.Configs.ConfigSetup<CouchSettings>(bChan, PLUGINNAME, new CouchSettings());
-        }
-
-        #region Command Interpetor
+        #region Command Stuff
+        
         private async void CommandResolve(BotWideCommandArguments args)
         {
             BotChannel bChan = await GetBotChannel(args);
@@ -152,13 +60,7 @@ namespace Couch
                 Respond(bChan, response);
                 return;
             }
-            // Check so we are connected to the twitch channel
-            if (!Program.Channels.CheckIfInTwitchChannel(bChan.TwitchChannelName)) 
-            { 
-                response.message = "Couch needs a twitch channel connection. See \"twitch\" command.";
-                Respond(bChan, response);
-                return; 
-            }
+
             CouchSettings settings = await Settings<CouchSettings>(bChan, PLUGINNAME);
             if (!settings._couches.ContainsKey(bChan.Key))
             {
@@ -167,9 +69,17 @@ namespace Couch
             switch (args.command.ToLower())
             {
                 case "couch":
+
                     // Broadcaster and Moderator commands
                     if (args.isModerator || args.isBroadcaster || args.canManageMessages)
                     {
+                        // Check so we are connected to the twitch channel
+                        if (!Program.Channels.CheckIfInTwitchChannel(bChan.TwitchChannelName))
+                        {
+                            response.message = "Couch needs a twitch channel connection. See \"twitch\" command.";
+                            Respond(bChan, response);
+                            return;
+                        }
                         if (args.arguments.Count == 0)
                         {
                             if (args.source == MESSAGESOURCE.DISCORD)
@@ -431,7 +341,8 @@ namespace Couch
                                 if (rngSitter != null)
                                 {
                                     UserEntry victim = await Program.Users.GetUserByTwitchDisplayName(rngSitter);
-                                    if(victim != null){
+                                    if (victim != null)
+                                    {
                                         settings._couches[bChan.Key].TwitchUsernames.RemoveAll(p => p == victim._twitchUsername);
                                         if (!await UserStatsExists(bChan.Key, args.user.Key))
                                         {
@@ -453,7 +364,7 @@ namespace Couch
                                         response.message = dbStrings.GetRandomLine(bChan, "INCIDENT");
                                         response.parseMessage = true;
                                         Respond(bChan, response);
-                                        
+
                                         SaveBaseSettings(bChan, PLUGINNAME, settings);
                                     }
                                 }
@@ -529,8 +440,8 @@ namespace Couch
             }
         }
         #endregion
-
         #region Internal stuff
+        
         private async Task ShakeCouch(BotChannel bChan, CouchSettings settings)
         {
             if (!settings._active || !settings._couches[bChan.Key].couchOpen) { return; }
@@ -696,33 +607,116 @@ namespace Couch
             return txt;
         }
         #endregion
-
-
-
-
-        public void OnSecondTick(int seconds) { }
-        public void OnMinuteTick(int minutes) { }
-        public void OnUserEntryMergeEvent(MisfitBot_MKII.UserEntry discordUser, MisfitBot_MKII.UserEntry twitchUser) { }
-        public void OnBotChannelEntryMergeEvent(MisfitBot_MKII.BotChannel discordGuild, MisfitBot_MKII.BotChannel twitchChannel) { }
-
-        private void OnDiscordConnected()
+        #region Event Listeners
+        private void OnCommandRecieved(BotWideCommandArguments args)
         {
-
+            if (args.source == MESSAGESOURCE.TWITCH)
+            {
+                if (_timedMessages.Exists(p => p.twitchChannelName == args.channel))
+                {
+                    _timedMessages.Find(p => p.twitchChannelName == args.channel).msgSinceLastused++;
+                }
+            }
+            CommandResolve(args);
         }
-
-        private void OnTwitchConnected(string msg)
+        /// <summary>
+        /// Count messages for reminder functionality
+        /// </summary>
+        /// <param name="args"></param>
+        private void OnMessageReceived(BotWideMessageArguments args)
         {
-
+            if (args.source == MESSAGESOURCE.TWITCH)
+            {
+                if (_timedMessages.Exists(p => p.twitchChannelName == args.channel))
+                {
+                    _timedMessages.Find(p => p.twitchChannelName == args.channel).msgSinceLastused++;
+                }
+            }
         }
-
-
-
-
-
-
-
+        public override void OnMinuteTick(int minutes) { }
+        public override void OnSecondTick(int seconds) { }
+        private async void OnTwitchChannelJoined(string channel, string botname)
+        {
+            if (channel == botname) { return; }
+            // Make sure we have all couch database tables for any twitch channel we join
+            BotChannel bChan = null;
+            while (bChan == null)
+            {
+                bChan = await Program.Channels.GetTwitchChannelByName(channel);
+            }
+            if (bChan == null) { return; }
+            if (!await dbStrings.TableInit(bChan))
+            {
+                await DBStringsFirstSetup(bChan);
+            }
+            if (!StatsTableExists(bChan)) { StatsTableCreate(bChan, PLUGINSTATS); }
+            await Core.Configs.ConfigSetup<CouchSettings>(bChan, PLUGINNAME, new CouchSettings());
+        }
+        public override void OnUserEntryMergeEvent(MisfitBot_MKII.UserEntry discordUser, MisfitBot_MKII.UserEntry twitchUser) { }
+        public override void OnBotChannelEntryMergeEvent(MisfitBot_MKII.BotChannel discordGuild, MisfitBot_MKII.BotChannel twitchChannel) { }
+        private async void OnTwitchChannelGoesLive(BotChannel bChan, int delay)
+        {
+            await Core.LOG(new LogEntry(LOGSEVERITY.DEBUG, PLUGINNAME,
+            $"OnTwitchChannelGoesLive({bChan.TwitchChannelName}) in it? ({Program.Channels.CheckIfInTwitchChannel(bChan.TwitchChannelName)})"));
+            CouchSettings settings = await Settings<CouchSettings>(bChan, PLUGINNAME);
+            // Check so we are connected to the twitch channel
+            if (Program.Channels.CheckIfInTwitchChannel(bChan.TwitchChannelName) && settings._active)
+            {
+                OpenCouch(bChan, settings);
+            }
+        }
+        #endregion
         #region DATABSE METHODS
         #region DB Strings stuff
+        /// <summary>
+        /// Builds the default DB string lists. Does not add them to Database
+        /// </summary>
+        private void DBDefaultLines()
+        {
+            // Successes
+            _success.Add("[USER] takes a seat on the couch.");
+            _success.Add("[USER] backflips onto the couch.");
+            _success.Add("[USER] manages to escape the restraints and takes a seat on the couch.");
+            _success.Add("[USER] suddenly materializes on the couch with a hint of a smirk.");
+            _success.Add("[USER] claws their way up from the void between the cushions.");
+            _success.Add("[USER] does an impressive herolanding then proceeds to stumble to the couch with intense knee pain.");
+            _success.Add("[USER] accepts their fate as a decoration on the couch.");
+            _success.Add("[USER] stridently claims their seat on the couch and act very smug about it.");
+
+            // Fails
+            _fail.Add("[USER] is left standing.");
+            _fail.Add("[USER] rolls into fetal position as they don't fit on the couch.");
+            _fail.Add("[USER] creates a tsunami with their tears of despair.");
+            _fail.Add("[USER] hair catches fire from rage and others reach for the marshmallows.");
+            _fail.Add("[USER] is carried away by a flock of chairs to the land of standing space.");
+            _fail.Add("[USER] lacks the basic understanding of how to couch so they end up on the table.");
+            _fail.Add("[USER] storms in with a cavelry, but misses the couch.");
+            _fail.Add("[USER] eagerly runs towards the couch but trips and slides under it only to come out on the other side covered in dustbunnies.");
+
+            // Incidents
+            _incident.Add("[USER] catches [VICTIM] a couch cushion and leave their spot from embarrassment.");
+            _incident.Add("[VICTIM] by pure chance ends up quantum entangling with the couch and disappears back into the void. [USER] Materializes in the same spot.");
+            _incident.Add("[VICTIM] gets bumped out of the couch as [USER] take their seat.");
+            _incident.Add("[VICTIM] becomes the victim of EjectorZeat 3000™. Who is playing with the buttons? [USER]?");
+            _incident.Add("[USER] feeds the couch beans and [VICTIM] gets launched by a rocket fart. [USER] smugly takes the spot.");
+            /// EOF OLD STUFF
+
+            _tardy.Add("[USER] is late to get a seat in the couch. It isn't full but the people in it have spread out and refuse to move.");
+            _tardy.Add("Sorry [USER]. Couch is closed for business.");
+            _tardy.Add("As the couch is racing towards the horizon, [USER] gets left in the dust.");
+
+            _shakeF.Add($"The couch is shaking! Luckily everybody on the couch manages to bite the pillows and hold on for dear life.");
+            _shakeF.Add($"A tremor travels through the couch. Watch out for grabboids.");
+            _shakeF.Add($"The couch frolic in the green pasture. Everyone on it is overcome by bliss.");
+
+            _shakeS.Add($"The couch is shaking! [REPLACE] couldn't hold on.");
+            _shakeS.Add($"A stampede of angry coasters make the couch flip! [REPLACE] couldn't hold on.");
+            _shakeS.Add($"A cheesewheel falls of the couch! [REPLACE] starts chasing it.");
+
+            _greets.Add("Welcome back [USER]. You truly are a proper couch potato. BloodTrail");
+            _greets.Add("❤️❤️❤️ Senpai [USER] ❤️❤️❤️");
+            _greets.Add("/me twitches nervously as [USER] enters the room.");
+        }
         private async Task DeleteEntry(BotChannel bChan, string discordChannel, int id)
         {
             DBString entry = await dbStrings.GetStringByID(bChan, id);
@@ -954,6 +948,8 @@ namespace Couch
                 await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, "Channelmerge detected. DB updated."));
             }
         }
+
+        
         // END OF DB things
         #endregion
     }// EOF CLASS

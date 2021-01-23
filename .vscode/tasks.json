@@ -10,6 +10,7 @@
                 "build",
                 "${workspaceFolder}/MisfitBot/MisfitBot-MKII.csproj",
                 "/property:GenerateFullPaths=true",
+                "/property:Private=False", 
                 "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"
@@ -71,6 +72,7 @@
                 "build",
                 "${workspaceFolder}/Plugins/Couch/Couch.csproj",
                 "/property:GenerateFullPaths=true",
+                "/property:Private=false", 
                 "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"

@@ -55,6 +55,7 @@ namespace MisfitBot_MKII
         public static UserManagerService Users { get => _Users; private set => _Users = value; }
         public static BotwideEvents BotEvents { get => _BotEvents; set => _BotEvents = value; }
         public static bool Debugmode { get => _Debugmode; private set => _Debugmode = value; }
+        public static bool TwitchConnected { get => _TwitchClient.IsConnected; private set {} }
 
         public List<PluginBase> _plugins;
 

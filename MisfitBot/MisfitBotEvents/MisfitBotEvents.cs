@@ -330,12 +330,16 @@ namespace MisfitBot_MKII.MisfitBotEvents
             }
             OnBanEvent?.Invoke(e);
         }
-
+        /// <summary>
+        /// NuJuan verification in progress TODO!
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <param name="user"></param>
         internal void RaiseOnTwitchFollow(BotChannel bChan, UserEntry user)
         {
             if (bChan != null && user != null)
             {
-                Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Events", $"New twitch follower:{user._twitchDisplayname}"));
+                Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Events", $"({bChan.TwitchChannelName}) New twitch follower:{user._twitchDisplayname}"));
                 OnTwitchFollow?.Invoke(bChan, user);
             }
         }
@@ -375,7 +379,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
         {
             if (bChan == null) { return; }
             bChan.isLive = true;
-            if(Program.Debugmode){ Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EVENTS", $"Twitch channel {bChan.TwitchChannelName} went live")); }
+            if(Program.Debugmode){ Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EVENTS", $"Twitch channel {bChan.TwitchChannelName} went live (PubSub StreamUp)")); }
             OnTwitchChannelGoesLive?.Invoke(bChan, delay);
         }
         internal void RaiseOnTwitchChannelGoesOffline(BotChannel bChan)
