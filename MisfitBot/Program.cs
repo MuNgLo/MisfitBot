@@ -118,6 +118,7 @@ namespace MisfitBot_MKII
         private void StartTwitchClient()
         {
             if (!config.UseTwitch) { return; }
+            Console.WriteLine("Starting up Twitch");
             KSLogger logger = new KSLogger();
             if (_LogTwitch) { TwitchAPI = new TwitchAPI(logger); }
             else
@@ -238,10 +239,11 @@ namespace MisfitBot_MKII
         private async Task StartDiscordClient()
         {
             if (!config.UseDiscord) { return; }
+            Console.WriteLine("Starting up Discord");
             _DiscordClient = new DiscordSocketClient();
             _DiscordEvents = new EventCatcherDiscord(_DiscordClient);
+            
 
-            //InitCommands();
             // Tokens should be considered secret data, and never hard-coded.
             await _DiscordClient.LoginAsync(TokenType.Bot, DiscordToken());
             await _DiscordClient.StartAsync();

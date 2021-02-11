@@ -89,7 +89,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
                     canManageMessages = asd.ManageMessages, 
                     user = usr, 
                     userDisplayName = arg.Author.Username,
-                    command = cmd,
+                    command = cmd.ToLower(),
                     message = msg.Content,
                     arguments = args
                 });

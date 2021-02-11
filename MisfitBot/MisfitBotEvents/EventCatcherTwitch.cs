@@ -73,7 +73,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
                     isModerator = e.Command.ChatMessage.IsModerator, 
                     user = usr, 
                     userDisplayName = e.Command.ChatMessage.DisplayName,
-                    command = e.Command.CommandText,
+                    command = e.Command.CommandText.ToLower(),
                     message = e.Command.ChatMessage.Message,
                     arguments = e.Command.ArgumentsAsList
                 });

@@ -73,6 +73,18 @@ namespace AdminPlugin
             BotChannel bChan = await GetBotChannel(args);
             BotWideResponseArguments response = new BotWideResponseArguments(args);
 
+            // TEMPORARY this should later move to a better suited plugin
+            if(args.command == "juanage")
+            {
+            
+
+
+                response.message = JuanAge();
+                Respond(bChan, response);
+                return;
+            }
+
+
             if (args.isBroadcaster || args.isModerator || args.canManageMessages)
             {
 
@@ -264,5 +276,18 @@ namespace AdminPlugin
         {
             throw new NotImplementedException();
         }
-    }
+
+        private string JuanAge()
+        {
+            TimeSpan time = TimeSpan.FromSeconds(Core.UpTime);
+
+            //here backslash is must to tell that colon is
+            //not the part of format, it just a character that we want in output
+            //string str = time.ToString(@"dd\d\a\y\s\ \ hh\:mm\:ss");
+            string str = time.ToString(@"d\ \d\a\y\s\ \a\n\d\ \ hh\:mm\:ss");
+            //seconds -= minutes * 60;
+            //minutes -= hours * 60;
+            return $"I have been running for {str}";
+        }
+    }// EOF CLASS
 }

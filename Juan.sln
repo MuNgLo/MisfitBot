@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExamplePlugin", "Plugins\ExamplePlugin\ExamplePlugin.csproj", "{8FFD2375-3733-4885-A1D3-A7E4B41F2BBF}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MisfitBot-MKII", "MisfitBot\MisfitBot-MKII.csproj", "{740BF7F1-F8B0-4A1A-ADFF-F06724BC4B43}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExamplePlugin", "Plugins\ExamplePlugin\ExamplePlugin.csproj", "{8FFD2375-3733-4885-A1D3-A7E4B41F2BBF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdminPlugin", "Plugins\AdminPlugin\AdminPlugin.csproj", "{10FA11B6-39AC-41AE-8B07-FF4ED2958520}"
 EndProject
@@ -75,9 +75,5 @@ Global
 		{CDECC1CC-B2D3-48D7-ACD5-EAADCA780898}.Release|x86.ActiveCfg = Release|Any CPU
 		{CDECC1CC-B2D3-48D7-ACD5-EAADCA780898}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{8FFD2375-3733-4885-A1D3-A7E4B41F2BBF} = {36E8A727-F153-4A90-BCC1-AE41A0E129E0}
-		{10FA11B6-39AC-41AE-8B07-FF4ED2958520} = {36E8A727-F153-4A90-BCC1-AE41A0E129E0}
-		{CDECC1CC-B2D3-48D7-ACD5-EAADCA780898} = {4DEC6F11-DE6F-4355-8864-5B4812F5354B}
-	EndGlobalSection
+
 EndGlobal
