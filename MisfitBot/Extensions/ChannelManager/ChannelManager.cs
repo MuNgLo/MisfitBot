@@ -15,7 +15,6 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
     public class ChannelManager
     {
         private readonly string PLUGINNAME = "ChannelManager";
-        private bool debug = false;
         public TwitchChannelGoesOfflineEvent OnBotChannelGoesOffline;
         private volatile bool apiQueryLock = false; // This is true when we have an active channel request towards Twitch API running
         /// CONSTRUCTOR

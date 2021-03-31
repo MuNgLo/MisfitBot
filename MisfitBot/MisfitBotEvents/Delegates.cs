@@ -14,6 +14,9 @@ namespace MisfitBot_MKII.MisfitBotEvents
     public delegate void DiscordMemberUpdatedEvent(BotChannel bchan, UserEntry currentUser, UserEntry oldUser);
     public delegate void DiscordMembersDownloadedEvent(SocketGuild arg);
     public delegate void DiscordReadyEvent();
+    public delegate void DiscordReactionClearedEvent(BotChannel bchan, ulong channelID);
+    public delegate void DiscordReactionRemovedEvent(BotChannel bchan, UserEntry currentUser, DiscordReactionArgument args);
+    public delegate void DiscordReactionAddedEvent(BotChannel bchan, UserEntry currentUser, DiscordReactionArgument args);
     // All Twitch events here all all need to start with Twitch and end with Event
     public delegate void TwitchHostEvent(BotChannel bChan, HostedEventArguments e);
     public delegate void TwitchSubGiftEvent(BotChannel bChan, TwitchSubGiftEventArguments e);

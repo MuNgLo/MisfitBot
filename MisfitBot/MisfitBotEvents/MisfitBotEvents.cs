@@ -30,6 +30,11 @@ namespace MisfitBot_MKII.MisfitBotEvents
         public DiscordMemberUpdatedEvent OnDiscordMemberUpdated;
         public DiscordMembersDownloadedEvent OnDiscordMembersDownloaded;
         public DiscordReadyEvent OnDiscordReady;
+        public DiscordReactionClearedEvent OnDiscordReactionCleared;
+        public DiscordReactionRemovedEvent OnDiscordReactionRemoved;
+        public DiscordReactionAddedEvent OnDiscordReactionAdded;
+
+
         // Twitch
         public TwitchConnectedEvent OnTwitchConnected;
         public TwitchConnectionErrorEvent OnTwitchConnectionError;
@@ -67,6 +72,32 @@ namespace MisfitBot_MKII.MisfitBotEvents
                 }
             });
         }
+
+        internal async void RaiseDiscordReactionCleared(BotChannel bChan, ulong channelID)
+        {
+            await Task.Run(()=>{
+                if(bChan!=null){
+                    OnDiscordReactionCleared?.Invoke(bChan, channelID);
+                }
+            });
+        }
+        internal async void RaiseDiscordReactionRemoved(BotChannel bChan, UserEntry user,DiscordReactionArgument args)
+        {
+            await Task.Run(()=>{
+                if(bChan!=null && user != null){
+                    OnDiscordReactionRemoved?.Invoke(bChan, user, args);
+                }
+            });
+        }
+        internal async void RaiseDiscordReactionAdded(BotChannel bChan, UserEntry user,DiscordReactionArgument args)
+        {
+            await Task.Run(()=>{
+                if(bChan!=null && user != null){
+                    OnDiscordReactionAdded?.Invoke(bChan, user, args);
+                }
+            });
+        }
+
         internal async Task RaiseTwitchOnUserLeave(BotChannel bChan, UserEntry user){
             await Task.Run(()=>{
                 if(bChan!=null && user != null){

@@ -36,9 +36,9 @@ namespace MisfitBot_MKII.MisfitBotEvents
             client.MessageReceived += HandleCommandAsync;
             //client.MessagesBulkDeleted += MessagesBulkDeleted;
             //client.MessageUpdated += MessageUpdated;
-            //client.ReactionAdded += ReactionAdded;
-            //client.ReactionRemoved += ReactionRemoved;
-            //client.ReactionsCleared += ReactionsCleared;
+            client.ReactionAdded += ReactionAdded;
+            client.ReactionRemoved += ReactionRemoved;
+            client.ReactionsCleared += ReactionsCleared;
             client.Ready += ReadyAsync;
             //client.RecipientAdded += RecipientAdded;
             //client.RecipientRemoved += RecipientRemoved;
@@ -54,7 +54,49 @@ namespace MisfitBot_MKII.MisfitBotEvents
             //client.UserVoiceStateUpdated += UserVoiceStateUpdated;
             //client.VoiceServerUpdated += VoiceServerUpdated;
         }
+
+        private async Task ReactionsCleared(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2)
+        {
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherDiscord", "ReactionCleared"));
+            BotChannel bChan = await Program.Channels.GetDiscordGuildbyID((arg2 as SocketGuildChannel).Guild.Id);
+            Program.BotEvents.RaiseDiscordReactionCleared(
+                bChan,
+                arg2.Id
+            );
+        }
+
+        private async Task ReactionRemoved(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
+        {
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherDiscord", "ReactionRemoved"));
+            UserEntry user = await Program.Users.GetUserByDiscordID(arg3.UserId);
+            BotChannel bChan = await Program.Channels.GetDiscordGuildbyID((arg2 as SocketGuildChannel).Guild.Id);
+            Program.BotEvents.RaiseDiscordReactionRemoved(
+                bChan,
+                user,
+                new DiscordReactionArgument(arg2.Id, arg3.MessageId, RESPONSEACTION.REMOVED, arg3.Emote.Name)
+            );
+        }
+
+        private async Task ReactionAdded(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
+        {
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherDiscord", "ReactionAdded"));
+            UserEntry user = await Program.Users.GetUserByDiscordID(arg3.UserId);
+            BotChannel bChan = await Program.Channels.GetDiscordGuildbyID((arg2 as SocketGuildChannel).Guild.Id);
+            Program.BotEvents.RaiseDiscordReactionAdded(
+                bChan,
+                user,
+                new DiscordReactionArgument(arg2.Id, arg3.MessageId, RESPONSEACTION.REMOVED, arg3.Emote.Name)
+            );
+        }
         #region NEEDS WORK
+
+
+
+
+
+
+
+
 
         private async Task HandleCommandAsync(SocketMessage arg)
         {
@@ -68,6 +110,9 @@ namespace MisfitBot_MKII.MisfitBotEvents
 
             // Create a command context
             SocketCommandContext context = new SocketCommandContext(Program.DiscordClient, msg);
+
+            
+
             // Create permissions list
             ChannelPermissions asd = (context.User as SocketGuildUser).GetPermissions(arg.Channel as IGuildChannel);
 

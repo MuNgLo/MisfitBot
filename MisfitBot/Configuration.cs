@@ -35,8 +35,8 @@ namespace MisfitBot_MKII
             return chanKey + "_" + plugin + "_config";
         }
         /// <summary>
-        /// Returns the saved config or creates a new entry with the object passed then save it to file and return it.
-        /// Remember to use the result in an AS statement.
+        /// Returns the saved config or creates a new entry with the object passed then save it to db and return it.
+        /// If no table is found it will serielize a fresh instance of the type and save it as a sting into DB.
         /// </summary>
         /// <param name="uid"></param>
         /// <param name="plugin"></param>
@@ -45,8 +45,34 @@ namespace MisfitBot_MKII
         /// <returns></returns>
         public async Task<dynamic> GetConfig<T>(BotChannel bChan, string plugin)
         {
-            T var = await Load<T>(bChan, plugin);
-            return var;
+            if(!TableExists(TableName(bChan.Key,plugin), Core.Data)){
+                // No table so we make one
+                using (SQLiteCommand cmd = new SQLiteCommand())
+                {
+                    cmd.CommandType = CommandType.Text;
+                    cmd.Connection = Core.Data;
+                    cmd.CommandText = $"CREATE TABLE \"{TableName(bChan.Key, plugin)}\" (configKey varchar(30), config TEXT(2048))";
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            if(await RowExists(TableName(bChan.Key, plugin), bChan.Key) == false){
+                // Create a new instance of the type we need
+                var y = (T)System.Activator.CreateInstance(typeof(T));
+                // No entry for this config so make one
+                using (SQLiteCommand c = new SQLiteCommand())
+                {
+                    c.CommandType = CommandType.Text;
+                    c.Connection = Core.Data;
+                    c.CommandText = $"INSERT INTO \"{TableName(bChan.Key, plugin)}\" VALUES (@key, @info)";
+                    c.Parameters.AddWithValue("@key", bChan.Key);
+                    c.Parameters.AddWithValue("@info", JsonConvert.SerializeObject(y));
+                    c.ExecuteNonQuery();
+                    await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, plugin, $"Created config entry ({plugin}::{bChan.Key}) in DB."));
+                }
+            }
+            // Now we should always have a valid entry in the DB so we read and return it
+            var qwe = await Load<T>(bChan, plugin);
+            return qwe;
         }
         /// <summary>
         /// Takes the passed Object, serialize the object and store it as a string under the plugin's DB Table using the Botchannel Key as identifier.
@@ -139,6 +165,13 @@ namespace MisfitBot_MKII
                 }
             }
         }
+        /// <summary>
+        /// Loads an existing table. Will throw exception if table does not exist.
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <param name="plugin"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         private async Task<dynamic> Load<T>(BotChannel bChan, string plugin)
         {
             
@@ -171,5 +204,24 @@ namespace MisfitBot_MKII
             }
 
         }
-    }
+        public async Task<bool> RowExists(String tablename, String key)
+        {
+            using (SQLiteCommand cmd = new SQLiteCommand())
+            {
+                cmd.CommandType = CommandType.Text;
+                cmd.Connection = Core.Data;
+                cmd.CommandText = $"SELECT * FROM \"{tablename}\" WHERE configKey IS @key";
+                cmd.Parameters.AddWithValue("@key", key);
+
+                if (await cmd.ExecuteScalarAsync() == null)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+        }
+    }// EOF CLASS
 }

@@ -8,6 +8,7 @@ namespace MisfitBot_MKII
 {
     public enum MESSAGESOURCE { DISCORD, TWITCH}
     public enum LOGSEVERITY {CRITICAL, ERROR, WARNING, INFO, VERBOSE, DEBUG}
+    public enum RESPONSEACTION {ERROR, ADDED, REMOVED, CLEARED}
 
     public struct BotWideMessageArguments
     {
@@ -81,6 +82,8 @@ public struct LogEntry
         public ulong ulongID;
         public int timestamp;
     }
+
+
 
     /// <summary>
     /// Default uservalues class. Only contains a simple timestamp so far
@@ -353,8 +356,19 @@ public struct LogEntry
         }
     }
 
-
-
+    public class DiscordReactionArgument
+    {
+        public readonly ulong ChannelID;
+        public readonly ulong MessageID;
+        public readonly RESPONSEACTION ActionTaken;
+        public readonly string Emote;
+        public DiscordReactionArgument(ulong channelID, ulong messageID, RESPONSEACTION actionTaken){
+            ChannelID = channelID; MessageID=messageID; ActionTaken= actionTaken;
+        }
+        public DiscordReactionArgument(ulong channelID, ulong messageID, RESPONSEACTION actionTaken, string emote){
+            ChannelID = channelID; MessageID=messageID; ActionTaken= actionTaken; Emote=emote;
+        }
+    }
 
     internal class MainConfig {
         public bool UseDiscord;

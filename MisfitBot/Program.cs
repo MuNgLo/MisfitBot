@@ -21,6 +21,7 @@ using MisfitBot_MKII.MisfitBotEvents;
 using System.Reflection;
 using MisfitBot_MKII.Extensions.UserManager;
 using MisfitBot_MKII.Extensions.PubSub;
+using System.Linq;
 
 namespace MisfitBot_MKII
 {
@@ -141,6 +142,8 @@ namespace MisfitBot_MKII
             _PubSubs = new PubSubManager();
             await _PubSubs.LaunchAllPubSubs();
         }
+
+        
 
         /// Makes sure Core is setup and have what it needs
         private void InitCore()
@@ -440,6 +443,22 @@ namespace MisfitBot_MKII
         public static async Task DiscordResponse(BotWideResponseArguments args)
         {
             await (DiscordClient.GetChannel(args.discordChannel) as ISocketMessageChannel).SendMessageAsync(args.message);
+        }
+        public static bool DiscordRoleExist(BotChannel bChan, string role)
+        {
+            SocketRole sRole = DiscordClient.GetGuild(bChan.GuildID).Roles.FirstOrDefault(x => x.Name == role);
+            if(sRole != null){
+                return true;
+            }
+            return false;
+        }
+        public static bool DiscordEmoteExist(BotChannel bChan, string emote)
+        {
+            GuildEmote gEmote = DiscordClient.GetGuild(bChan.GuildID).Emotes.FirstOrDefault(x => x.Name == emote);
+            if(gEmote != null){
+                return true;
+            }
+            return false;
         }
         public static void PubSubStart(BotChannel bChan){
             PubSubs.StartPubSub(bChan, true);
