@@ -26,6 +26,7 @@ namespace MisfitBot_MKII
         public MESSAGESOURCE source;
         public string channel;
         public ulong guildID;
+        public ulong channelID;
         public ulong messageID;
         public bool isBroadcaster;
         public bool isModerator;
@@ -368,6 +369,33 @@ public struct LogEntry
         public DiscordReactionArgument(ulong channelID, ulong messageID, RESPONSEACTION actionTaken, string emote){
             ChannelID = channelID; MessageID=messageID; ActionTaken= actionTaken; Emote=emote;
         }
+    }
+
+    public class DiscordChannelMessage{
+        public readonly ulong ID;
+        public readonly DiscordReactions Reactions;
+
+        public DiscordChannelMessage(IMessage message){
+            ID = message.Id;
+            Reactions = new DiscordReactions(message.Reactions);
+        }
+    }
+
+    public class DiscordReactions{
+        public Dictionary<string, DiscordReaction> ReactionMetaData;
+        public DiscordReactions(IReadOnlyDictionary<IEmote, ReactionMetadata> reactions){
+            ReactionMetaData = new Dictionary<string, DiscordReaction>();
+            foreach(IEmote emote in reactions.Keys){
+                ReactionMetaData[emote.Name] = new DiscordReaction(){
+                    HasReacted = reactions[emote].IsMe, Count = reactions[emote].ReactionCount
+                };
+            }
+        }
+    }
+
+    public struct DiscordReaction{
+        public bool HasReacted;
+        public int Count;
     }
 
     internal class MainConfig {

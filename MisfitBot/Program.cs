@@ -452,6 +452,10 @@ namespace MisfitBot_MKII
             }
             return false;
         }
+        public static async Task<DiscordChannelMessage> DiscordGetMessage(ulong chID, ulong msgID){
+            IMessage message = await (DiscordClient.GetChannel(chID) as ISocketMessageChannel).GetMessageAsync(msgID);
+            return new DiscordChannelMessage(message);
+        }
         public static bool DiscordEmoteExist(BotChannel bChan, string emote)
         {
             GuildEmote gEmote = DiscordClient.GetGuild(bChan.GuildID).Emotes.FirstOrDefault(x => x.Name == emote);

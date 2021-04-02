@@ -36,7 +36,20 @@ namespace RolesPlugin
                 return;}
 
  #region role stuff
-                if(args.arguments[0].ToLower() == "topic" || args.arguments[1].ToLower() == "add") 
+                if(args.arguments[0].ToLower() == "mark"){
+                    if(args.arguments.Count < 2)
+                    {
+                        response.message = $"Not enough arguments. Use \"{CMC}roles mark <DiscordMessageID>\" as syntax. Get The ID by rightclicking the message when your Discordclient has developer mode turned on in advanced settings.";
+                        Respond(bChan, response);
+                        return;
+                    }
+                    ulong msgID = Core.StringToUlong(args.arguments[1]);
+                    DiscordChannelMessage dMessage = await Program.DiscordGetMessage(response.discordChannel, msgID);
+                    response.message = $"Countinue Here later.";
+                    Respond(bChan, response);
+                }
+                
+                if(args.arguments[0].ToLower() == "topic" && args.arguments[1].ToLower() == "add") 
                 {
                     if(args.arguments.Count < 3){
                             response.message = $"Not enough arguments. Use \"{CMC}roles topic add <TheTopicNameYouWant>\" as syntax";
@@ -94,30 +107,52 @@ namespace RolesPlugin
                         Respond(bChan, response);
                     }
                 }
+                if(args.arguments[0].ToLower() == "topic" && args.arguments[1].ToLower() == "remove") 
+                {
+                    if(args.arguments.Count < 3)
+                    {
+                        response.message = $"Not enough arguments. Use \"{CMC}roles topic remove <NameofTopic>\" as syntax";
+                        Respond(bChan, response);
+                        return;
+                    }
+                    if(TopicRemove(bChan, settings, args.arguments[2])){
+                        response.message = $"Topic was removed.";
+                        Respond(bChan, response);
+                    }else{
+                        response.message = $"Could not match topic.";
+                        Respond(bChan, response);
+                    }
+                } 
+                if(args.arguments[0].ToLower() == "role" && args.arguments[1].ToLower() == "editemote") 
+                {
+                    if(args.arguments.Count < 4)
+                    {
+                        response.message = $"Not enough arguments. Use \"{CMC}roles role editemote <RoleToEdit> <NewEmote>\" as syntax";
+                        Respond(bChan, response);
+                        return;
+                    }
+                    if(!settings.RoleTable.ContainsKey(args.arguments[2])){
+                        response.message = $"Can't find that role. Make sure you enter it correctly and remember it is case sensitive.";
+                        Respond(bChan, response);
+                        return;
+                    }
+                    if(settings.RoleTable[args.arguments[2]] == args.arguments[3]){
+                        response.message = $"That is the already stored emote for that role. Baka!";
+                        Respond(bChan, response);
+                    }
+                    if(RoleEdit(bChan, settings, args.arguments[2], args.arguments[3])){
+                        response.message = $"The role {args.arguments[2]}'s emote was updated to {args.arguments[3]}.";
+                        Respond(bChan, response);
+                    }else{
+                        response.message = $"Failed to change the emote.";
+                        Respond(bChan, response);
+                    }
+
+
+                        
+                }
 
                 
-                if(
-                    (args.arguments[0].ToLower() == "topic" || args.arguments[1].ToLower() == "topic") 
-                    && 
-                    (args.arguments[0].ToLower() == "remove" || args.arguments[1].ToLower() == "remove"))
-                {
-                        TopicRemove(bChan, settings, args);
-                } 
-         
-if(
-                    (args.arguments[0].ToLower() == "topic" || args.arguments[1].ToLower() == "topic") 
-                    && 
-                    (args.arguments[0].ToLower() == "edit" || args.arguments[1].ToLower() == "edit"))
-                {
-                        TopicEdit(bChan, settings, args);
-                }
-                if(
-                    (args.arguments[0].ToLower() == "role" || args.arguments[1].ToLower() == "role") 
-                    && 
-                    (args.arguments[0].ToLower() == "edit" || args.arguments[1].ToLower() == "edit"))
-                {
-                        RoleEdit(bChan, settings, args);
-                }
 #endregion
             SaveBaseSettings(bChan, PLUGINNAME, settings);
         }// EOF OnCommandReceived
@@ -146,9 +181,12 @@ if(
         }
 
 
-        private void TopicRemove(BotChannel bChan, RolesSettings settings, BotWideCommandArguments args)
+        private bool TopicRemove(BotChannel bChan, RolesSettings settings, string topic)
         {
-            throw new NotImplementedException();
+            if(!settings.Topics.Exists(p=>p.TopicName == topic)){return false;}
+            settings.Topics.RemoveAll(p=>p.TopicName == topic);
+            SaveBaseSettings(bChan, PLUGINNAME, settings);
+            return true;
         }
 
         private bool TopicAdd(BotChannel bChan, RolesSettings settings, string topic)
@@ -160,9 +198,11 @@ if(
         }
 
         #region Role Management
-        private void RoleEdit(BotChannel bChan, RolesSettings settings, BotWideCommandArguments args)
+        private bool RoleEdit(BotChannel bChan, RolesSettings settings, string role, string newEmote)
         {
-            throw new NotImplementedException();
+            settings.RoleTable[role] = newEmote;
+            SaveBaseSettings(bChan, PLUGINNAME, settings);
+            return settings.RoleTable[role] == newEmote;
         }
         private bool RoleRemove(BotChannel bChan, RolesSettings settings, string role)
         {
