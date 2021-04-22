@@ -5,6 +5,7 @@ using Discord;
 using TwitchLib.Client.Events;
 using TwitchLib.Client.Interfaces;
 using TwitchLib.Communication.Events;
+using MisfitBot_MKII.Statics;
 
 namespace MisfitBot_MKII.MisfitBotEvents
 {

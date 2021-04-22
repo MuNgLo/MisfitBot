@@ -7,6 +7,7 @@ using System.Data.SQLite;
 using System.Text;
 using Discord;
 using Newtonsoft.Json;
+using MisfitBot_MKII.Statics;
 
 namespace MisfitBot_MKII
 {

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using TwitchLib.PubSub.Enums;
+using MisfitBot_MKII.Statics;
 
 namespace MisfitBot_MKII
 {
@@ -14,6 +15,7 @@ namespace MisfitBot_MKII
     {
         public MESSAGESOURCE source;
         public string channel;
+        public ulong guildID;
         public bool isBroadcaster;
         public bool isModerator;
         public bool canManageMessages;
@@ -372,11 +374,13 @@ public struct LogEntry
     }
 
     public class DiscordChannelMessage{
-        public readonly ulong ID;
+        public readonly ulong MessageID;
+        public readonly ulong ChannelID;
         public readonly DiscordReactions Reactions;
 
         public DiscordChannelMessage(IMessage message){
-            ID = message.Id;
+            MessageID = message.Id;
+            ChannelID = message.Channel.Id;
             Reactions = new DiscordReactions(message.Reactions);
         }
     }

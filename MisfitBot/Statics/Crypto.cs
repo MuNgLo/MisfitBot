@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 using System.IO;
 using System.Linq;
 
-namespace MisfitBot_MKII.Crypto
+namespace MisfitBot_MKII.Statics
 {
     /// <summary>
     /// Static class to handle encrypting and decrypting

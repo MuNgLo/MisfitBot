@@ -1,15 +1,8 @@
-﻿using Discord;
-using Discord.WebSocket;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
-using TwitchLib.PubSub;
 using System.Data.SQLite;
-using MisfitBot_MKII.Extensions.ChannelManager;
-namespace MisfitBot_MKII
+namespace MisfitBot_MKII.Statics
 {
     public static class Core
     {

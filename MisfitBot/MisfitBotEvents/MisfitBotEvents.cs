@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TwitchLib.Client.Events;
 using TwitchLib.Client.Models;
+using MisfitBot_MKII.Statics;
 
 namespace MisfitBot_MKII.MisfitBotEvents
 {

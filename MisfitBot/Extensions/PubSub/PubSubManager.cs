@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord.WebSocket;
+using MisfitBot_MKII.Statics;
 
 namespace MisfitBot_MKII.Extensions.PubSub
 {

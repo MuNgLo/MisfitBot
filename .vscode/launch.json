@@ -4,16 +4,17 @@
    // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
    "version": "0.2.0",
    "configurations": [
+
         {
             //"name": ".NET Core Launch (console)",
             "name": "Build Bot",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build",
+            "preLaunchTask": "Build Bot",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
             "cwd": "bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
-            "args": "debug", // HAs to be after CWD in this file because reasons
+            "args": "debug", // Has to be after CWD in this file because reasons
             // ARGS List
             // clearDB - deletes current DB at launch and creates a new one
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
@@ -22,17 +23,67 @@
         },
         {
             //"name": ".NET Core Launch (console)",
-            "name": "Build Roles",
+            "name": "Build AdminPlugin",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build Roles",
-            // If you have changed target frameworks, make sure to update the program path.
+            "preLaunchTask": "Compile Admin Plugin",
+            "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
+            "cwd": "bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
+            "console": "integratedTerminal",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Build Couch",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "Compile Couch Plugin",
             "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
             "cwd": "bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
             "args": "debug", // HAs to be after CWD in this file because reasons
-            // ARGS List
-            // clearDB - deletes current DB at launch and creates a new one
-            // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
+            "console": "integratedTerminal",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Build Example Plugin",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "Compile Example Plugin",
+            "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
+            "cwd": "bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
+            "args": "debug", // HAs to be after CWD in this file because reasons
+            "console": "integratedTerminal",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Build Insults",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "Compile Insults Plugin",
+            "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
+            "cwd": "bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
+            "args": "debug", // HAs to be after CWD in this file because reasons
+            "console": "integratedTerminal",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Build Roles",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "Compile Roles Plugin",
+            "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
+            "cwd": "bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
+            "args": "debug", // HAs to be after CWD in this file because reasons
+            "console": "integratedTerminal",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Build Shoutouts",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "Compile Shoutouts Plugin",
+            "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
+            "cwd": "bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
+            "args": "debug", // HAs to be after CWD in this file because reasons
             "console": "integratedTerminal",
             "stopAtEntry": false
         },

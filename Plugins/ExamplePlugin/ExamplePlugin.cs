@@ -1,5 +1,7 @@
 ﻿using System;
 using MisfitBot_MKII;
+using MisfitBot_MKII.DiscordWrap;
+using MisfitBot_MKII.Statics;
 
 namespace ExamplePlugin
 {
@@ -9,9 +11,10 @@ namespace ExamplePlugin
         public ExamplePlugin()
         {
             Program.BotEvents.OnMessageReceived += OnMessageReceived;
+            version = "1.0";
             Core.LOG(new LogEntry(LOGSEVERITY.INFO,
             "PLUGIN",
-            "ExamplePlugin loaded."));
+            $"ExamplePlugin v{version} loaded."));
         }
 
         private async void OnMessageReceived(BotWideMessageArguments args)
@@ -24,7 +27,7 @@ namespace ExamplePlugin
                 }
                 if (args.source == MESSAGESOURCE.DISCORD)
                 {
-                    await Program.DiscordSayMessage(args.channel, "PONG!");
+                    await DiscordClient.DiscordSayMessage(args.channel, "PONG!");
                 }
             }
         }

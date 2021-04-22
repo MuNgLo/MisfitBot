@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using System.Threading.Tasks;
+using MisfitBot_MKII.Statics;
 
 namespace MisfitBot_MKII
 {
@@ -15,6 +16,7 @@ namespace MisfitBot_MKII
         abstract public void OnBotChannelEntryMergeEvent(MisfitBot_MKII.BotChannel discordGuild, MisfitBot_MKII.BotChannel twitchChannel);
 
         public char CMC { get { return Program.CommandCharacter; } set {}}
+        public string version = "0.0";
 
         public async Task MakeConfig<T>(BotChannel bChan, string plugin, T obj){
             await Core.Configs.ConfigSetup<T>(bChan, plugin, obj);
@@ -33,7 +35,7 @@ namespace MisfitBot_MKII
             }
 
             if(args.discordChannel != 0){
-                await Program.DiscordResponse(args);
+                await MisfitBot_MKII.DiscordWrap.DiscordClient.DiscordResponse(args);
             }
             if(args.twitchChannel != null){
                 Program.TwitchResponse(args);
@@ -41,6 +43,13 @@ namespace MisfitBot_MKII
         }
 
         public async Task<BotChannel> GetBotChannel(BotWideCommandArguments args){
+            if(args.source == MESSAGESOURCE.TWITCH){
+               return await Program.Channels.GetTwitchChannelByName(args.channel);
+            }
+            return await Program.Channels.GetDiscordGuildbyID(args.guildID);
+        }
+
+        public async Task<BotChannel> GetBotChannel(BotWideMessageArguments args){
             if(args.source == MESSAGESOURCE.TWITCH){
                return await Program.Channels.GetTwitchChannelByName(args.channel);
             }

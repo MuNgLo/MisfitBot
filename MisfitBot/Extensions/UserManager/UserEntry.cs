@@ -37,6 +37,15 @@ namespace MisfitBot_MKII
             _twitchUID = string.Empty;
             _discordUID = discordID;
         }
+
+        public string ContextName(MESSAGESOURCE source)
+        {
+            if(source == MESSAGESOURCE.TWITCH){
+                return _twitchDisplayname;
+            }
+            return _discordUsername;
+        }
+
         public UserEntry(string name, int lastseen, string twitchID)
         {
             _discordUsername = name;

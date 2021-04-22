@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Discord.Commands;
-using MisfitBot_MKII.Crypto;
 using Microsoft.Extensions.DependencyInjection;
 using System.Data.SQLite;
 using MisfitBot_MKII.Extensions.ChannelManager;
@@ -22,6 +21,7 @@ using System.Reflection;
 using MisfitBot_MKII.Extensions.UserManager;
 using MisfitBot_MKII.Extensions.PubSub;
 using System.Linq;
+using MisfitBot_MKII.Statics;
 
 namespace MisfitBot_MKII
 {
@@ -94,7 +94,6 @@ namespace MisfitBot_MKII
         private void LoadPlugins()
         {
             _plugins = new List<PluginBase>();
-
             string PluginFolder = "Plugins";
             string[] FolderContent = Directory.GetDirectories(PluginFolder);
             foreach (string fileName in FolderContent)
@@ -188,7 +187,7 @@ namespace MisfitBot_MKII
 
         public static async void DiscordRemoveMessage(ulong channelID, ulong messageID)
         {
-            await (DiscordClient.GetChannel(channelID) as Discord.WebSocket.ISocketMessageChannel).DeleteMessageAsync(messageID);
+            await (DiscordClient.GetChannel(channelID) as  Discord.WebSocket.ISocketMessageChannel).DeleteMessageAsync(messageID);
         }
 
         // This runs verification and loading of existing stuff or a first start query session
@@ -396,10 +395,8 @@ namespace MisfitBot_MKII
             return Cipher.Decrypt(config.TwitchUser);
         }
         #endregion
+  
         #region Discord stuff
-
-
-
         public static async void DiscordReconnect()
         {
             await _DiscordClient.StartAsync();
@@ -435,35 +432,7 @@ namespace MisfitBot_MKII
         {
             TwitchClient.SendMessage(args.twitchChannel, args.message);
         }
-        public static async Task DiscordSayMessage(string channel, string message)
-        {
-            if(DiscordClient.ConnectionState != ConnectionState.Connected){return;}
-            await (DiscordClient.GetChannel(Core.StringToUlong(channel)) as ISocketMessageChannel).SendMessageAsync(message);
-        }
-        public static async Task DiscordResponse(BotWideResponseArguments args)
-        {
-            await (DiscordClient.GetChannel(args.discordChannel) as ISocketMessageChannel).SendMessageAsync(args.message);
-        }
-        public static bool DiscordRoleExist(BotChannel bChan, string role)
-        {
-            SocketRole sRole = DiscordClient.GetGuild(bChan.GuildID).Roles.FirstOrDefault(x => x.Name == role);
-            if(sRole != null){
-                return true;
-            }
-            return false;
-        }
-        public static async Task<DiscordChannelMessage> DiscordGetMessage(ulong chID, ulong msgID){
-            IMessage message = await (DiscordClient.GetChannel(chID) as ISocketMessageChannel).GetMessageAsync(msgID);
-            return new DiscordChannelMessage(message);
-        }
-        public static bool DiscordEmoteExist(BotChannel bChan, string emote)
-        {
-            GuildEmote gEmote = DiscordClient.GetGuild(bChan.GuildID).Emotes.FirstOrDefault(x => x.Name == emote);
-            if(gEmote != null){
-                return true;
-            }
-            return false;
-        }
+        
         public static void PubSubStart(BotChannel bChan){
             PubSubs.StartPubSub(bChan, true);
         }

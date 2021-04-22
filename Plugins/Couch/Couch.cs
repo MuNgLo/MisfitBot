@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MisfitBot_MKII;
 using MisfitBot_MKII.Components;
+using MisfitBot_MKII.Statics;
 using System.Data.SQLite;
 using System.Data;
 
@@ -33,9 +34,10 @@ namespace Couch
             Program.BotEvents.OnTwitchChannelJoined += OnTwitchChannelJoined;
             Program.BotEvents.OnTwitchChannelGoesLive += OnTwitchChannelGoesLive;
             dbStrings = new DatabaseStrings(PLUGINNAME, "couch");
+            version = "1.0";
             Core.LOG(new LogEntry(LOGSEVERITY.INFO,
             "PLUGIN",
-            "Couch loaded."));
+            $"Couch v{version} loaded."));
         }
 
         
@@ -48,6 +50,7 @@ namespace Couch
         
         private async void CommandResolve(BotWideCommandArguments args)
         {
+            if (args.command.ToLower() != "couch" && args.command.ToLower() != "seat" && args.command.ToLower() != "seats"){return;}
             BotChannel bChan = await GetBotChannel(args);
             if (bChan == null) { return; }
             if (args.user == null) { return; }
@@ -69,7 +72,6 @@ namespace Couch
             switch (args.command.ToLower())
             {
                 case "couch":
-
                     // Broadcaster and Moderator commands
                     if (args.isModerator || args.isBroadcaster || args.canManageMessages)
                     {

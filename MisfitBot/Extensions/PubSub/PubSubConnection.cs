@@ -5,7 +5,8 @@ using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using TwitchLib.PubSub;
 using TwitchLib.PubSub.Events;
-using MisfitBot_MKII.Crypto;
+using MisfitBot_MKII.Statics;
+
 namespace MisfitBot_MKII.Extensions.PubSub
 {
     /// <summary>
@@ -323,12 +324,13 @@ namespace MisfitBot_MKII.Extensions.PubSub
         private async void OnPubSubServiceConnected(object sender, EventArgs e)
         {
             // SendTopics accepts an oauth optionally, which is necessary for some topics
-            Client.SendTopics(Crypto.Cipher.Decrypt(_oauth));
+            Client.SendTopics(Cipher.Decrypt(_oauth));
             //Client.SendTopics();
             await Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                 $"PubSub connected for {_twitchChannelName}."
                 ));
             BotChannel bChan = await Program.Channels.GetTwitchChannelByID(_twitchID);
+            /*
             if (bChan != null)
             {
                 if (bChan.discordAdminChannel != 0 && Program.DiscordClient != null)
@@ -339,6 +341,7 @@ namespace MisfitBot_MKII.Extensions.PubSub
                         );
                 }
             }
+            */
         }
         /// <summary>
         /// NuJuan Verified

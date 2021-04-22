@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
 
-namespace MisfitBot_MKII
+namespace MisfitBot_MKII.Statics
 {
     /// <summary>
     /// Static class to make it easy to dump objects into files for debugging.

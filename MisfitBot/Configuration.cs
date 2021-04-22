@@ -7,6 +7,7 @@ using Discord.WebSocket;
 using System.Threading.Tasks;
 using System.Data.SQLite;
 using System.Data;
+using MisfitBot_MKII.Statics;
 
 namespace MisfitBot_MKII
 {

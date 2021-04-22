@@ -1,7 +1,8 @@
 ﻿using System;
 using Discord.WebSocket;
 using MisfitBot_MKII;
-using MisfitBot_MKII.Crypto;
+using MisfitBot_MKII.Statics;
+using MisfitBot_MKII.DiscordWrap;
 
 namespace AdminPlugin
 {
@@ -22,10 +23,10 @@ namespace AdminPlugin
             Program.BotEvents.OnTwitchSubGift += OnTwitchSubGift;
             Program.BotEvents.OnTwitchReSubscriber += OnTwitchResub;
             Program.BotEvents.OnTwitchNewSubscriber += OnTwitchNewSub;
-
+            version = "1.0";
             Core.LOG(new LogEntry(LOGSEVERITY.INFO,
             "PLUGIN",
-            "AdminPlugin loaded."));
+            $"AdminPlugin v{version} loaded."));
         }
 
         #region Listeners to announce shiite
@@ -98,7 +99,7 @@ namespace AdminPlugin
                         {
                             if (bChan.TwitchChannelName == string.Empty)
                             {
-                                response.message = $"There is no twitch channel tied to this Discord.";
+                                response.message = $"There is no twitch channel tied to this Discord. Use \"{CMC}twitch channel <NameOfTwitchChannel>\" to tie a channel to this Discord.";
                             }
                             else
                             {
@@ -256,7 +257,7 @@ namespace AdminPlugin
                 }
                 if (args.source == MESSAGESOURCE.DISCORD)
                 {
-                    await Program.DiscordSayMessage(args.channel, "PONG! arrrgh");
+                    await DiscordClient.DiscordSayMessage(args.channel, "PONG! arrrgh");
                 }
             }
         }

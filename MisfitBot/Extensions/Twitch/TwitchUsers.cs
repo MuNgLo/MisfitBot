@@ -1,7 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-//using TwitchLib.Events.Client;
+using MisfitBot_MKII.Statics;
+
 
 namespace MisfitBot_MKII.Twitch
 {

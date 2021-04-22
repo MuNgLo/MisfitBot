@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SQLite;
 using System.Text;
 using System.Threading.Tasks;
+using MisfitBot_MKII.Statics;
 
 namespace MisfitBot_MKII.Components
 {

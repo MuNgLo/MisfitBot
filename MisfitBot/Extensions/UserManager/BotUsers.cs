@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TwitchLib.Api.V5.Models.Users;
 using TwitchLib.Client.Events;
+using MisfitBot_MKII.Statics;
 
 namespace MisfitBot_MKII.Extensions.UserManager
 {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MisfitBot_MKII
+namespace MisfitBot_MKII.Statics
 {
     /// <summary>
     /// Static class to format strings. Replacing predefined fields. See the GetReplacementValues method.
@@ -48,11 +48,7 @@ namespace MisfitBot_MKII
                     }
                     break;*/
                 case "[VICTIM]":
-                    if(args.source == MESSAGESOURCE.TWITCH) {
-                        value = args.victim._twitchDisplayname;
-                    }else{
-                        value = args.victim._discordUsername;
-                    }
+                        value = args.victim.ContextName(args.source);
                     break;
             }
             return value;

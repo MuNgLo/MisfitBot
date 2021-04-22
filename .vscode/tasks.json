@@ -2,35 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
-            "dependsOn": ["Compile Admin Plugin", "Compile Example Plugin", "Compile Couch Plugin", "Compile Roles Plugin"],
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/MisfitBot/MisfitBot-MKII.csproj",
-                "/property:GenerateFullPaths=true",
-                "/property:Private=False", 
-                "/consoleloggerparameters:NoSummary"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "build Roles",
-            "dependsOn": ["Compile Roles Plugin"],
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/MisfitBot/MisfitBot-MKII.csproj",
-                "/property:GenerateFullPaths=true",
-                "/property:Private=False", 
-                "/consoleloggerparameters:NoSummary"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "publish",
+            "label": "Build Bot",
             "command": "dotnet",
             "type": "process",
             "args": [
@@ -67,18 +39,6 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "Compile Example Plugin",
-            "command": "dotnet",
-            "type": "process",
-            "args": [
-                "build",
-                "${workspaceFolder}/Plugins/ExamplePlugin/ExamplePlugin.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
             "label": "Compile Couch Plugin",
             "command": "dotnet",
             "type": "process",
@@ -92,12 +52,49 @@
             "problemMatcher": "$msCompile"
         },
         {
+            "label": "Compile Example Plugin",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Plugins/ExamplePlugin/ExamplePlugin.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Compile Insults Plugin",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Plugins/Insults/Insults.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
             "label": "Compile Roles Plugin",
             "command": "dotnet",
             "type": "process",
             "args": [
                 "build",
                 "${workspaceFolder}/Plugins/RolesPlugin/RolesPlugin.csproj",
+                "/property:GenerateFullPaths=true",
+                "/property:Private=false", 
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Compile Shoutouts Plugin",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Plugins/Shoutouts/Shoutouts.csproj",
                 "/property:GenerateFullPaths=true",
                 "/property:Private=false", 
                 "/consoleloggerparameters:NoSummary"

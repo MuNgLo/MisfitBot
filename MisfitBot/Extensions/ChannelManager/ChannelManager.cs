@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Discord.WebSocket;
 using MisfitBot_MKII.MisfitBotEvents;
 using TwitchLib.Client.Models;
+using MisfitBot_MKII.Statics;
 
 namespace MisfitBot_MKII.Extensions.ChannelManager
 {

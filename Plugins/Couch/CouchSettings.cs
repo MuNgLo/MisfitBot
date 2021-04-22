@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using MisfitBot_MKII;
+using MisfitBot_MKII.Statics;
 
 namespace Couch
 {

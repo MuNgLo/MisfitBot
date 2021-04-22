@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using MisfitBot_MKII.Statics;
 
 namespace MisfitBot_MKII.MisfitBotEvents
 {
@@ -82,6 +83,11 @@ namespace MisfitBot_MKII.MisfitBotEvents
             await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherDiscord", "ReactionAdded"));
             UserEntry user = await Program.Users.GetUserByDiscordID(arg3.UserId);
             BotChannel bChan = await Program.Channels.GetDiscordGuildbyID((arg2 as SocketGuildChannel).Guild.Id);
+
+
+            
+
+
             Program.BotEvents.RaiseDiscordReactionAdded(
                 bChan,
                 user,
@@ -102,7 +108,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
         {
             SocketUserMessage msg = arg as SocketUserMessage;
             if (msg == null) return;
-            if(msg.Content == string.Empty) return;
+            if (msg.Content == string.Empty) return;
             if (msg.Author.Id == Program.DiscordClient.CurrentUser.Id || msg.Author.IsBot) return;
 
             UserEntry usr = await Program.Users.GetUserByDiscordID(msg.Author.Id);
@@ -110,28 +116,30 @@ namespace MisfitBot_MKII.MisfitBotEvents
 
             // Create a command context
             SocketCommandContext context = new SocketCommandContext(Program.DiscordClient, msg);
-            
+
 
             // Create permissions list
             ChannelPermissions asd = (context.User as SocketGuildUser).GetPermissions(arg.Channel as IGuildChannel);
 
 
 
-            if(msg.Content[0] == Program.CommandCharacter){
+            if (msg.Content[0] == Program.CommandCharacter)
+            {
                 List<string> args = new List<string>();
-                args.AddRange( msg.Content.Split(' '));
+                args.AddRange(msg.Content.Split(' '));
                 string cmd = args[0];
-                cmd = cmd.Remove(0,1);
+                cmd = cmd.Remove(0, 1);
                 args.RemoveAt(0);
-                Program.BotEvents.RaiseOnCommandRecieved(new BotWideCommandArguments(){
-                    source = MESSAGESOURCE.DISCORD, 
+                Program.BotEvents.RaiseOnCommandRecieved(new BotWideCommandArguments()
+                {
+                    source = MESSAGESOURCE.DISCORD,
                     channel = msg.Channel.Id.ToString(),
-                    guildID = context.Guild.Id, 
+                    guildID = context.Guild.Id,
                     messageID = context.Message.Id,
                     isBroadcaster = false,
-                    isModerator = false, 
-                    canManageMessages = asd.ManageMessages, 
-                    user = usr, 
+                    isModerator = false,
+                    canManageMessages = asd.ManageMessages,
+                    user = usr,
                     userDisplayName = arg.Author.Username,
                     command = cmd.ToLower(),
                     message = msg.Content,
@@ -139,14 +147,18 @@ namespace MisfitBot_MKII.MisfitBotEvents
                 });
 
 
-            }else{
-                Program.BotEvents.RaiseOnMessageReceived(new BotWideMessageArguments(){
-                    source = MESSAGESOURCE.DISCORD, 
+            }
+            else
+            {
+                Program.BotEvents.RaiseOnMessageReceived(new BotWideMessageArguments()
+                {
+                    source = MESSAGESOURCE.DISCORD,
                     channel = msg.Channel.Id.ToString(),
+                    guildID = context.Guild.Id, 
                     isBroadcaster = false,
-                    isModerator = false, 
-                    canManageMessages = asd.ManageMessages, 
-                    user = usr, 
+                    isModerator = false,
+                    canManageMessages = asd.ManageMessages,
+                    user = usr,
                     userDisplayName = arg.Author.Username,
                     message = msg.Content
                 });
@@ -231,7 +243,8 @@ namespace MisfitBot_MKII.MisfitBotEvents
         /// <returns></returns>
         private async Task LogAsync(LogMessage log)
         {
-            if(Program.Debugmode){
+            if (Program.Debugmode)
+            {
                 await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherDiscord", log.ToString()));
             }
         }

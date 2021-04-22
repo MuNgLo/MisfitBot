@@ -7,7 +7,7 @@ namespace RolesPlugin
 {
     public class RolesSettings : PluginSettingsBase
     {
-
+        public List<MarkedMessage> MarkedMessages = new List<MarkedMessage>();
         public List<TopicDefinition> Topics = new List<TopicDefinition>();
         public Dictionary<string, string> RoleTable = new Dictionary<string, string>();
 
