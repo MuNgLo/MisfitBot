@@ -133,7 +133,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
                 Program.BotEvents.RaiseOnCommandRecieved(new BotWideCommandArguments()
                 {
                     source = MESSAGESOURCE.DISCORD,
-                    channel = msg.Channel.Id.ToString(),
+                    channelID = msg.Channel.Id,
                     guildID = context.Guild.Id,
                     messageID = context.Message.Id,
                     isBroadcaster = false,
@@ -153,7 +153,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
                 Program.BotEvents.RaiseOnMessageReceived(new BotWideMessageArguments()
                 {
                     source = MESSAGESOURCE.DISCORD,
-                    channel = msg.Channel.Id.ToString(),
+                    channelID = msg.Channel.Id,
                     guildID = context.Guild.Id, 
                     isBroadcaster = false,
                     isModerator = false,

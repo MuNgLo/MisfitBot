@@ -21,7 +21,13 @@ namespace MisfitBot_MKII
         public async Task MakeConfig<T>(BotChannel bChan, string plugin, T obj){
             await Core.Configs.ConfigSetup<T>(bChan, plugin, obj);
         }
-
+        /// <summary>
+        /// Returns saved settings from DB or creates a new entry in DB and returns that.
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <param name="plugin"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public async Task<T> Settings<T>(BotChannel bChan, string plugin)
         {
             T settings = await Core.Configs.GetConfig<T>(bChan, plugin);
@@ -94,6 +100,11 @@ namespace MisfitBot_MKII
                 await (Program.DiscordClient.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync("", false, obj);
                 return;
             }
+        }
+
+        public async Task SayEmbedOnDiscord(ulong channel, Embed obj)
+        {
+            await (Program.DiscordClient.GetChannel(channel) as ISocketMessageChannel).SendMessageAsync("", false, obj);
         }
     }
 }

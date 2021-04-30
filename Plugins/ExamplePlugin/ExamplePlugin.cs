@@ -11,7 +11,7 @@ namespace ExamplePlugin
         public ExamplePlugin()
         {
             Program.BotEvents.OnMessageReceived += OnMessageReceived;
-            version = "1.0";
+            version = "1.1";
             Core.LOG(new LogEntry(LOGSEVERITY.INFO,
             "PLUGIN",
             $"ExamplePlugin v{version} loaded."));
@@ -27,7 +27,7 @@ namespace ExamplePlugin
                 }
                 if (args.source == MESSAGESOURCE.DISCORD)
                 {
-                    await DiscordClient.DiscordSayMessage(args.channel, "PONG!");
+                    await DiscordClient.DiscordSayMessage(args.channelID, "PONG!");
                 }
             }
         }

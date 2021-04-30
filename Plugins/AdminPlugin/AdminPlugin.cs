@@ -23,7 +23,7 @@ namespace AdminPlugin
             Program.BotEvents.OnTwitchSubGift += OnTwitchSubGift;
             Program.BotEvents.OnTwitchReSubscriber += OnTwitchResub;
             Program.BotEvents.OnTwitchNewSubscriber += OnTwitchNewSub;
-            version = "1.0";
+            version = "1.1";
             Core.LOG(new LogEntry(LOGSEVERITY.INFO,
             "PLUGIN",
             $"AdminPlugin v{version} loaded."));
@@ -257,7 +257,7 @@ namespace AdminPlugin
                 }
                 if (args.source == MESSAGESOURCE.DISCORD)
                 {
-                    await DiscordClient.DiscordSayMessage(args.channel, "PONG! arrrgh");
+                    await DiscordClient.DiscordSayMessage(args.channelID, "PONG! arrrgh");
                 }
             }
         }

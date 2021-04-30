@@ -31,8 +31,12 @@ namespace MisfitBot_MKII.DiscordWrap
         }
         public static async Task DiscordSayMessage(string channel, string message)
         {
+            await DiscordSayMessage(Core.StringToUlong(channel), message);
+        }
+        public static async Task DiscordSayMessage(ulong channel, string message)
+        {
             if(Program.DiscordClient.ConnectionState != ConnectionState.Connected){return;}
-            await (Program.DiscordClient.GetChannel(Core.StringToUlong(channel)) as ISocketMessageChannel).SendMessageAsync(message);
+            await (Program.DiscordClient.GetChannel(channel) as ISocketMessageChannel).SendMessageAsync(message);
         }
         public static async Task DiscordResponse(BotWideResponseArguments args)
         {

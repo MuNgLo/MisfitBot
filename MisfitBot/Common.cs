@@ -16,6 +16,7 @@ namespace MisfitBot_MKII
         public MESSAGESOURCE source;
         public string channel;
         public ulong guildID;
+        public ulong channelID;
         public bool isBroadcaster;
         public bool isModerator;
         public bool canManageMessages;
@@ -52,15 +53,15 @@ namespace MisfitBot_MKII
             source = args.source;
             user = args.user;
             parseMessage = false;
-            if(source == MESSAGESOURCE.TWITCH){twitchChannel = args.channel;}
-            if(source == MESSAGESOURCE.DISCORD){discordChannel = Core.StringToUlong(args.channel);}
+            twitchChannel = args.channel;
+            discordChannel = args.channelID;
         }
         public BotWideResponseArguments(BotWideCommandArguments args){
             source = args.source;
             user = args.user;
             parseMessage = false;
-            if(source == MESSAGESOURCE.TWITCH){twitchChannel = args.channel;}
-            if(source == MESSAGESOURCE.DISCORD){discordChannel = Core.StringToUlong(args.channel);}
+            twitchChannel = args.channel;
+            discordChannel = args.channelID;
         }
     }
 

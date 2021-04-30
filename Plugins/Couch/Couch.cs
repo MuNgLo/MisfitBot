@@ -34,7 +34,7 @@ namespace Couch
             Program.BotEvents.OnTwitchChannelJoined += OnTwitchChannelJoined;
             Program.BotEvents.OnTwitchChannelGoesLive += OnTwitchChannelGoesLive;
             dbStrings = new DatabaseStrings(PLUGINNAME, "couch");
-            version = "1.0";
+            version = "1.1";
             Core.LOG(new LogEntry(LOGSEVERITY.INFO,
             "PLUGIN",
             $"Couch v{version} loaded."));
