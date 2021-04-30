@@ -79,6 +79,9 @@ namespace MisfitBot_MKII.DiscordWrap
         }
         public static async Task<DiscordChannelMessage> DiscordGetMessage(ulong chID, ulong msgID){
             IMessage message = await (Program.DiscordClient.GetChannel(chID) as ISocketMessageChannel).GetMessageAsync(msgID);
+            if(message == null){
+                return null;
+            }
             return new DiscordChannelMessage(message);
         }
         public static bool DiscordEmoteExist(BotChannel bChan, string emote)

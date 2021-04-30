@@ -76,6 +76,11 @@ namespace RolesPlugin
                         return;
                     }
                     DiscordChannelMessage dMessage = await MisfitBot_MKII.DiscordWrap.DiscordClient.DiscordGetMessage(response.discordChannel, msgID);
+                    if(dMessage == null){
+                        response.message = $"Can't find that message. Make sure I got access to channel and rights to manage messages in it.";
+                        Respond(bChan, response);
+                        return;
+                    }
                     response.message = $"Marking that message with the topic \"{args.arguments[2]}\".";
                     settings.MarkedMessages.Add(new MarkedMessage() { MessageID = msgID, Topic = args.arguments[2], TimeStamp = Core.CurrentTime });
 
@@ -336,7 +341,7 @@ namespace RolesPlugin
                                 $"Topics : {settings.TopicsList()}{System.Environment.NewLine}{System.Environment.NewLine}" +
                                 $"Currently {settings.MarkedMessages.Count} messages is marked{System.Environment.NewLine}{System.Environment.NewLine}" +
                                 $"Roles plugin is currently {(settings._active ? "active" : "inactive")}```";
-            await SayOnDiscord(message, args.channel);
+            await SayOnDiscord(message, args.channelID);
         }
 
         private async Task MarkMessage(BotChannel bChan, RolesSettings settings, DiscordChannelMessage dMessage, string topicToAdd)
