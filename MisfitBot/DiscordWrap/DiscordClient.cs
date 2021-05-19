@@ -40,7 +40,15 @@ namespace MisfitBot_MKII.DiscordWrap
         }
         public static async Task DiscordResponse(BotWideResponseArguments args)
         {
-            await (Program.DiscordClient.GetChannel(args.discordChannel) as ISocketMessageChannel).SendMessageAsync(args.message);
+            SocketChannel sChannel = Program.DiscordClient.GetChannel(args.discordChannel);
+            SocketGuildUser sUser = (sChannel as SocketGuildChannel).Guild.GetUser(args.user._discordUID);
+            // Create permissions list
+            ChannelPermissions asd = sUser.GetPermissions(sChannel as IGuildChannel);
+            if(!asd.SendMessages){
+                // Can't send to channel so aborting
+                return;
+            }
+            await (sChannel as ISocketMessageChannel).SendMessageAsync(args.message);
         }
         public static async Task<bool> RoleAddUser(BotChannel bChan, UserEntry user, string role){
             IGuild iGuild = Program.DiscordClient.GetGuild(bChan.GuildID) as IGuild;

@@ -8,13 +8,9 @@ namespace ExamplePlugin
     //  https://cann0nf0dder.wordpress.com/2020/08/30/basic-dotnet-command-calls-to-create-a-c-project-in-visual-studio-code/#Adding-Projects
     public class ExamplePlugin : PluginBase
     {
-        public ExamplePlugin()
+        public ExamplePlugin():base("ExamplePlugin", 0)
         {
             Program.BotEvents.OnMessageReceived += OnMessageReceived;
-            version = "1.1";
-            Core.LOG(new LogEntry(LOGSEVERITY.INFO,
-            "PLUGIN",
-            $"ExamplePlugin v{version} loaded."));
         }
 
         private async void OnMessageReceived(BotWideMessageArguments args)

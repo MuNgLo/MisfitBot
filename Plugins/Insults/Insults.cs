@@ -11,20 +11,11 @@ namespace Insults
 {
     public class Insults : PluginBase
     {
-
-        public readonly string PLUGINNAME = "Insults";
-        public readonly string PLUGINSTATS = "_Couch_Stats";
-
         private DatabaseStrings dbStrings;
 
-        public Insults()
+        public Insults():base("Insults", 1)
         {
-            dbStrings = new DatabaseStrings(PLUGINNAME, "insults");
-            version = "0.2";
-            Core.LOG(new LogEntry(LOGSEVERITY.INFO,
-            "PLUGIN",
-            $"{PLUGINNAME} v{version} loaded."));
-
+            dbStrings = new DatabaseStrings("Insults", "insults");
             Program.BotEvents.OnCommandReceived += OnCommandRecieved;
         }
 
@@ -33,7 +24,7 @@ namespace Insults
             BotChannel bChan = await GetBotChannel(args);
             if (bChan == null) { return; }
             await DBVerify(bChan);
-            InsultSettings settings = await Settings<InsultSettings>(bChan, PLUGINNAME);
+            InsultSettings settings = await Settings<InsultSettings>(bChan, PluginName);
             BotWideResponseArguments response = new BotWideResponseArguments(args);
             if(args.command.ToLower() == "insult" && settings._active){
                 string pickedLine = dbStrings.GetRandomLine(bChan, "INSULT");
@@ -64,22 +55,28 @@ namespace Insults
                         await SayEmbedOnDiscord(args.channelID, embedded.Build());
                     return;
                     }
+                    if(args.source == MESSAGESOURCE.TWITCH){
+                        response.message = $"The plugin is currently {(settings._active ? "active" : "inactive")} here.";
+                        Respond(bChan, response);
+                        return;
+                    }
                 }
                 // resolve subcommands
                 switch(args.arguments[0]){
                     case "off":
                         settings._active = false;
-                        SaveBaseSettings(bChan, PLUGINNAME, settings);
+                        SaveBaseSettings(bChan, PluginName, settings);
                         response.message = $"Insults is inactive.";
                         Respond(bChan, response);
                         break;
                     case "on":
                         settings._active = true;
-                        SaveBaseSettings(bChan, PLUGINNAME, settings);
+                        SaveBaseSettings(bChan, PluginName, settings);
                         response.message = $"Insults is active.";
                         Respond(bChan, response);
                         break;
                     case "add":
+                        if(args.source == MESSAGESOURCE.TWITCH){return;}
                         if(args.arguments.Count <= 1){
                             response.message = "You need to have line after the add. Use [VICTIM] as replacement of the user's name.";
                             Respond(bChan, response);
@@ -94,6 +91,7 @@ namespace Insults
                         Respond(bChan, response);
                     break;
                     case "use":
+                        if(args.source == MESSAGESOURCE.TWITCH){return;}
                         if(args.arguments.Count <= 1){
                             response.message = "You need to give a valid ID. Check the List command to see ID for the lines in the database.";
                             Respond(bChan, response);

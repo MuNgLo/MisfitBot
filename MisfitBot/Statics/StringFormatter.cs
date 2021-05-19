@@ -50,6 +50,12 @@ namespace MisfitBot_MKII.Statics
                 case "[VICTIM]":
                         value = args.victim.ContextName(args.source);
                     break;
+                /*case "[EVENT]":
+                        value = args.victim.ContextName(args.source);
+                    break;*/
+                case "[EVENTUSER]":
+                        value = args.victim.ContextName(args.source);
+                    break;
             }
             return value;
         }

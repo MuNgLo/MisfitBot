@@ -117,7 +117,6 @@ namespace MisfitBot_MKII.MisfitBotEvents
             // Create a command context
             SocketCommandContext context = new SocketCommandContext(Program.DiscordClient, msg);
 
-
             // Create permissions list
             ChannelPermissions asd = (context.User as SocketGuildUser).GetPermissions(arg.Channel as IGuildChannel);
 

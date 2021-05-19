@@ -14,15 +14,11 @@ namespace RolesPlugin
     {
         public readonly string PLUGINNAME = "RolesPlugin";
 
-        public RolesPlugin()
+        public RolesPlugin():base("Roles", 0)
         {
             Program.BotEvents.OnDiscordReactionAdded += OnDiscordReactionAdded;
             Program.BotEvents.OnDiscordReactionRemoved += OnDiscordReactionRemoved;
             Program.BotEvents.OnCommandReceived += OnCommandReceived;
-            version = "1.1";
-            Core.LOG(new LogEntry(LOGSEVERITY.INFO,
-            "PLUGIN",
-            $"RolesPlugin v{version} loaded."));
         }
 
         private async void OnCommandReceived(BotWideCommandArguments args)

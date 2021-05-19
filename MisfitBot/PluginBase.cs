@@ -16,7 +16,33 @@ namespace MisfitBot_MKII
         abstract public void OnBotChannelEntryMergeEvent(MisfitBot_MKII.BotChannel discordGuild, MisfitBot_MKII.BotChannel twitchChannel);
 
         public char CMC { get { return Program.CommandCharacter; } set {}}
-        public string version = "0.0";
+
+
+        private readonly string _pluginName;
+        public string PluginName { get => _pluginName; private set {} }
+
+        private readonly int _version = 0;
+        public int Version { get => _version; private set {} }
+
+
+        public PluginBase(string pluginName, int version){
+            _pluginName = pluginName;
+            _version = version;
+            Core.LOG(new LogEntry(LOGSEVERITY.INFO,
+            "PLUGIN",
+            $"{pluginName} v{version} loaded."));
+            CompatabilityCheck();
+        }
+
+
+        public async void CompatabilityCheck(){
+            if(Program._version < _version){
+                await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, _pluginName, $"WARNING! {_pluginName} was compiled against a newer version of the bot({Program._version})."));
+            }
+            if(Program._version > _version){
+                await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, _pluginName, $"WARNING! {_pluginName} was compiled against an older version of the bot({Program._version})."));
+            }
+        }
 
         public async Task MakeConfig<T>(BotChannel bChan, string plugin, T obj){
             await Core.Configs.ConfigSetup<T>(bChan, plugin, obj);
@@ -40,10 +66,10 @@ namespace MisfitBot_MKII
                 args.message = StringFormatter.ConvertMessage(ref args);
             }
 
-            if(args.discordChannel != 0){
+            if(args.source == MESSAGESOURCE.DISCORD && args.discordChannel != 0){
                 await MisfitBot_MKII.DiscordWrap.DiscordClient.DiscordResponse(args);
             }
-            if(args.twitchChannel != null){
+            if(args.source == MESSAGESOURCE.TWITCH && args.twitchChannel != null){
                 Program.TwitchResponse(args);
             }
         }

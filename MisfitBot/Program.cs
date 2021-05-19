@@ -27,6 +27,7 @@ namespace MisfitBot_MKII
 {
     public class Program
     {
+        public const int _version = 1;
         private static DiscordSocketClient _DiscordClient;
         private static EventCatcherDiscord _DiscordEvents;
         private static IServiceProvider _services;
@@ -57,6 +58,7 @@ namespace MisfitBot_MKII
         public static BotwideEvents BotEvents { get => _BotEvents; set => _BotEvents = value; }
         public static bool Debugmode { get => _Debugmode; private set => _Debugmode = value; }
         public static bool TwitchConnected { get => _TwitchClient.IsConnected; private set {} }
+        public static int Version { get => _version; private set{} }
 
         public List<PluginBase> _plugins;
 
@@ -432,7 +434,19 @@ namespace MisfitBot_MKII
         {
             TwitchClient.SendMessage(args.twitchChannel, args.message);
         }
-        
+        public static async Task<object> TwitchChannelInfo(string twitchChannelID){
+            var channelInfo = await _TwitchAPI.V5.Channels.GetChannelByIDAsync(twitchChannelID);
+
+            return channelInfo;
+        }
+        /*public static async Task<object> TwitchStreamInfo(string twitchChannelID){
+            _TwitchAPI.Settings.AccessToken = Cipher.Decrypt(Program.config.TwitchToken);
+
+
+            //var streamInfo = await _TwitchAPI.Helix..GetUsersAsync(new List<string>(){twitchChannelID});
+            //var vodInfo = await _TwitchAPI.V5.Videos.GetVideoAsync
+            return streamInfo;
+        }*/
         public static void PubSubStart(BotChannel bChan){
             PubSubs.StartPubSub(bChan, true);
         }

@@ -9,7 +9,7 @@ namespace AdminPlugin
     // Invite link https://discordapp.com/oauth2/authorize?client_id=295257486708047882&scope=bot&permissions=0
     public class AdminPlugin : PluginBase
     {
-        public AdminPlugin()
+        public AdminPlugin():base("AdminPlugin", 0)
         {
             Program.BotEvents.OnMessageReceived += OnMessageReceived;
             Program.BotEvents.OnTwitchConnected += OnTwitchConnected;
@@ -23,10 +23,6 @@ namespace AdminPlugin
             Program.BotEvents.OnTwitchSubGift += OnTwitchSubGift;
             Program.BotEvents.OnTwitchReSubscriber += OnTwitchResub;
             Program.BotEvents.OnTwitchNewSubscriber += OnTwitchNewSub;
-            version = "1.1";
-            Core.LOG(new LogEntry(LOGSEVERITY.INFO,
-            "PLUGIN",
-            $"AdminPlugin v{version} loaded."));
         }
 
         #region Listeners to announce shiite

@@ -26,7 +26,7 @@ namespace Couch
         private List<TimedMessage> _timedMessages = new List<TimedMessage>();
         #endregion
 
-        public Couch()
+        public Couch():base("Couch", 1)
         {
             DBDefaultLines();
             Program.BotEvents.OnMessageReceived += OnMessageReceived;
@@ -34,10 +34,6 @@ namespace Couch
             Program.BotEvents.OnTwitchChannelJoined += OnTwitchChannelJoined;
             Program.BotEvents.OnTwitchChannelGoesLive += OnTwitchChannelGoesLive;
             dbStrings = new DatabaseStrings(PLUGINNAME, "couch");
-            version = "1.1";
-            Core.LOG(new LogEntry(LOGSEVERITY.INFO,
-            "PLUGIN",
-            $"Couch v{version} loaded."));
         }
 
         
@@ -107,7 +103,7 @@ namespace Couch
                                 $"User commands{System.Environment.NewLine}" +
                                 $"{Program.CommandCharacter}seat -> When couch open it responds with success of fail message.{System.Environment.NewLine}" +
                                 $"{Program.CommandCharacter}seats -> User stats rundown.{System.Environment.NewLine}```";
-                                await SayOnDiscord(message, args.channel);
+                                await SayOnDiscord(message, args.channelID);
                             }
                             if (settings._active)
                             {
@@ -181,7 +177,7 @@ namespace Couch
                                 int id = -1;
                                 int.TryParse(args.arguments[1], out id);
                                 if (id <= 0) { return; }
-                                await DeleteEntry(bChan, args.channel, id);
+                                await DeleteEntry(bChan, args.channelID, id);
                                 break;
                             case "greet":
                                 if (args.arguments.Count == 2)
@@ -294,14 +290,14 @@ namespace Couch
                                 if (args.source != MESSAGESOURCE.DISCORD) { return; }
                                 if (args.arguments.Count == 1)
                                 {
-                                    await ListLinesFromDB(bChan, args.channel, 0);
+                                    await ListLinesFromDB(bChan, args.channelID, 0);
                                     return;
                                 }
                                 int page = 0;
                                 int.TryParse(args.arguments[1], out page);
                                 if (page <= 0) { page = 1; }
 
-                                await ListLinesFromDB(bChan, args.channel, page - 1);
+                                await ListLinesFromDB(bChan, args.channelID, page - 1);
                                 break;
 
                         }
@@ -719,7 +715,7 @@ namespace Couch
             _greets.Add("❤️❤️❤️ Senpai [USER] ❤️❤️❤️");
             _greets.Add("/me twitches nervously as [USER] enters the room.");
         }
-        private async Task DeleteEntry(BotChannel bChan, string discordChannel, int id)
+        private async Task DeleteEntry(BotChannel bChan, ulong discordChannel, int id)
         {
             DBString entry = await dbStrings.GetStringByID(bChan, id);
             if (entry == null)
@@ -749,6 +745,10 @@ namespace Couch
             {
                 await SayOnDiscordAdmin(bChan, "Failed to update entry.");
             }
+        }
+        private async Task ListLinesFromDB(BotChannel bChan, ulong channelID, int page)
+        {
+            await ListLinesFromDB(bChan, channelID.ToString(), page);
         }
         private async Task ListLinesFromDB(BotChannel bChan, string channelID, int page)
         {
