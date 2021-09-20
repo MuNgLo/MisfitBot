@@ -208,8 +208,6 @@ namespace Insults
             BotChannel bChan = await GetBotChannel(args);
             if (bChan == null) { return; }
             await DBVerify(bChan);
-
-
         }
 
         private async Task DBVerify(BotChannel bChan)

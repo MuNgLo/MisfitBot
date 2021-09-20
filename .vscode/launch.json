@@ -88,6 +88,17 @@
             "stopAtEntry": false
         },
         {
+            "name": "Build Queue",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "Compile Queue Plugin",
+            "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
+            "cwd": "bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
+            "args": "debug", // Has to be after CWD in this file because reasons
+            "console": "integratedTerminal",
+            "stopAtEntry": false
+        },
+        {
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach",

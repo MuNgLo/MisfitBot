@@ -100,6 +100,19 @@
                 "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Compile Queue Plugin",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+            "build",
+            "${workspaceFolder}/Plugins/QueuePlugin/QueuePlugin.csproj",
+            "/property:GenerateFullPaths=true",
+            "/property:Private=false", 
+            "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
         }
     ]
 }
