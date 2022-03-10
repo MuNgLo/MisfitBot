@@ -1,14 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
-<ItemGroup>
-    <ProjectReference Include="..\..\MisfitBot\MisfitBot-MKII.csproj" />
-  </ItemGroup>
-
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <OutputType>library</OutputType>
-    <OutputPath>../../bin/netcoreapp3.1/Plugins/Couch</OutputPath>
-  </PropertyGroup>
-
+	<ItemGroup>
+		<ProjectReference Include="..\..\MisfitBot\MisfitBot-MKII.csproj"/>
+		<PackageReference Include="Discord.net" Version="3.4.0"/>
+		<PackageReference Include="Discord.Net.Commands" Version="3.4.0"/>
+		<PackageReference Include="Discord.Net.Rest" Version="3.4.0"/>
+		<PackageReference Include="Discord.Net.Webhook" Version="3.4.0"/>
+		<PackageReference Include="Discord.Net.WebSocket" Version="3.4.0"/>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0"/>
+		<PackageReference Include="system.data.sqlite.core" Version="1.0.115.5"/>
+		<PackageReference Include="TwitchLib" Version="3.3.0"/>
+		<PackageReference Include="TwitchLib.PubSub" Version="3.2.3"/>
+	</ItemGroup>
+	<PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<OutputType>library</OutputType>
+		<OutputPath>../../bin/netcoreapp3.1/Plugins/Couch</OutputPath>
+	</PropertyGroup>
 </Project>

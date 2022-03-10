@@ -1,5 +1,5 @@
 ﻿using System;
-using Discord.WebSocket;
+//using Discord.WebSocket;
 using MisfitBot_MKII;
 using MisfitBot_MKII.Statics;
 using MisfitBot_MKII.DiscordWrap;

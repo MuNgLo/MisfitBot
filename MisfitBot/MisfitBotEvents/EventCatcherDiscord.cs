@@ -24,7 +24,11 @@ namespace MisfitBot_MKII.MisfitBotEvents
             client.Disconnected += Disconnected;
             client.GuildAvailable += Program.BotEvents.RaiseOnDiscordGuildAvailable;
             client.GuildMembersDownloaded += Program.BotEvents.RaiseOnDiscordMembersDownloaded;
-            client.GuildMemberUpdated += GuildMemberUpdated;
+            //client.GuildMemberUpdated  += GuildMemberUpdated; // TODO FIX THIS
+
+            client.PresenceUpdated += PresenceUpdated;
+
+            #region temp hider
             client.GuildUnavailable += (guild) => { Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "EventCatcherDiscord", $"Discord guild \"{guild.Name}\" unavailable.")); return Task.CompletedTask; };
             //client.GuildUpdated += GuildUpdated;
             client.JoinedGuild += (guild) => { Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherDiscord", $"Joined Discord guild \"{guild.Name}\".")); return Task.CompletedTask; }; ;
@@ -37,9 +41,13 @@ namespace MisfitBot_MKII.MisfitBotEvents
             client.MessageReceived += HandleCommandAsync;
             //client.MessagesBulkDeleted += MessagesBulkDeleted;
             //client.MessageUpdated += MessageUpdated;
-            client.ReactionAdded += ReactionAdded;
-            client.ReactionRemoved += ReactionRemoved;
-            client.ReactionsCleared += ReactionsCleared;
+
+    // TODO FIX THESE 3
+            //client.ReactionAdded += ReactionAdded;
+            //client.ReactionRemoved += ReactionRemoved;
+            //client.ReactionsCleared += ReactionsCleared;
+
+
             client.Ready += ReadyAsync;
             //client.RecipientAdded += RecipientAdded;
             //client.RecipientRemoved += RecipientRemoved;
@@ -49,12 +57,42 @@ namespace MisfitBot_MKII.MisfitBotEvents
             //client.UserBanned += UserBanned;
             //client.UserIsTyping += UserIsTyping;
             client.UserJoined += UserJoined;
-            client.UserLeft += UserLeft;
+            //client.UserLeft += UserLeft; // TODO FIX THIS
             //client.UserUnbanned += UserUnbanned;
             client.UserUpdated += Program.BotEvents.RaiseDiscordUserUpdated;
             //client.UserVoiceStateUpdated += UserVoiceStateUpdated;
             //client.VoiceServerUpdated += VoiceServerUpdated;
+            #endregion
         }
+/// <summary>
+        /// When a guild memember gets updated we raise an event for each guild shared so plugins can listen for their specific guild
+        /// </summary>
+        /// <param name="current"></param>
+        /// <param name="old"></param>
+        /// <returns></returns>
+        private async Task PresenceUpdated(SocketUser current, SocketPresence oldP, SocketPresence newP)
+        {
+            // TODO warning verify current and old is accurate
+            foreach (SocketGuild guild in current.MutualGuilds)
+            {
+                BotChannel bChan = await Program.Channels.GetDiscordGuildbyID(guild.Id);
+                UserEntry currentUser = await Program.Users.GetUserByDiscordID(current.Id);
+                UserEntry oldUser = await Program.Users.GetUserByDiscordID(guild.Id); // TODO this will be bugged
+                Program.BotEvents.RaiseOnDiscordGuildMemberUpdated(bChan, currentUser, oldUser);
+            }
+        }
+private async Task GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> current, SocketGuildUser old)
+        {
+            // TODO warning verify current and old is accurate
+            foreach (SocketGuild guild in current.Value.MutualGuilds)
+            {
+                BotChannel bChan = await Program.Channels.GetDiscordGuildbyID(guild.Id);
+                UserEntry currentUser = await Program.Users.GetUserByDiscordID(current.Id);
+                UserEntry oldUser = await Program.Users.GetUserByDiscordID(old.Id);
+                Program.BotEvents.RaiseOnDiscordGuildMemberUpdated(bChan, currentUser, oldUser);
+            }
+        }
+
 
         private async Task ReactionsCleared(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2)
         {
@@ -78,7 +116,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
             );
         }
 
-        private async Task ReactionAdded(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
+        private async Task ReactionAddedOLD(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
         {
             await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherDiscord", "ReactionAdded"));
             UserEntry user = await Program.Users.GetUserByDiscordID(arg3.UserId);
@@ -167,23 +205,10 @@ namespace MisfitBot_MKII.MisfitBotEvents
 
 
         #region Passed first check. All here raise BotWide Events except the log grabber.
-        /// <summary>
-        /// When a guild memember gets updated we raise an event for each guild shared so plugins can listen for their specific guild
-        /// </summary>
-        /// <param name="current"></param>
-        /// <param name="old"></param>
-        /// <returns></returns>
-        private async Task GuildMemberUpdated(SocketGuildUser current, SocketGuildUser old)
-        {
-            // TODO warning verify current and old is accurate
-            foreach (SocketGuild guild in current.MutualGuilds)
-            {
-                BotChannel bChan = await Program.Channels.GetDiscordGuildbyID(guild.Id);
-                UserEntry currentUser = await Program.Users.GetUserByDiscordID(current.Id);
-                UserEntry oldUser = await Program.Users.GetUserByDiscordID(old.Id);
-                Program.BotEvents.RaiseOnDiscordGuildMemberUpdated(bChan, currentUser, oldUser);
-            }
-        }
+        
+
+        
+
         /// <summary>
         /// New user joins a guild
         /// </summary>
