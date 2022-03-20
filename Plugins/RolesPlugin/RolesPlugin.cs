@@ -14,7 +14,7 @@ namespace RolesPlugin
     {
         public readonly string PLUGINNAME = "RolesPlugin";
 
-        public RolesPlugin():base("Roles", 0)
+        public RolesPlugin():base("Roles", 1)
         {
             Program.BotEvents.OnDiscordReactionAdded += OnDiscordReactionAdded;
             Program.BotEvents.OnDiscordReactionRemoved += OnDiscordReactionRemoved;

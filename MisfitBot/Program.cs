@@ -127,7 +127,7 @@ namespace MisfitBot_MKII
             { TwitchAPI = new TwitchAPI(); }
             TwitchAPI.Settings.SkipDynamicScopeValidation = true;
             TwitchAPI.Settings.ClientId = TwitchClientID();
-            TwitchAPI.Settings.AccessToken = "";
+            TwitchAPI.Settings.AccessToken = TwitchOAUTHToken();
 
             ConnectionCredentials cred = new ConnectionCredentials(TwitchUserName(), TwitchOAUTHToken());
             _TwitchClient = new TwitchClient();
@@ -244,7 +244,13 @@ namespace MisfitBot_MKII
         {
             if (!config.UseDiscord) { return; }
             Console.WriteLine("Starting up Discord");
-            _DiscordClient = new DiscordSocketClient();
+
+            DiscordSocketConfig dConfig = new DiscordSocketConfig()
+            {
+                GatewayIntents = GatewayIntents.GuildMembers | GatewayIntents.GuildPresences | GatewayIntents.DirectMessages | GatewayIntents.DirectMessageReactions | GatewayIntents.Guilds | GatewayIntents.GuildBans | GatewayIntents.GuildEmojis | GatewayIntents.GuildMessages | GatewayIntents.GuildMessageReactions
+            };
+
+            _DiscordClient = new DiscordSocketClient(dConfig);
             _DiscordEvents = new EventCatcherDiscord(_DiscordClient);
             
 

@@ -6,13 +6,13 @@
    "configurations": [
        
         {
-            "name": "BuildBot",
+            "name": "Build Bot",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "Build Bot",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
-            "cwd": "bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
+            "cwd": "${workspaceFolder}/bin/netcoreapp3.1", 
             "args": ["debug"], // Has to be after CWD in this file because reasons
             // ARGS List
             // clearDB - deletes current DB at launch and creates a new one
@@ -27,7 +27,7 @@
             "request": "launch",
             "preLaunchTask": "Compile Admin Plugin",
             "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
-            "cwd": "bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
+            "cwd": "${workspaceFolder}/bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
             "args": ["debug"], // HAs to be after CWD in this file because reasons
             "console": "integratedTerminal",
             "stopAtEntry": false
@@ -38,7 +38,7 @@
             "request": "launch",
             "preLaunchTask": "Compile Couch Plugin",
             "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
-            "cwd": "bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
+            "cwd": "${workspaceFolder}/bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
             "args": ["debug"], // HAs to be after CWD in this file because reasons
             "console": "integratedTerminal",
             "stopAtEntry": false
@@ -49,7 +49,7 @@
             "request": "launch",
             "preLaunchTask": "Compile Example Plugin",
             "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
-            "cwd": "bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
+            "cwd": "${workspaceFolder}/bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
             "args": ["debug"], // HAs to be after CWD in this file because reasons
             "console": "integratedTerminal",
             "stopAtEntry": false
@@ -60,7 +60,7 @@
             "request": "launch",
             "preLaunchTask": "Compile Insults Plugin",
             "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
-            "cwd": "bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
+            "cwd": "${workspaceFolder}/bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
             "args": ["debug"], // HAs to be after CWD in this file because reasons
             "console": "integratedTerminal",
             "stopAtEntry": false
@@ -71,7 +71,7 @@
             "request": "launch",
             "preLaunchTask": "Compile Roles Plugin",
             "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
-            "cwd": "bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
+            "cwd": "${workspaceFolder}/bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
             "args": ["debug"], // HAs to be after CWD in this file because reasons
             "console": "integratedTerminal",
             "stopAtEntry": false
@@ -82,7 +82,7 @@
             "request": "launch",
             "preLaunchTask": "Compile Shoutouts Plugin",
             "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
-            "cwd": "bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
+            "cwd": "${workspaceFolder}/bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
             "args": ["debug"], // HAs to be after CWD in this file because reasons
             "console": "integratedTerminal",
             "stopAtEntry": false
@@ -93,7 +93,7 @@
             "request": "launch",
             "preLaunchTask": "Compile Queue Plugin",
             "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
-            "cwd": "bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
+            "cwd": "${workspaceFolder}/bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
             "args": ["debug"], // Has to be after CWD in this file because reasons
             "console": "integratedTerminal",
             "stopAtEntry": false

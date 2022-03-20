@@ -202,7 +202,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
         internal async Task RaiseOnTwitchConnected(string msg)
         {
             await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Events", "Twitch Connected: " + msg));
-            OnTwitchConnected?.Invoke(msg);
+            OnTwitchConnected?.Invoke();
         }
 
         

@@ -1,19 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<OutputType>Exe</OutputType>
-		<OutputPath>../bin</OutputPath>
-		<TargetFramework>netcoreapp3.1</TargetFramework>
-		<RootNamespace>MisfitBot_MKII</RootNamespace>
-	</PropertyGroup>
-	<ItemGroup>
-		<PackageReference Include="Discord.net" Version="3.4.0"/>
-		<PackageReference Include="Discord.Net.Commands" Version="3.4.0"/>
-		<PackageReference Include="Discord.Net.Rest" Version="3.4.0"/>
-		<PackageReference Include="Discord.Net.Webhook" Version="3.4.0"/>
-		<PackageReference Include="Discord.Net.WebSocket" Version="3.4.0"/>
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0"/>
-		<PackageReference Include="system.data.sqlite.core" Version="1.0.115.5"/>
-		<PackageReference Include="TwitchLib" Version="3.3.0"/>
-		<PackageReference Include="TwitchLib.PubSub" Version="3.2.3"/>
-	</ItemGroup>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <OutputPath>../bin</OutputPath>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>MisfitBot_MKII</RootNamespace>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <ContentSQLiteInteropFiles>true</ContentSQLiteInteropFiles>
+    <CopySQLiteInteropFiles>false</CopySQLiteInteropFiles>
+    <CleanSQLiteInteropFiles>false</CleanSQLiteInteropFiles>
+    <CollectSQLiteInteropFiles>false</CollectSQLiteInteropFiles>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Discord.net" Version="3.4.1"/>
+    <PackageReference Include="Discord.Net.Commands" Version="3.4.1"/>
+    <PackageReference Include="Discord.Net.Rest" Version="3.4.1"/>
+    <PackageReference Include="Discord.Net.Webhook" Version="3.4.1"/>
+    <PackageReference Include="Discord.Net.WebSocket" Version="3.4.1"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0"/>
+    <PackageReference Include="TwitchLib" Version="3.3.0"/>
+    <PackageReference Include="TwitchLib.PubSub" Version="3.2.3"/>
+    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.113.7"/>
+  </ItemGroup>
 </Project>

@@ -8,8 +8,7 @@
             "args": [
                 "publish",
                 "${workspaceFolder}/MisfitBot/MisfitBot-MKII.csproj",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
+                "/property:GenerateFullPaths=true"
             ],
             "problemMatcher": "$msCompile"
         },

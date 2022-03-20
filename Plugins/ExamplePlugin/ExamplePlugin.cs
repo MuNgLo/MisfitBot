@@ -8,7 +8,7 @@ namespace ExamplePlugin
     //  https://cann0nf0dder.wordpress.com/2020/08/30/basic-dotnet-command-calls-to-create-a-c-project-in-visual-studio-code/#Adding-Projects
     public class ExamplePlugin : PluginBase
     {
-        public ExamplePlugin():base("ExamplePlugin", 0)
+        public ExamplePlugin():base("ExamplePlugin", 1)
         {
             Program.BotEvents.OnMessageReceived += OnMessageReceived;
         }
@@ -30,22 +30,18 @@ namespace ExamplePlugin
 
         public override void OnSecondTick(int seconds)
         {
-            throw new NotImplementedException();
         }
 
         public override void OnMinuteTick(int minutes)
         {
-            throw new NotImplementedException();
         }
 
         public override void OnUserEntryMergeEvent(UserEntry discordUser, UserEntry twitchUser)
         {
-            throw new NotImplementedException();
         }
 
         public override void OnBotChannelEntryMergeEvent(BotChannel discordGuild, BotChannel twitchChannel)
         {
-            throw new NotImplementedException();
         }
     }
 }

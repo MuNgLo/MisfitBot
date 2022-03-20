@@ -67,16 +67,17 @@ namespace MisfitBot_MKII.MisfitBotEvents
 /// <summary>
         /// When a guild memember gets updated we raise an event for each guild shared so plugins can listen for their specific guild
         /// </summary>
-        /// <param name="current"></param>
+        /// <param name="user"></param>
         /// <param name="old"></param>
         /// <returns></returns>
-        private async Task PresenceUpdated(SocketUser current, SocketPresence oldP, SocketPresence newP)
+        private async Task PresenceUpdated(SocketUser user, SocketPresence oldP, SocketPresence newP)
         {
+            return;
             // TODO warning verify current and old is accurate
-            foreach (SocketGuild guild in current.MutualGuilds)
+            foreach (SocketGuild guild in user.MutualGuilds)
             {
                 BotChannel bChan = await Program.Channels.GetDiscordGuildbyID(guild.Id);
-                UserEntry currentUser = await Program.Users.GetUserByDiscordID(current.Id);
+                UserEntry currentUser = await Program.Users.GetUserByDiscordID(user.Id);
                 UserEntry oldUser = await Program.Users.GetUserByDiscordID(guild.Id); // TODO this will be bugged
                 Program.BotEvents.RaiseOnDiscordGuildMemberUpdated(bChan, currentUser, oldUser);
             }

@@ -9,7 +9,7 @@ namespace AdminPlugin
     // Invite link https://discordapp.com/oauth2/authorize?client_id=295257486708047882&scope=bot&permissions=0
     public class AdminPlugin : PluginBase
     {
-        public AdminPlugin():base("AdminPlugin", 0)
+        public AdminPlugin():base("AdminPlugin", 1)
         {
             Program.BotEvents.OnMessageReceived += OnMessageReceived;
             Program.BotEvents.OnTwitchConnected += OnTwitchConnected;
@@ -238,7 +238,7 @@ namespace AdminPlugin
 
         }
 
-        private void OnTwitchConnected(string msg)
+        private void OnTwitchConnected()
         {
 
         }
