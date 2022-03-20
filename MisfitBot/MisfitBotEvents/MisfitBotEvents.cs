@@ -202,7 +202,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
         internal async Task RaiseOnTwitchConnected(string msg)
         {
             await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Events", "Twitch Connected: " + msg));
-            OnTwitchConnected?.Invoke(msg);
+            OnTwitchConnected?.Invoke();
         }
 
         
@@ -261,7 +261,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
         // Below needs to be verified
         internal async Task RaiseDiscordUserUpdated(SocketUser arg1, SocketUser arg2)
         {
-
+                /*     TODO Fix this
             if (arg1 == null || arg1 == null)
             {
                 await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "Events", "RaiseDiscordUserUpdated fed NULL parameter."));
@@ -297,6 +297,8 @@ namespace MisfitBot_MKII.MisfitBotEvents
                 }
                 return;
             }
+
+            */
         }
 
         

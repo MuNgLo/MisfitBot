@@ -31,7 +31,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             TimerStuff.OnMinuteTick += OnMinuteTick;
         }// EO Constructor
 
-        private async void OnTwitchConnected(string args)
+        private async void OnTwitchConnected()
         {
             await JoinAllAutoJoinTwitchChannels();
         }
@@ -293,20 +293,19 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             {
                 return;
             }
-            TwitchLib.Api.V5.Models.Users.Users channelEntries = await Program.TwitchAPI.V5.Users.GetUsersByNameAsync(chansToLookup);
-            if (channelEntries.Matches.Length < 1)
+            TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse channelEntries = await Program.TwitchAPI.Helix.Users.GetUsersAsync(null, chansToLookup);
+            if (channelEntries.Users.Length < 1)
             {
                 return;
             }
-            foreach (TwitchLib.Api.V5.Models.Users.User usr in channelEntries.Matches)
+            foreach (TwitchLib.Api.Helix.Models.Users.GetUsers.User usr in channelEntries.Users)
             {
-                var channel = Program.TwitchClient.GetJoinedChannel(usr.Name);
+                var channel = Program.TwitchClient.GetJoinedChannel(usr.Login);
                 if (channel == null)
                 {
-                    Program.TwitchClient.JoinChannel(usr.Name);
+                    Program.TwitchClient.JoinChannel(usr.Login);
                 }
             }
-            //await LaunchAllPubSubs(); // TODO eneable pubsubs somehow later
         }
         
         

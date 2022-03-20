@@ -21,7 +21,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
     public delegate void TwitchHostEvent(BotChannel bChan, HostedEventArguments e);
     public delegate void TwitchSubGiftEvent(BotChannel bChan, TwitchSubGiftEventArguments e);
     
-    public delegate void TwitchConnectedEvent(string args);
+    public delegate void TwitchConnectedEvent();
     public delegate void TwitchConnectionErrorEvent(string msg);
     public delegate void TwitchChannelChatClearedEvent(string channel);
     public delegate void TwitchChannelJoinLeaveEvent(string channel, string botname);

@@ -141,7 +141,7 @@ namespace MisfitBot_MKII.Extensions.PubSub
             Client.ListenToFollows(_twitchID);
             Client.ListenToVideoPlayback(_twitchChannelName);
             Client.ListenToSubscriptions(_twitchID);
-            Client.ListenToBitsEvents(_twitchID);
+            //Client.ListenToBitEventsV2(_twitchID); // TODO Fix this
             // Verify
             //Client.ListenToRaid(_twitchID);
             //Client.ListenToWhispers(botUser._twitchUID);

@@ -12,7 +12,7 @@ namespace Shoutouts
     {
         private DatabaseStrings dbStrings;
 
-        public Shoutouts():base("Shoutouts", 0)
+        public Shoutouts():base("Shoutouts", 1)
         {
             dbStrings = new DatabaseStrings("Shoutouts", "so");
             Program.BotEvents.OnCommandReceived += OnCommandRecieved;
