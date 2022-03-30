@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Discord;
 using TwitchLib.Client.Events;
 using TwitchLib.Client.Interfaces;
 using TwitchLib.Communication.Events;
@@ -22,7 +18,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
             client.OnConnectionError += TwitchOnConnectionError;
             client.OnDisconnected += OnDisconnected;
             client.OnError += TwitchOnError;
-            //client.OnExistingUsersDetected // Maybe only the twitch user extension should listen to this
+            client.OnExistingUsersDetected += TwitchOnExistingUsersDetected; // Maybe only the twitch user extension should listen to this
             //client.OnHostingStarted
             //client.OnHostingStopped
             //client.OnHostLeft
@@ -58,9 +54,6 @@ namespace MisfitBot_MKII.MisfitBotEvents
             client.OnNewSubscriber += TwitchOnNewSubscriber;
             client.OnReSubscriber += TwitchOnReSubscriber;
         }
-
-      
-
         private async void TwitchOnChatCommandRecieved(object sender, OnChatCommandReceivedArgs e)
         {
                 if(e.Command.ChatMessage.IsMe){return;}
@@ -201,12 +194,12 @@ namespace MisfitBot_MKII.MisfitBotEvents
         /// <param name="e"></param>
         private async void TwitchOnExistingUsersDetected(object sender, OnExistingUsersDetectedArgs e)
         {
-            /*TwitchLib.Api.V5.Models.Users.Users users = await _api.V5.Users.GetUsersByNameAsync(e.Users);
-            foreach (TwitchLib.Api.V5.Models.Users.User user in users.Matches)
+            TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse userList = await Program.Users.GetUsersByTwitchUsernamesFromAPI(e.Users);
+            foreach (TwitchLib.Api.Helix.Models.Users.GetUsers.User user in userList.Users)
             {
                 string twitchID = user.Id;
-            }*/
-            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherTwitch", $"TwitchOnExistingUsersDetected"));
+            }
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherTwitch", $"TwitchOnExistingUsersDetected with {userList.Users.Length}"));
         }
         private async void TwitchOnNewSubscriber(object sender, OnNewSubscriberArgs e)
         {

@@ -6,6 +6,7 @@ using MisfitBot_MKII.Components;
 using MisfitBot_MKII.Statics;
 using System.Data.SQLite;
 using System.Data;
+using TwitchStream = TwitchLib.Api.Helix.Models.Streams.GetStreams.Stream;
 
 namespace QueuePlugin
 {
@@ -23,12 +24,12 @@ namespace QueuePlugin
             Program.BotEvents.OnTwitchChannelGoesOffline += OnBotChannelGoesOffline;
         }
 
-        private async void OnBotChannelGoesOffline(BotChannel bChan)
+        private async void OnBotChannelGoesOffline(TwitchStreamGoOfflineEventArguments arg)
         {
-            QueueSettings settings = await Settings<QueueSettings>(bChan, PluginName);
+            QueueSettings settings = await Settings<QueueSettings>(arg.bChan, PluginName);
             if (settings._active)
             {
-                StopQueue(bChan);
+                StopQueue(arg.bChan);
             }
         }
 

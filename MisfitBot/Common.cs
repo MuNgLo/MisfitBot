@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using TwitchLib.PubSub.Enums;
 using MisfitBot_MKII.Statics;
+using TwitchStream = TwitchLib.Api.Helix.Models.Streams.GetStreams.Stream;
 
 namespace MisfitBot_MKII
 {
@@ -11,6 +12,14 @@ namespace MisfitBot_MKII
     public enum LOGSEVERITY {CRITICAL, ERROR, WARNING, INFO, VERBOSE, DEBUG}
     public enum RESPONSEACTION {ERROR, ADDED, REMOVED, CLEARED}
 
+    public struct TwitchStreamGoLiveEventArguments{
+        public BotChannel bChan;
+        public TwitchStream stream;
+    }
+    public struct TwitchStreamGoOfflineEventArguments{
+        public BotChannel bChan;
+        public TwitchStream stream;
+    }
     public struct BotWideMessageArguments
     {
         public MESSAGESOURCE source;

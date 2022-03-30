@@ -7,6 +7,7 @@ using Discord.WebSocket;
 using MisfitBot_MKII.MisfitBotEvents;
 using TwitchLib.Client.Models;
 using MisfitBot_MKII.Statics;
+using System.Linq;
 
 namespace MisfitBot_MKII.Extensions.ChannelManager
 {
@@ -58,8 +59,8 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         {
             try
             {
-                TwitchLib.Api.V5.Models.Users.Users channelEntry = await Program.TwitchAPI.V5.Users.GetUserByNameAsync(channelName.ToLower());
-                if (channelEntry.Matches.Length < 1)
+                TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse channelEntry = await Program.TwitchAPI.Helix.Users.GetUsersAsync(null, new List<string>(){ channelName.ToLower()});
+                if (channelEntry.Users.Length < 1)
                 {
                     await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, PLUGINNAME, $"Twitch channel lookup failed! Couldn't find channel. Not connecting to \"{channelName.ToLower()}\""));
                     return false;
@@ -83,50 +84,56 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         /// </summary>
         private async void UpdateChannelStatuses()
         {
-             for (int i = 0; i < Program.TwitchClient.JoinedChannels.Count; i++)
+            try
             {
-                TwitchLib.Api.V5.Models.Users.Users channels;
-                try
-                {
-                    channels = await Program.TwitchAPI.V5.Users.GetUserByNameAsync(Program.TwitchClient.JoinedChannels[i].Channel);// Maybe rewrite to bulk get channels
-                }
-                catch (Exception)
-                {
-                    return;
-                }
-                if (channels.Matches.Length > 0)
+                //TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse channels;
+                
+                var fetchedStreams = await Program.TwitchAPI.Helix.Streams.GetStreamsAsync(
+                    userLogins: Program.TwitchClient.JoinedChannels.ToList().Where(p=>p.Channel != string.Empty).Select(p=>p.Channel).ToList() 
+                    );
+
+                for (int i = 0; i < Program.TwitchClient.JoinedChannels.Count; i++)
                 {
                     bool isLive = false;
-                    try
-                    {
-                        isLive = await Program.TwitchAPI.V5.Streams.BroadcasterOnlineAsync(channels.Matches[0].Id);
-                    }
-                    catch (Exception)
-                    {
-                        return;
-                    }
-                    BotChannel bChan = await GetTwitchChannelByName(channels.Matches[0].Name);
+                    BotChannel bChan = await GetTwitchChannelByName(Program.TwitchClient.JoinedChannels[i].Channel);
                     if (bChan == null)
                     {
                         continue;
                     }
+                    isLive = fetchedStreams.Streams.ToList().Exists(p=>p.UserId == bChan.TwitchChannelID);
                     if (bChan.isLive != isLive)
                     {
                         if (isLive)
                         {
-                            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, PLUGINNAME, $"Twitch channel \"{channels.Matches[0].Name}\" went live!!"));
+                            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, PLUGINNAME, $"Twitch channel \"{bChan.TwitchChannelName}\" went live!!"));
                             bChan.isLive = true;
                             ChannelSave(bChan);
                         }
                         else
                         {
-                            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, PLUGINNAME, $"Twitch channel \"{channels.Matches[0].Name}\" is now offline."));
+                            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, PLUGINNAME, $"Twitch channel \"{bChan.TwitchChannelName}\" is now offline."));
                             bChan.isLive = false;
                             ChannelSave(bChan);
                         }
                     }
                 }
+
             }
+            catch (Exception)
+            {
+                return;
+            }
+
+
+
+
+
+
+
+
+            
+                
+            // Make sure dicord guilds we are connected to exist in DB
             foreach (SocketGuild guild in Program.DiscordClient.Guilds)
             {
                 await GetDiscordGuildbyID(guild.Id);
@@ -185,21 +192,21 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
 
             if (!await ChannelDataExists(TwitchName))
             {
-                TwitchLib.Api.V5.Models.Users.Users channelEntry = null;
+                TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse channelEntry = null;
                 try
                 {
                     while (apiQueryLock) { }
                     if (!await ChannelDataExists(TwitchName))
                     {
                         apiQueryLock = true;
-                        channelEntry = await Program.TwitchAPI.V5.Users.GetUserByNameAsync(TwitchName.ToLower());
+                        channelEntry = await Program.TwitchAPI.Helix.Users.GetUsersAsync(null, new List<string>(){ TwitchName.ToLower()});
                     }
-                    if (channelEntry == null || channelEntry.Matches.Length < 1)
+                    if (channelEntry == null || channelEntry.Users.Length < 1)
                     {
                         apiQueryLock = false;
                         return null;
                     }
-                    await ChannelDataWrite(new BotChannel(channelEntry.Matches[0].Name, channelEntry.Matches[0].Id));
+                    await ChannelDataWrite(new BotChannel(channelEntry.Users[0].Login, channelEntry.Users[0].Id));
                     apiQueryLock = false;
                     return await ChannelDataRead(TwitchName);
                 }
@@ -223,21 +230,21 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         {
             if (!await ChannelDataExistsTwitchID(TwitchID))
             {
-                TwitchLib.Api.V5.Models.Users.User channel = null;
+                TwitchLib.Api.Helix.Models.Users.GetUsers.User channel = null;
                 try
                 {
                     while (apiQueryLock) { }
                     if (!await ChannelDataExistsTwitchID(TwitchID))
                     {
                         apiQueryLock = true;
-                        channel = await Program.TwitchAPI.V5.Users.GetUserByIDAsync(TwitchID);
+                        channel = await Program.Users.GetUserByTwitchIDFromAPI(TwitchID);
                     }
                     if (channel == null)
                     {
                         apiQueryLock = false;
                         return null;
                     }
-                    await ChannelDataWrite(new BotChannel(channel.Name, channel.Id));
+                    await ChannelDataWrite(new BotChannel(channel.Login, channel.Id));
                     apiQueryLock = false;
                     return await ChannelDataReadTwitchID(TwitchID);
                 }
@@ -293,7 +300,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             {
                 return;
             }
-            TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse channelEntries = await Program.TwitchAPI.Helix.Users.GetUsersAsync(null, chansToLookup);
+            TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse channelEntries = await Program.Users.GetUsersByTwitchUsernamesFromAPI(chansToLookup);
             if (channelEntries.Users.Length < 1)
             {
                 return;

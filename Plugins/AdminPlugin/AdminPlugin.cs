@@ -81,6 +81,15 @@ namespace AdminPlugin
                 return;
             }
 
+if(args.command == "myid")
+            {
+                            if(args.source == MESSAGESOURCE.TWITCH){
+                                var user = await Program.Users.GetUserByTwitchIDFromAPI(args.user._twitchUID);
+                                response.message = $"I looked you over and you look awful. BroadType({user.BroadcasterType}) viewcount({user.ViewCount})";
+                                Respond(bChan, response);
+                            }
+            }
+
 
             if (args.isBroadcaster || args.isModerator || args.canManageMessages)
             {
@@ -109,8 +118,9 @@ namespace AdminPlugin
                             case "channel":
                                 if (args.arguments.Count == 2)
                                 {
-                                    TwitchLib.Api.V5.Models.Users.Users users = await Program.TwitchAPI.V5.Users.GetUserByNameAsync(args.arguments[1].ToLower());
-                                    if (users.Matches.Length != 1)
+                                    TwitchLib.Api.Helix.Models.Users.GetUsers.User user = await Program.Users.GetUserByTwitchUsernameFromAPI(args.arguments[1].ToLower());
+                                    
+                                    if (user == null)
                                     {
                                         // Failed to look up twitch channel so notify and exit
                                         response.message = "Sorry. Could not find that channel. Make sure you enter it correctly and try again.";
@@ -118,7 +128,7 @@ namespace AdminPlugin
                                         return;
                                     }
                                     bChan.TwitchChannelName = args.arguments[1].ToLower();
-                                    bChan.TwitchChannelID = users.Matches[0].Id;
+                                    bChan.TwitchChannelID = user.Id;
                                     bChan.TwitchAutojoin = true;
                                     response.message = $"This Discord is now tied to the Twitch channel \"{bChan.TwitchChannelName}\".";
                                     Program.Channels.ChannelSave(bChan);
@@ -176,12 +186,16 @@ namespace AdminPlugin
                                 */
                         }
                         break;
-                        case "setadminchannel":
-                            bChan.discordAdminChannel = Core.StringToUlong( args.channel);
-                            Program.Channels.ChannelSave(bChan);
-                            response.message = $"This is now set as the default adminchannel for this DiscordServer. This is needed to direct some important messages and notifications";
-                            Respond(bChan, response);
-                        return;
+                    case "setadminchannel":
+                        bChan.discordAdminChannel = Core.StringToUlong( args.channel);
+                        Program.Channels.ChannelSave(bChan);
+                        response.message = $"This is now set as the default adminchannel for this DiscordServer. This is needed to direct some important messages and notifications";
+                        Respond(bChan, response);
+                    return;
+                    case "users":
+                    response.message = Program.Users.UserStats();
+                    Respond(bChan, response);
+                    return;   
                 }
 
             }

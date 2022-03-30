@@ -39,8 +39,8 @@ namespace MisfitBot_MKII.MisfitBotEvents
     public delegate void CommandReceivedEvent(BotWideCommandArguments args);
 
     // Below needs to be verified
-    public delegate void TwitchChannelGoesLiveEvent(BotChannel bChan, int delay);
-    public delegate void TwitchChannelGoesOfflineEvent(BotChannel bChan);
+    public delegate void TwitchChannelGoesLiveEvent(TwitchStreamGoLiveEventArguments args);
+    public delegate void TwitchChannelGoesOfflineEvent(TwitchStreamGoOfflineEventArguments args);
     public delegate void BanEvent(BanEventArguments e);
     public delegate void BitEvent(BitEventArguments e);
     public delegate void DiscordUserStartsStreamEvent(BotChannel bChan, UserEntry user, StreamingGame streaminfo);

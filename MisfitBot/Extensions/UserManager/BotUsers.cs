@@ -8,7 +8,6 @@ using System.Data.SQLite;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using TwitchLib.Api.V5.Models.Users;
 using TwitchLib.Client.Events;
 using MisfitBot_MKII.Statics;
 
@@ -22,6 +21,10 @@ namespace MisfitBot_MKII.Extensions.UserManager
     {
         private readonly string EXTENSIONNAME = "BotUsers";
         private List<UserEntry> _UserCache;
+        private int _lastCacheDrop = -1;
+        internal int CachedUserCount {get {return _UserCache.Count;}}
+        internal int LastCacheUserDropCount {get {return _lastCacheDrop;}}
+        
         internal BotUsers(){
             TimerStuff.OnMinuteTick += OnMinuteTick;
             _UserCache = new List<UserEntry>();
@@ -34,7 +37,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
             int preCount = _UserCache.Count;
             _UserCache.RemoveAll(p=>p._lastseen < Core.CurrentTime - 600);
             if(preCount != _UserCache.Count){
-                //Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME, $"UserCache Flushed of {preCount - _UserCache.Count} users. {_UserCache.Count} left."));
+                _lastCacheDrop = preCount - _UserCache.Count;
             }
         }
         #region User getters
@@ -62,6 +65,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
             }
             return _UserCache.Find(p=>p._twitchUID == uid);
         }
+        
         internal async Task<UserEntry> GetDBUserByDiscordUID(ulong uid)
         {
             if(!_UserCache.Exists(p=>p._discordUID == uid))
@@ -72,6 +76,11 @@ namespace MisfitBot_MKII.Extensions.UserManager
         }
         #endregion
         #region Database user getters
+        /// <summary>
+        /// Gets the user matching by twitch username. Looks user up and creates a new entry when unknown user.
+        /// </summary>
+        /// <param name="twitchUsername"></param>
+        /// <returns></returns>
         private async Task FetchDBUserByTwitchUserName(string twitchUsername)
         {
             UserEntry user = new UserEntry();
@@ -101,8 +110,6 @@ namespace MisfitBot_MKII.Extensions.UserManager
             if(uid=="0"){
                 throw new ArgumentException($"Twitch userID to lookup is 0 ?? WTF!");
             }
-
-
             UserEntry user = new UserEntry();
             if (!await DBUserExistsTwitchID(uid))
             {
@@ -311,6 +318,11 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 return user;
             }
         }
+        /// <summary>
+        /// Returns match from DB or NULL
+        /// </summary>
+        /// <param name="twitchname"></param>
+        /// <returns></returns>
         private UserEntry DBReadTwitchUserByName(string twitchname)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
@@ -476,11 +488,47 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 //await Core.LOG(new Discord.LogMessage(Discord.LogSeverity.Warning, PLUGINNAME, $"Created entry for Discord user {userinfo.Username}"));
             }
         }
+
+        internal async Task<TwitchLib.Api.Helix.Models.Users.GetUsers.User> GetTwitchUserByIDFromAPI(string uid){
+            TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse response = await Program.TwitchAPI.Helix.Users.GetUsersAsync(new List<string>() { uid }, null, null);
+            if(response.Users.Length == 1){
+                return response.Users[0];
+            }
+            return null;
+        }
+        internal async Task<TwitchLib.Api.Helix.Models.Users.GetUsers.User> GetTwitchUserByUserNameFromAPI(string username){
+            TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse response = await Program.TwitchAPI.Helix.Users.GetUsersAsync(
+                null, 
+                new List<string>() { username }, 
+                null);
+            if(response.Users.Length == 1){
+                return response.Users[0];
+            }
+            return null;
+        }
+        internal async Task<TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse> GetTwitchUsersByUserNamesFromAPI(List<string> usernames){
+            TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse response = await Program.TwitchAPI.Helix.Users.GetUsersAsync(
+                null, 
+                usernames, 
+                null);
+            if(response.Users.Length > 0){
+                return response;
+            }
+            return null;
+        }
         private async void CreateNewTwitchUserFromID(string uid)
         {
-            User userinfo = await Program.TwitchAPI.V5.Users.GetUserByIDAsync(uid);
+            TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse userinfo = await Program.TwitchAPI.Helix.Users.GetUsersAsync(
+                new List<string>() { uid }, null, null
+                );
+
             if (userinfo != null)
             {
+if (userinfo.Users.Length == 1)
+            {
+
+await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "BotUsers", $"{userinfo.Users[0].DisplayName} is {userinfo.Users[0].BroadcasterType} vc {userinfo.Users[0].ViewCount}"));
+
                 using (SQLiteCommand cmd = new SQLiteCommand())
                 {
                     try
@@ -508,13 +556,13 @@ namespace MisfitBot_MKII.Extensions.UserManager
                         cmd.Parameters.AddWithValue("@username", string.Empty);
                         cmd.Parameters.AddWithValue("@lastseen", Core.CurrentTime);
                         cmd.Parameters.AddWithValue("@lastseenOnTwitch", Core.CurrentTime);
-                        cmd.Parameters.AddWithValue("@twitchUID", userinfo.Id);
-                        cmd.Parameters.AddWithValue("@twitchUsername", userinfo.Name);
-                        cmd.Parameters.AddWithValue("@twitchDisplayname", userinfo.DisplayName);
+                        cmd.Parameters.AddWithValue("@twitchUID", userinfo.Users[0].Id);
+                        cmd.Parameters.AddWithValue("@twitchUsername", userinfo.Users[0].Login);
+                        cmd.Parameters.AddWithValue("@twitchDisplayname", userinfo.Users[0].DisplayName);
                         cmd.Parameters.AddWithValue("@twitchColour", string.Empty);
-                        cmd.Parameters.AddWithValue("@twitchLogo", userinfo.Logo);
-                        cmd.Parameters.AddWithValue("@twitchCreated", userinfo.CreatedAt);
-                        cmd.Parameters.AddWithValue("@twitchLastUpdate", userinfo.UpdatedAt);
+                        cmd.Parameters.AddWithValue("@twitchLogo", userinfo.Users[0].ProfileImageUrl);
+                        cmd.Parameters.AddWithValue("@twitchCreated", userinfo.Users[0].CreatedAt);
+                        cmd.Parameters.AddWithValue("@twitchLastUpdate", userinfo.Users[0].CreatedAt);
                         cmd.Parameters.AddWithValue("@discordUID", 0);
                         cmd.Parameters.AddWithValue("@discordStatus", Discord.UserStatus.Offline);
                         cmd.Parameters.AddWithValue("@lastChange", Core.CurrentTime);
@@ -528,17 +576,21 @@ namespace MisfitBot_MKII.Extensions.UserManager
                     }
                 }
             }
+            }
             else
             {
                 await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "BotUsers", "Twitch user lookup failed!"));
             }
+            // always wait a bit so DB changes really work
+            await Task.Delay(300);
         }
+        
         private async Task CreateNewTwitchUserFromName(string twitchusername)
         {
             try
             {
-                Users users = await Program.TwitchAPI.V5.Users.GetUserByNameAsync(twitchusername.ToLower());
-                if (users.Matches.Length > 0)
+                TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse users = await Program.TwitchAPI.Helix.Users.GetUsersAsync(null, new List<string>(){ twitchusername });
+                if (users.Users.Length > 0)
                 {
                     using (SQLiteCommand cmd = new SQLiteCommand())
                     {
@@ -565,13 +617,13 @@ namespace MisfitBot_MKII.Extensions.UserManager
                         cmd.Parameters.AddWithValue("@username", string.Empty);
                         cmd.Parameters.AddWithValue("@lastseen", Core.CurrentTime);
                         cmd.Parameters.AddWithValue("@lastseenOnTwitch", Core.CurrentTime);
-                        cmd.Parameters.AddWithValue("@twitchUID", users.Matches[0].Id);
-                        cmd.Parameters.AddWithValue("@twichUsername", users.Matches[0].Name);
-                        cmd.Parameters.AddWithValue("@twitchDisplayname", users.Matches[0].DisplayName);
+                        cmd.Parameters.AddWithValue("@twitchUID", users.Users[0].Id);
+                        cmd.Parameters.AddWithValue("@twichUsername", users.Users[0].Login);
+                        cmd.Parameters.AddWithValue("@twitchDisplayname", users.Users[0].DisplayName);
                         cmd.Parameters.AddWithValue("@twitchColour", string.Empty);
-                        cmd.Parameters.AddWithValue("@twitchLogo", users.Matches[0].Logo);
-                        cmd.Parameters.AddWithValue("@twitchCreated", users.Matches[0].CreatedAt);
-                        cmd.Parameters.AddWithValue("@twitchLastUpdate", users.Matches[0].UpdatedAt);
+                        cmd.Parameters.AddWithValue("@twitchLogo", users.Users[0].ProfileImageUrl);
+                        cmd.Parameters.AddWithValue("@twitchCreated", users.Users[0].CreatedAt);
+                        cmd.Parameters.AddWithValue("@twitchLastUpdate", users.Users[0].CreatedAt);
                         cmd.Parameters.AddWithValue("@discordUID", 0);
                         cmd.Parameters.AddWithValue("@discordStatus", UserStatus.Offline);
                         cmd.Parameters.AddWithValue("@lastChange", Core.CurrentTime);
@@ -587,12 +639,13 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 {
                     await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "BotUsers", $"Twitch user lookup failed for {twitchusername}!"));
                 }
-
             }
             catch (Exception)
             {
                 await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "BotUsers", $"Twitch user lookup exception caught ({twitchusername})!"));
             }
+            // always wait a bit so DB changes really work
+            await Task.Delay(300);
         }
         #endregion
         private async void SaveUser(UserEntry user)

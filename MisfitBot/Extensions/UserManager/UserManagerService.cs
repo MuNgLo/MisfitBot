@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using Newtonsoft.Json;
-using TwitchLib.Api.V5.Models.Users;
 using TwitchLib.Client.Events;
 using MisfitBot_MKII.Statics;
 
@@ -36,7 +35,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
         internal async Task UpdateTwitchUserColour(OnMessageReceivedArgs e)
         {
             if (e == null) return;
-            UserEntry user = await UserList.GetDBUserByTwitchID(e.ChatMessage.UserId);
+            UserEntry user = await UserList.GetDBUserByTwitchUserName(e.ChatMessage.Username);
             if (user == null) return;
             user._twitchColour = e.ChatMessage.ColorHex;
             user._lastseenOnTwitch = Core.CurrentTime;
@@ -177,6 +176,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
         {
             return await UserList.GetDBUserByTwitchDisplayName(twitchDisplayName);
         }
+        
         /// <summary>
         /// This can return null
         /// </summary>
@@ -185,6 +185,19 @@ namespace MisfitBot_MKII.Extensions.UserManager
         public async Task<UserEntry> GetUserByTwitchID(string twitchID)
         {
             return await UserList.GetDBUserByTwitchID(twitchID);
+        }
+        
+        public async Task<TwitchLib.Api.Helix.Models.Users.GetUsers.User> GetUserByTwitchIDFromAPI(string twitchID)
+        {
+            return await UserList.GetTwitchUserByIDFromAPI(twitchID);
+        }
+        public async Task<TwitchLib.Api.Helix.Models.Users.GetUsers.User> GetUserByTwitchUsernameFromAPI(string twUsername)
+        {
+            return await UserList.GetTwitchUserByUserNameFromAPI(twUsername);
+        }
+        public async Task<TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse> GetUsersByTwitchUsernamesFromAPI(List<string> twUsernames)
+        {
+            return await UserList.GetTwitchUsersByUserNamesFromAPI(twUsernames);
         }
         /// <summary>
         /// Get UserEntry from Discord user ID. Create a new entry if none exist.
@@ -225,10 +238,9 @@ namespace MisfitBot_MKII.Extensions.UserManager
         }
 
         #region MISC
-        internal string GetUSerStats() // TODO FIX later on
+        public string UserStats() // TODO FIX later on
         {
-            int linked = 0, discord = 0, twitch = 0;
-            return $"   Users in memory: [Discord]{discord}  [Twitch]{twitch}  [Linked]{linked}";
+            return $"UsersManagerStats: Cached Users[{UserList.CachedUserCount}] last Cache clean dropped [{UserList.LastCacheUserDropCount}] users.";
         }
         #endregion
 

@@ -22,6 +22,7 @@ using MisfitBot_MKII.Extensions.UserManager;
 using MisfitBot_MKII.Extensions.PubSub;
 using System.Linq;
 using MisfitBot_MKII.Statics;
+using MisfitBot_MKII.Twitch;
 
 namespace MisfitBot_MKII
 {
@@ -36,8 +37,10 @@ namespace MisfitBot_MKII
 
         private static ITwitchClient _TwitchClient;
         private static EventCatcherTwitch _TwitchEvents;
+        private static EventCatcherTwitchServices _TwitchServiceEvents;
         private static ITwitchAPI _TwitchAPI;
         private static PubSubManager _PubSubs;
+        private static TwitchChannelWatcher _TwitchChannelWatcher;
 
         private static ChannelManager _Channels;
         private static UserManagerService _Users;
@@ -85,6 +88,8 @@ namespace MisfitBot_MKII
 
 
             LoadPlugins();
+            _TwitchServiceEvents = new EventCatcherTwitchServices();
+            StartTwitchAPI(_TwitchServiceEvents);
             StartTwitchClient();
             await StartDiscordClient();
 
@@ -116,11 +121,10 @@ namespace MisfitBot_MKII
             }
         }
 
-
-        private void StartTwitchClient()
+        private void StartTwitchAPI(EventCatcherTwitchServices arg)
         {
             if (!config.UseTwitch) { return; }
-            Console.WriteLine("Starting up Twitch");
+            Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Bot", $"Starting up Twitch API"));
             KSLogger logger = new KSLogger();
             if (_LogTwitch) { TwitchAPI = new TwitchAPI(logger); }
             else
@@ -128,7 +132,13 @@ namespace MisfitBot_MKII
             TwitchAPI.Settings.SkipDynamicScopeValidation = true;
             TwitchAPI.Settings.ClientId = TwitchClientID();
             TwitchAPI.Settings.AccessToken = TwitchOAUTHToken();
+            StartTwitchChannelWatcher(arg);
+        }
 
+        private void StartTwitchClient()
+        {
+            if (!config.UseTwitch) { return; }
+            Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Bot", $"Starting up Twitch"));
             ConnectionCredentials cred = new ConnectionCredentials(TwitchUserName(), TwitchOAUTHToken());
             _TwitchClient = new TwitchClient();
             _TwitchClient.Initialize(cred, TwitchUserName());
@@ -136,6 +146,11 @@ namespace MisfitBot_MKII
             _TwitchClient.AddChatCommandIdentifier(Program.CommandCharacter);
             _TwitchEvents = new EventCatcherTwitch(_TwitchClient, _LogTwitch);
             _TwitchClient.Connect();
+        }
+
+        private void StartTwitchChannelWatcher(EventCatcherTwitchServices arg)
+        {
+            _TwitchChannelWatcher = new TwitchChannelWatcher(arg);
         }
 
         private async Task StartPubSubManager()
@@ -243,7 +258,7 @@ namespace MisfitBot_MKII
         private async Task StartDiscordClient()
         {
             if (!config.UseDiscord) { return; }
-            Console.WriteLine("Starting up Discord");
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Bot", $"Starting up Discord"));
 
             DiscordSocketConfig dConfig = new DiscordSocketConfig()
             {
@@ -440,19 +455,6 @@ namespace MisfitBot_MKII
         {
             TwitchClient.SendMessage(args.twitchChannel, args.message);
         }
-        public static async Task<object> TwitchChannelInfo(string twitchChannelID){
-            var channelInfo = await _TwitchAPI.V5.Channels.GetChannelByIDAsync(twitchChannelID);
-
-            return channelInfo;
-        }
-        /*public static async Task<object> TwitchStreamInfo(string twitchChannelID){
-            _TwitchAPI.Settings.AccessToken = Cipher.Decrypt(Program.config.TwitchToken);
-
-
-            //var streamInfo = await _TwitchAPI.Helix..GetUsersAsync(new List<string>(){twitchChannelID});
-            //var vodInfo = await _TwitchAPI.V5.Videos.GetVideoAsync
-            return streamInfo;
-        }*/
         public static void PubSubStart(BotChannel bChan){
             PubSubs.StartPubSub(bChan, true);
         }

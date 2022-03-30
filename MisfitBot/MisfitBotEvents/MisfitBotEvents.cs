@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using TwitchLib.Client.Events;
 using TwitchLib.Client.Models;
 using MisfitBot_MKII.Statics;
+using TwitchStream = TwitchLib.Api.Helix.Models.Streams.GetStreams.Stream;
 
 namespace MisfitBot_MKII.MisfitBotEvents
 {
@@ -408,22 +409,39 @@ namespace MisfitBot_MKII.MisfitBotEvents
             }
             OnUnBanEvent?.Invoke(e);
         }
-
-        internal void RaiseOnTwitchChannelGoesLive(BotChannel bChan, int delay)
+        /// <summary>
+        /// nullchecks bchan to then raise the botwide event if stream went from offline to live
+        /// Syncs to DB but blocks events for the first 60 seconds after bot start
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <param name="stream"></param>
+        internal void RaiseOnTwitchChannelGoesLive(BotChannel bChan, TwitchStream stream)
         {
             if (bChan == null) { return; }
+            if (bChan.isLive) { return; }
             bChan.isLive = true;
-            if(Program.Debugmode){ Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EVENTS", $"Twitch channel {bChan.TwitchChannelName} went live (PubSub StreamUp)")); }
-            OnTwitchChannelGoesLive?.Invoke(bChan, delay);
+            Program.Channels.ChannelSave(bChan);
+            if(TimerStuff.Uptime < 60){return; }
+            if(Program.Debugmode){ Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EVENTS", $"Twitch channel {bChan.TwitchChannelName} went live")); }
+            OnTwitchChannelGoesLive?.Invoke(new TwitchStreamGoLiveEventArguments(){bChan = bChan, stream = stream });
         }
-        internal void RaiseOnTwitchChannelGoesOffline(BotChannel bChan)
+        /// <summary>
+        /// nullchecks bchan then raise the botwide event if stream went from live to offline
+        /// Syncs to DB but blocks events for the first 60 seconds after bot start
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <param name="stream"></param>
+        internal void RaiseOnTwitchChannelGoesOffline(BotChannel bChan, TwitchStream stream)
         {
             if (bChan == null) { return; }
+            if (!bChan.isLive) { return; }
             bChan.isLive = false;
+            Program.Channels.ChannelSave(bChan);
+            if(TimerStuff.Uptime < 60){return; }
             if(Program.Debugmode){ Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EVENTS", $"Twitch channel {bChan.TwitchChannelName} went offline")); }
-            OnTwitchChannelGoesOffline?.Invoke(bChan);
+            OnTwitchChannelGoesOffline?.Invoke(new TwitchStreamGoOfflineEventArguments(){bChan = bChan, stream = stream });
         }
-        internal void RaiseOnViewerCount(BotChannel bChan, int oldCount, int newCount)
+        /*internal void RaiseOnViewerCount(BotChannel bChan, int oldCount, int newCount)
         {
             if (bChan == null)
             {
@@ -432,7 +450,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
             }
             if(Program.Debugmode){ Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EVENTS", $"{bChan.TwitchChannelName} has {newCount} viewers. ({newCount - oldCount})")); }
             OnViewercount?.Invoke(bChan, oldCount, newCount);
-        }
+        }*/
 
         internal void RaiseOnBotChannelMerge(BotChannel discordProfile, BotChannel twitchProfile)
         {

@@ -75,7 +75,7 @@ namespace MisfitBot_MKII.Extensions.PubSub
         private async void Client_OnFollow(object sender, OnFollowArgs e)
         {
             BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
-            UserEntry user = await Program.Users.GetUserByTwitchID(e.UserId);
+            UserEntry user = await Program.Users.GetUserByTwitchUserName(e.Username);
             await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "PUBSUB", $"Channel {_twitchChannelName} New follower {e.DisplayName} (PubSub Listener)"));
             Program.BotEvents.RaiseOnTwitchFollow(bChan, user);
         }
@@ -105,7 +105,7 @@ namespace MisfitBot_MKII.Extensions.PubSub
         private async void OnBitsReceived(object sender, OnBitsReceivedArgs e)
         {
             BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
-            UserEntry user = await Program.Users.GetUserByTwitchID(e.UserId);
+            UserEntry user = await Program.Users.GetUserByTwitchUserName(e.Username);
             if (user != null && bChan != null)
             {
                 BitEventArguments bitEvent = new BitEventArguments(
@@ -247,7 +247,7 @@ namespace MisfitBot_MKII.Extensions.PubSub
         }
         private async void Client_OnTimeout(object sender, OnTimeoutArgs e)
         {
-            UserEntry user = await Program.Users.GetUserByTwitchID(e.TimedoutUserId);
+            UserEntry user = await Program.Users.GetUserByTwitchUserName(e.TimedoutUser);
             if (user != null)
             {
                 await Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
@@ -394,19 +394,19 @@ namespace MisfitBot_MKII.Extensions.PubSub
         /// <returns></returns>
         private async void Client_OnStreamDown(object sender, OnStreamDownArgs e)
         {
-            BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
-            Program.BotEvents.RaiseOnTwitchChannelGoesOffline(bChan);
+            //BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
+            //Program.BotEvents.RaiseOnTwitchChannelGoesOffline(bChan);
         }
         /// <summary>
-        /// NuJuan Verified
+        /// TODO verify
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         /// <returns></returns>
         private async void Client_OnStreamUp(object sender, OnStreamUpArgs e)
         {
-            BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
-            Program.BotEvents.RaiseOnTwitchChannelGoesLive(bChan, e.PlayDelay);
+            //BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
+            //Program.BotEvents.RaiseOnTwitchChannelGoesLive(bChan, e.PlayDelay);
         }
         #endregion
     }

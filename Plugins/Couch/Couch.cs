@@ -6,6 +6,8 @@ using MisfitBot_MKII.Components;
 using MisfitBot_MKII.Statics;
 using System.Data.SQLite;
 using System.Data;
+using TwitchStream = TwitchLib.Api.Helix.Models.Streams.GetStreams.Stream;
+using MisfitBot_MKII.MisfitBotEvents;
 
 namespace Couch
 {
@@ -652,15 +654,13 @@ namespace Couch
         }
         public override void OnUserEntryMergeEvent(MisfitBot_MKII.UserEntry discordUser, MisfitBot_MKII.UserEntry twitchUser) { }
         public override void OnBotChannelEntryMergeEvent(MisfitBot_MKII.BotChannel discordGuild, MisfitBot_MKII.BotChannel twitchChannel) { }
-        private async void OnTwitchChannelGoesLive(BotChannel bChan, int delay)
+        private async void OnTwitchChannelGoesLive(TwitchStreamGoLiveEventArguments args)
         {
-            await Core.LOG(new LogEntry(LOGSEVERITY.DEBUG, PLUGINNAME,
-            $"OnTwitchChannelGoesLive({bChan.TwitchChannelName}) in it? ({Program.Channels.CheckIfInTwitchChannel(bChan.TwitchChannelName)})"));
-            CouchSettings settings = await Settings<CouchSettings>(bChan, PLUGINNAME);
+            CouchSettings settings = await Settings<CouchSettings>(args.bChan, PLUGINNAME);
             // Check so we are connected to the twitch channel
-            if (Program.Channels.CheckIfInTwitchChannel(bChan.TwitchChannelName) && settings._active)
+            if (Program.Channels.CheckIfInTwitchChannel(args.bChan.TwitchChannelName) && settings._active)
             {
-                OpenCouch(bChan, settings);
+                OpenCouch(args.bChan, settings);
             }
         }
         #endregion
