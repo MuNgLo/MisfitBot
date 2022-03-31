@@ -52,8 +52,8 @@ namespace MisfitBot_MKII.Extensions.PubSub
             #region NuJuan Verified
             Client.OnBitsReceived += OnBitsReceived;
             Client.OnViewCount += OnViewCount;
-            Client.OnStreamUp += Client_OnStreamUp;
-            Client.OnStreamDown += Client_OnStreamDown;
+            //Client.OnStreamUp += Client_OnStreamUp;
+            //Client.OnStreamDown += Client_OnStreamDown;
             Client.OnPubSubServiceConnected += OnPubSubServiceConnected;
             Client.OnListenResponse += OnListenResponse;
             #endregion
@@ -386,6 +386,7 @@ namespace MisfitBot_MKII.Extensions.PubSub
                 }
             }
         }
+        /*
         /// <summary>
         /// NuJuan Verified
         /// </summary>
@@ -408,6 +409,7 @@ namespace MisfitBot_MKII.Extensions.PubSub
             //BotChannel bChan = await Program.Channels.GetTwitchChannelByName(_twitchChannelName);
             //Program.BotEvents.RaiseOnTwitchChannelGoesLive(bChan, e.PlayDelay);
         }
+        */
         #endregion
     }
 }

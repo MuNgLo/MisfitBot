@@ -72,15 +72,17 @@ namespace MisfitBot_MKII.MisfitBotEvents
         /// <returns></returns>
         private async Task PresenceUpdated(SocketUser user, SocketPresence oldP, SocketPresence newP)
         {
+            await Task.Delay(10);
             return;
             // TODO warning verify current and old is accurate
-            foreach (SocketGuild guild in user.MutualGuilds)
+            /*foreach (SocketGuild guild in user.MutualGuilds)
             {
                 BotChannel bChan = await Program.Channels.GetDiscordGuildbyID(guild.Id);
                 UserEntry currentUser = await Program.Users.GetUserByDiscordID(user.Id);
                 UserEntry oldUser = await Program.Users.GetUserByDiscordID(guild.Id); // TODO this will be bugged
                 Program.BotEvents.RaiseOnDiscordGuildMemberUpdated(bChan, currentUser, oldUser);
             }
+            */
         }
 private async Task GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> current, SocketGuildUser old)
         {

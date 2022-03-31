@@ -262,6 +262,8 @@ namespace MisfitBot_MKII.MisfitBotEvents
         // Below needs to be verified
         internal async Task RaiseDiscordUserUpdated(SocketUser arg1, SocketUser arg2)
         {
+            await Task.Delay(10);
+
                 /*     TODO Fix this
             if (arg1 == null || arg1 == null)
             {
