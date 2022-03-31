@@ -78,6 +78,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
         #region Database user getters
         /// <summary>
         /// Gets the user matching by twitch username. Looks user up and creates a new entry when unknown user.
+        /// Fails rarely
         /// </summary>
         /// <param name="twitchUsername"></param>
         /// <returns></returns>
@@ -91,6 +92,10 @@ namespace MisfitBot_MKII.Extensions.UserManager
             if (await DBUserExistsTwitchName(twitchUsername))
             {
                 user = DBReadTwitchUserByName(twitchUsername);
+                if(user == null){
+                    await Core.LOG(new LogEntry(LOGSEVERITY.CRITICAL, "BotUsers", "FetchDBUserByTwitchUserName() User created in db. Exist returned True but getting the user returned NULL"));
+                    return;
+                }
                 user._lastseen = Core.CurrentTime;
                 _UserCache.Add(user);
             }else{
