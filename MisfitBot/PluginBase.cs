@@ -113,7 +113,7 @@ namespace MisfitBot_MKII
                 return;
             }
 
-            if (bChan.discordAdminChannel != 0)
+            if (bChan.discordAdminChannel != 0 && Program.DiscordClient.Status == UserStatus.Online) // Need to verify this online check
             {
                 await (Program.DiscordClient.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(message);
                 return;
