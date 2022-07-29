@@ -24,6 +24,15 @@ namespace MisfitBot_MKII.Statics
             }
             return args.message;
         }
+        public static string ConvertMessage(string message, Dictionary<string, string> filter)
+        {
+            List<string> parts = GetAllParts(message);
+            foreach (var part in parts)
+            {
+                message = message.Replace(part, GetReplacementValue(part, filter));
+            }
+            return message;
+        }
         /// <summary>
         /// Checks for patterns to replace. Returns input or replacement value.
         /// </summary>
@@ -56,6 +65,16 @@ namespace MisfitBot_MKII.Statics
                 case "[EVENTUSER]":
                         value = args.victim.ContextName(args.source);
                     break;
+            }
+            return value;
+        }
+        private static string GetReplacementValue(string pattern, Dictionary<string, string> filter)
+        {
+            string value = string.Empty;
+            if (filter.ContainsKey(pattern))
+            {
+                //Core.LOG($"GetReplacementValue matched pattern() with a key");
+                value = filter[pattern];
             }
             return value;
         }

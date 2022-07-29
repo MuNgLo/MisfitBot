@@ -74,6 +74,15 @@ namespace MisfitBot_MKII
             }
         }
 
+        public void SayOnTwitchChannel(string twitchChannel, string message)
+        {
+            if (Program.Channels.CheckIfInTwitchChannel(twitchChannel))
+            {
+                Program.TwitchSayMessage(twitchChannel, message);
+            }
+        }
+
+
         public async Task<BotChannel> GetBotChannel(BotWideCommandArguments args){
             if(args.source == MESSAGESOURCE.TWITCH){
                return await Program.Channels.GetTwitchChannelByName(args.channel);
