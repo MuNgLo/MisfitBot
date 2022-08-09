@@ -6,6 +6,21 @@
    "configurations": [
        
         {
+            "name": "Full Build",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "Build All",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
+            "cwd": "${workspaceFolder}/bin/netcoreapp3.1", 
+            "args": ["debug"], // Has to be after CWD in this file because reasons
+            // ARGS List
+            // clearDB - deletes current DB at launch and creates a new one
+            // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
+            "console": "integratedTerminal",
+            "stopAtEntry": false
+        },
+        {
             "name": "Build Bot",
             "type": "coreclr",
             "request": "launch",
@@ -77,10 +92,10 @@
             "stopAtEntry": false
         },
         {
-            "name": "Build Shoutouts",
+            "name": "Build Shoutout",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "Compile Shoutouts Plugin",
+            "preLaunchTask": "Compile Shoutout Plugin",
             "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
             "cwd": "${workspaceFolder}/bin/netcoreapp3.1", // RELATIVE TO project OUTPUTPATH FFS! I think
             "args": ["debug"], // HAs to be after CWD in this file because reasons

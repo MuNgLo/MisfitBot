@@ -2,6 +2,25 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Build All",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "publish",
+                "${workspaceFolder}/MisfitBot/MisfitBot-MKII.csproj",
+                "/property:GenerateFullPaths=true"
+            ],
+            "problemMatcher": "$msCompile",
+            "dependsOn":["Compile Admin Plugin", 
+            "Compile Couch Plugin", 
+            "Compile Example Plugin", 
+            "Compile Insults Plugin",
+            "Compile Roles Plugin",
+            "Compile Shoutout Plugin",
+            "Compile Queue Plugin"
+            ]
+        },
+        {
             "label": "Build Bot",
             "command": "dotnet",
             "type": "process",
@@ -88,12 +107,12 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "Compile Shoutouts Plugin",
+            "label": "Compile Shoutout Plugin",
             "command": "dotnet",
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/Plugins/Shoutouts/Shoutouts.csproj",
+                "${workspaceFolder}/Plugins/ShoutOutPlugin/ShoutOut.csproj",
                 "/property:GenerateFullPaths=true",
                 "/property:Private=false", 
                 "/consoleloggerparameters:NoSummary"
