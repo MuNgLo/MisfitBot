@@ -131,12 +131,13 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
 
 
 
-            
-                
-            // Make sure dicord guilds we are connected to exist in DB
-            foreach (SocketGuild guild in Program.DiscordClient.Guilds)
+            if (Program.DiscordClient.Guilds != null)
             {
-                await GetDiscordGuildbyID(guild.Id);
+                // Make sure dicord guilds we are connected to exist in DB
+                foreach (SocketGuild guild in Program.DiscordClient.Guilds)
+                {
+                    await GetDiscordGuildbyID(guild.Id);
+                }
             }
         }// END of UpdateChannelStatuses
 

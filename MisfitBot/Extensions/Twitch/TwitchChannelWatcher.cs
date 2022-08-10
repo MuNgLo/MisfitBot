@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MisfitBot_MKII.MisfitBotEvents;
 using TwitchLib.Api.Services;
+using MisfitBot_MKII.Statics;
 
 namespace MisfitBot_MKII.Twitch
 {
@@ -14,7 +15,12 @@ namespace MisfitBot_MKII.Twitch
         }
         private async void Init(EventCatcherTwitchServices arg){
             List<string> ids = await FetchTwitchChannelIDs();
-
+            if(ids.Count < 1){
+                await Core.LOG(new LogEntry(LOGSEVERITY.INFO,
+                "TwitchChannelWatcher",
+                $"No channels being watched."));
+                return;
+            }
             _channelMonitor.SetChannelsById(ids);            
             _channelMonitor.OnStreamOnline += arg.OnStreamOnline;
             _channelMonitor.OnStreamOffline += arg.OnStreamOffline;
