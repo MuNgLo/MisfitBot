@@ -12,6 +12,8 @@ namespace MisfitBot_MKII
     public enum LOGSEVERITY {CRITICAL, ERROR, WARNING, INFO, VERBOSE, DEBUG}
     public enum RESPONSEACTION {ERROR, ADDED, REMOVED, CLEARED}
 
+    public delegate void SubCommandMethod(BotChannel bChan, BotWideCommandArguments args);
+
     public struct TwitchStreamGoLiveEventArguments{
         public BotChannel bChan;
         public TwitchStream stream;

@@ -239,7 +239,7 @@ namespace ShoutOut
         {
             // LINES IN USE
             string inuseText = $"Currently stored lines...```fix{Environment.NewLine}" +
-                $"These are lines stored in the database that the Insult plugin will use if they are marked as inuse.{Environment.NewLine}{Environment.NewLine}" +
+                $"These are lines stored in the database that the Shoutout plugin will use if they are marked as inuse.{Environment.NewLine}{Environment.NewLine}" +
                 $"<ID> <INUSE> <TEXT>        Page {page + 1}{Environment.NewLine}";
             List<DBString> lines = dbStrings.GetRowsByTen(bChan, page);
             if (lines.Count == 0)
@@ -257,7 +257,7 @@ namespace ShoutOut
                 }
             }
 
-            inuseText += $"```Use command {CMC}insults list <page> to list a page. Those marked with **true** for INUSE are in rotation.";
+            inuseText += $"```Use command {CMC}so list <page> to list a page. Those marked with **true** for INUSE are in rotation.";
             await SayOnDiscord(inuseText, channelID);
         }
 

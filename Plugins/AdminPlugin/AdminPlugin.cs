@@ -9,7 +9,7 @@ namespace AdminPlugin
     // Invite link https://discordapp.com/oauth2/authorize?client_id=295257486708047882&scope=bot&permissions=0
     public class AdminPlugin : PluginBase
     {
-        public AdminPlugin():base("AdminPlugin", 1)
+        public AdminPlugin():base("admin", "AdminPlugin", 2, "Admin functionality")
         {
             Program.BotEvents.OnMessageReceived += OnMessageReceived;
             Program.BotEvents.OnTwitchConnected += OnTwitchConnected;
@@ -73,23 +73,10 @@ namespace AdminPlugin
             // TEMPORARY this should later move to a better suited plugin
             if(args.command == "juanage")
             {
-            
-
-
                 response.message = JuanAge();
                 Respond(bChan, response);
                 return;
             }
-
-if(args.command == "myid")
-            {
-                            if(args.source == MESSAGESOURCE.TWITCH){
-                                var user = await Program.Users.GetUserByTwitchIDFromAPI(args.user._twitchUID);
-                                response.message = $"I looked you over and you look awful. BroadType({user.BroadcasterType}) viewcount({user.ViewCount})";
-                                Respond(bChan, response);
-                            }
-            }
-
 
             if (args.isBroadcaster || args.isModerator || args.canManageMessages)
             {
@@ -192,14 +179,23 @@ if(args.command == "myid")
                         response.message = $"This is now set as the default adminchannel for this DiscordServer. This is needed to direct some important messages and notifications";
                         Respond(bChan, response);
                     return;
-                    case "users":
-                    response.message = Program.Users.UserStats();
-                    Respond(bChan, response);
-                    return;   
+                    //case "users":
+                    //response.message = Program.Users.UserStats();
+                    //Respond(bChan, response);
+                    //return;   
                 }
 
             }
         }
+
+        [SubCommand("users", 0), CommandHelp("This maybe does something!")]
+        public void SubCommandTesthandler(BotChannel bChan, BotWideCommandArguments args)
+        {
+            BotWideResponseArguments response = new BotWideResponseArguments(args);
+            response.message = Program.Users.UserStats();
+            Respond(bChan, response);
+        }
+
 
         private string PubSubHelpDump(BotChannel bChan)
         {

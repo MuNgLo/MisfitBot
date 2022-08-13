@@ -14,7 +14,7 @@ namespace RolesPlugin
     {
         public readonly string PLUGINNAME = "RolesPlugin";
 
-        public RolesPlugin():base("Roles", 1)
+        public RolesPlugin():base("roles", "Roles", 2)
         {
             Program.BotEvents.OnDiscordReactionAdded += OnDiscordReactionAdded;
             Program.BotEvents.OnDiscordReactionRemoved += OnDiscordReactionRemoved;
@@ -416,7 +416,7 @@ namespace RolesPlugin
         private async void OnDiscordReactionAdded(BotChannel bChan, UserEntry user, DiscordReactionArgument args)
         {
             // Ignore self reaction
-            string botName = Cipher.Decrypt(Program.BotName);
+            string botName = Program.BotName;
             if (user._discordUsername != botName)
             {
                 RolesSettings settings = await Settings<RolesSettings>(bChan, PLUGINNAME);
@@ -439,7 +439,7 @@ namespace RolesPlugin
         private async void OnDiscordReactionRemoved(BotChannel bChan, UserEntry user, DiscordReactionArgument args)
         {
             // Ignore self reaction
-            string botName = Cipher.Decrypt(Program.BotName);
+            string botName = Program.BotName;
             if (user._discordUsername != botName)
             {
                 RolesSettings settings = await Settings<RolesSettings>(bChan, PLUGINNAME);

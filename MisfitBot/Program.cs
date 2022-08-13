@@ -20,6 +20,7 @@ using MisfitBot_MKII.MisfitBotEvents;
 using System.Reflection;
 using MisfitBot_MKII.Extensions.UserManager;
 using MisfitBot_MKII.Extensions.PubSub;
+using MisfitBot_MKII.Extensions.CommandInterpreter;
 using System.Linq;
 using MisfitBot_MKII.Statics;
 using MisfitBot_MKII.Twitch;
@@ -28,7 +29,7 @@ namespace MisfitBot_MKII
 {
     public class Program
     {
-        public const int _version = 1;
+        public const int _version = 2;
         private static DiscordSocketClient _DiscordClient;
         private static EventCatcherDiscord _DiscordEvents;
         private static IServiceProvider _services;
@@ -45,6 +46,7 @@ namespace MisfitBot_MKII
         private static ChannelManager _Channels;
         private static UserManagerService _Users;
         private static BotwideEvents _BotEvents;
+        private static CommandInterpreter commands;
 
         private static MainConfig config;
         private static bool _Debugmode = false;
@@ -55,15 +57,19 @@ namespace MisfitBot_MKII
         public static ITwitchAPI TwitchAPI { get => _TwitchAPI; private set => _TwitchAPI = value; }
         internal static PubSubManager PubSubs { get => _PubSubs; private set => _PubSubs = value; }
         public static char CommandCharacter { get => config.CMDCharacter; private set => config.CMDCharacter = value; }
-        public static string BotName { get => config.TwitchUser; private set {} }
+        public static string BotName { get => Cipher.Decrypt(config.TwitchUser); private set {} }
         public static ChannelManager Channels { get => _Channels; private set => _Channels = value; }
         public static UserManagerService Users { get => _Users; private set => _Users = value; }
+        public static CommandInterpreter Commands { get => commands; private set => commands = value; }
         public static BotwideEvents BotEvents { get => _BotEvents; set => _BotEvents = value; }
         public static bool Debugmode { get => _Debugmode; private set => _Debugmode = value; }
         public static bool TwitchConnected { get => _TwitchClient.IsConnected; private set {} }
         public static int Version { get => _version; private set{} }
 
-        public List<PluginBase> _plugins;
+        private static List<PluginBase> plugins;
+        public static List<PluginBase> Plugins { get => plugins; }
+        public static int PluginCount { get => plugins.Count; private set { } }
+
 
         static void Main(string[] args)
         {
@@ -86,8 +92,8 @@ namespace MisfitBot_MKII
 
             await VerifyFoldersAndStartupFiles();
 
-
             LoadPlugins();
+            InitCommandInterpreter();
             _TwitchServiceEvents = new EventCatcherTwitchServices();
             StartTwitchAPI(_TwitchServiceEvents);
             StartTwitchClient();
@@ -98,9 +104,18 @@ namespace MisfitBot_MKII
             await Task.Delay(Timeout.Infinite);
         }
 
+        private void InitCommandInterpreter()
+        {
+            commands = new CommandInterpreter();
+            foreach(PluginBase pl in plugins)
+            {
+                commands.ProcessPlugin(pl);
+            }
+        }
+
         private void LoadPlugins()
         {
-            _plugins = new List<PluginBase>();
+            plugins = new List<PluginBase>();
             string PluginFolder = "Plugins";
             string[] FolderContent = Directory.GetDirectories(PluginFolder);
             foreach (string fileName in FolderContent)
@@ -115,7 +130,7 @@ namespace MisfitBot_MKII
                         Type myType = a.GetType(nameClass, true);
                         object obj = Activator.CreateInstance(myType);
                         var plugin = obj as PluginBase;
-                        _plugins.Add(plugin);
+                        plugins.Add(plugin);
                     }
                 }
             }

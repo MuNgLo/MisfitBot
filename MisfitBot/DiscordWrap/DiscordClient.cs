@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
@@ -17,8 +17,34 @@ namespace MisfitBot_MKII.DiscordWrap
             if(Program.DiscordClient.ConnectionState != ConnectionState.Connected){return;}
             IMessage message = await (Program.DiscordClient.GetChannel(dMessage.ChannelID) as ISocketMessageChannel).GetMessageAsync(dMessage.MessageID);
             GuildEmote emote;
+
+            if(emoteName[0] == ':')
+            {
+                string[] parts = emoteName.Split(':');
+                emote = (message.Channel as SocketGuildChannel).Guild.Emotes.FirstOrDefault(x => x.Name == parts[1]);
+            }
+            else
+            {
+                emote = (message.Channel as SocketGuildChannel).Guild.Emotes.FirstOrDefault(x => x.Name == emoteName);
+            }
+
+            if (emote == null)
+            {
+                Emoji test = new Emoji(emoteName);
+                await message.AddReactionAsync(test);
+                return;
+            }
+            else
+            {
+                await message.AddReactionAsync(emote);
+                return;
+            }
+
+            /*
             // Check if emote is unicode
-            if (Char.IsSurrogate(emoteName, 0)){
+            //if (Char.IsSurrogate(emoteName, 0) || emoteName == "1️⃣")
+            if (Char.IsSurrogate(emoteName, 1))
+            {
                 // Resolve Unicode to emote object
                 Emoji heartEmoji = new Emoji(emoteName);
                 await message.AddReactionAsync(heartEmoji);
@@ -26,8 +52,15 @@ namespace MisfitBot_MKII.DiscordWrap
                 // resolve custom emote
                 string[] parts = emoteName.Split(':');
                 emote = (message.Channel as SocketGuildChannel).Guild.Emotes.FirstOrDefault(x => x.Name == parts[1]);
+                if(emote == null)
+                {
+                    Emoji test = new Emoji(parts[1]);
+                    await message.AddReactionAsync(test);
+                    return;
+                }
                 await message.AddReactionAsync(emote);
             }
+            */
         }
         public static async Task DiscordSayMessage(string channel, string message)
         {

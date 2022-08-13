@@ -3,15 +3,27 @@ using MisfitBot_MKII;
 using MisfitBot_MKII.DiscordWrap;
 using MisfitBot_MKII.Statics;
 
+
 namespace ExamplePlugin
 {
     //  https://cann0nf0dder.wordpress.com/2020/08/30/basic-dotnet-command-calls-to-create-a-c-project-in-visual-studio-code/#Adding-Projects
     public class ExamplePlugin : PluginBase
     {
-        public ExamplePlugin():base("ExamplePlugin", 1)
+        public ExamplePlugin():base("example", "ExamplePlugin", 2, "Just an example")
         {
             Program.BotEvents.OnMessageReceived += OnMessageReceived;
         }
+
+
+
+        [SubCommand("test", 0), CommandHelp("This is just a test command that don't do anything!")]
+        public void SubCommandTesthandler(BotChannel bChan, BotWideCommandArguments args)
+        {
+            BotWideResponseArguments response = new BotWideResponseArguments(args);
+            response.message = "Exampleplugin subcommandExample working here!";
+            Respond(bChan, response);
+        }
+
 
         private async void OnMessageReceived(BotWideMessageArguments args)
         {

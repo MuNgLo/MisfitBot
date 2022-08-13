@@ -28,7 +28,7 @@ namespace Couch
         private List<TimedMessage> _timedMessages = new List<TimedMessage>();
         #endregion
 
-        public Couch():base("Couch", 1)
+        public Couch():base("couch", "Couch", 2)
         {
             DBDefaultLines();
             Program.BotEvents.OnMessageReceived += OnMessageReceived;
@@ -229,10 +229,7 @@ namespace Couch
                                     await SayOnDiscordAdmin(bChan, "Couldn't remove anything from the database.");
                                 }
                                 break;*/
-                            case "rock":
-                            case "shake":
-                                await ShakeCouch(bChan, settings);
-                                break;
+                            
                             case "size":
                                 if (args.arguments.Count == 2)
                                 {
@@ -405,6 +402,24 @@ namespace Couch
                     break;
             }
         }
+        [SubCommand("rock", 0), CommandHelp("Rock the couch and see if anyone falls off.")]
+        public async void RockCouch(BotChannel bChan, BotWideCommandArguments args)
+        {
+            CouchSettings settings = await Settings<CouchSettings>(bChan, PLUGINNAME);
+            await ShakeCouch(bChan, settings);
+        }
+
+
+        [SubCommand("shake", 0), CommandHelp("Same as Rock.")]
+        public async void ShakeCouch(BotChannel bChan, BotWideCommandArguments args)
+        {
+            CouchSettings settings = await Settings<CouchSettings>(bChan, PLUGINNAME);
+            await ShakeCouch(bChan, settings);
+        }
+
+
+
+
         private async void TwitchInUserJoined(object sender, TwitchLib.Client.Events.OnUserJoinedArgs e)
         {
             if (TimerStuff.Uptime < 300)

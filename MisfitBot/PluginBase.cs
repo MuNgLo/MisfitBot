@@ -19,15 +19,25 @@ namespace MisfitBot_MKII
 
 
         private readonly string _pluginName;
+        private readonly string cmd;
+
+        private readonly string pluginInfo = "No info";
         public string PluginName { get => _pluginName; private set {} }
+        public string PluginInfo { get => pluginInfo; private set {} }
+        public string CMD { get => cmd; private set {} }
 
         private readonly int _version = 0;
         public int Version { get => _version; private set {} }
 
 
-        public PluginBase(string pluginName, int version){
+        public PluginBase(string command, string pluginName, int version, string info=null){
             _pluginName = pluginName;
+            cmd = command;
             _version = version;
+            if(info!= null)
+            {
+                pluginInfo = info;
+            }
             Core.LOG(new LogEntry(LOGSEVERITY.INFO,
             "PLUGIN",
             $"{pluginName} v{version} loaded."));
