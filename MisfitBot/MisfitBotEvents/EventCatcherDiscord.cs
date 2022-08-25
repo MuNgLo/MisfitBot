@@ -43,7 +43,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
             //client.MessageUpdated += MessageUpdated;
 
     // TODO FIX THESE 3
-            //client.ReactionAdded += ReactionAdded;
+            client.ReactionAdded += ReactionAdded;
             //client.ReactionRemoved += ReactionRemoved;
             //client.ReactionsCleared += ReactionsCleared;
 
@@ -64,7 +64,10 @@ namespace MisfitBot_MKII.MisfitBotEvents
             //client.VoiceServerUpdated += VoiceServerUpdated;
             #endregion
         }
-/// <summary>
+
+        
+
+        /// <summary>
         /// When a guild memember gets updated we raise an event for each guild shared so plugins can listen for their specific guild
         /// </summary>
         /// <param name="user"></param>
@@ -119,15 +122,16 @@ private async Task GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> current,
             );
         }
 
-        private async Task ReactionAddedOLD(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2, SocketReaction arg3)
+
+        private async Task ReactionAdded(Cacheable<IUserMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2, SocketReaction arg3)
         {
-            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherDiscord", "ReactionAdded"));
+            if (Program.DiscordClient.CurrentUser.Id == arg3.UserId)
+            {
+                // Ignore reactions from our self
+                return;
+            }
             UserEntry user = await Program.Users.GetUserByDiscordID(arg3.UserId);
-            BotChannel bChan = await Program.Channels.GetDiscordGuildbyID((arg2 as SocketGuildChannel).Guild.Id);
-
-
-            
-
+            BotChannel bChan = await Program.Channels.GetDiscordGuildbyID((Program.DiscordClient.GetChannel(arg2.Id) as IGuildChannel).GuildId);
 
             Program.BotEvents.RaiseDiscordReactionAdded(
                 bChan,

@@ -12,52 +12,44 @@ namespace QueuePlugin
 {
     public class QueuePlugin : PluginBase
     {
-
         private Dictionary<string, QueueObject> _queues;
-
-        public QueuePlugin() : base("QueuePlugin", 1)
+        public QueuePlugin() : base("queue", "QueuePlugin", 3, "Allows users to get into a queue")
         {
-            Program.BotEvents.OnCommandReceived += OnCommandRecieved;
             Program.BotEvents.OnMessageReceived += OnMessageRecieved;
             _queues = new Dictionary<string, QueueObject>();
             TimerStuff.OnSecondTick += OnSecondTick;
             Program.BotEvents.OnTwitchChannelGoesOffline += OnBotChannelGoesOffline;
         }
 
-        private async void OnBotChannelGoesOffline(TwitchStreamGoOfflineEventArguments arg)
+        #region Command Methods
+        [SingleCommand("aq"), CommandHelp("Join active queue."), CommandSourceAccess(MESSAGESOURCE.TWITCH), CommandVerified(3)]
+        public void JQueue(BotChannel bChan, BotWideCommandArguments args)
         {
-            QueueSettings settings = await Settings<QueueSettings>(arg.bChan, PluginName);
-            if (settings._active)
-            {
-                StopQueue(arg.bChan);
-            }
+            JoinQueue(bChan, args);
         }
-
-        private async void OnMessageRecieved(BotWideMessageArguments args)
+        [SingleCommand("addqueue"), CommandHelp("Join active queue."), CommandSourceAccess(MESSAGESOURCE.TWITCH), CommandVerified(3)]
+        public async void JoinQueue(BotChannel bChan, BotWideCommandArguments args)
         {
-            BotChannel bChan = await GetBotChannel(args);
             QueueSettings settings = await Settings<QueueSettings>(bChan, PluginName);
-            if (settings._active)
+            if (settings._active && _queues.ContainsKey(bChan.Key))
             {
-                if (_queues.ContainsKey(bChan.Key))
+                if (args.source == MESSAGESOURCE.TWITCH)
                 {
-                    _queues[bChan.Key].AddMessage();
+                    QueueUp(bChan, args.userDisplayName);
                 }
             }
         }
-
-        private async void OnCommandRecieved(BotWideCommandArguments args)
+        [SingleCommand("lq"), CommandHelp("Leave active queue."), CommandSourceAccess(MESSAGESOURCE.TWITCH), CommandVerified(3)]
+        public async void LQueue(BotChannel bChan, BotWideCommandArguments args)
         {
-            BotChannel bChan = await GetBotChannel(args);
-            if (bChan == null) { return; }
-            QueueSettings settings = await Settings<QueueSettings>(bChan, PluginName);
+            LeaveQueue(bChan, args);
+        }
+        [SingleCommand("leavequeue"), CommandHelp("Leave active queue."), CommandSourceAccess(MESSAGESOURCE.TWITCH), CommandVerified(3)]
+        public async void LeaveQueue(BotChannel bChan, BotWideCommandArguments args)
+        {
             BotWideResponseArguments response = new BotWideResponseArguments(args);
-            if (settings._active && args.source == MESSAGESOURCE.TWITCH && (args.command.ToLower() == "addqueue" || args.command.ToLower() == "aq"))
-            {
-                QueueUp(bChan, args.userDisplayName);
-                return;
-            }
-            if (settings._active && args.source == MESSAGESOURCE.TWITCH && (args.command.ToLower() == "leavequeue" || args.command.ToLower() == "lq"))
+            QueueSettings settings = await Settings<QueueSettings>(bChan, PluginName);
+            if (settings._active && _queues.ContainsKey(bChan.Key))
             {
                 if (QueueLeave(bChan, args.userDisplayName))
                 {
@@ -68,107 +60,139 @@ namespace QueuePlugin
                 }
                 return;
             }
-
+        }
+        [SingleCommand("queueinfo"), CommandHelp("Gives info about the queue."), CommandVerified(3)]
+        public async void Queue(BotChannel bChan, BotWideCommandArguments args)
+        {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
             {
                 // No access below
                 return;
             }
-            if (args.command.ToLower() == "queue")
+            BotWideResponseArguments response = new BotWideResponseArguments(args);
+            QueueSettings settings = await Settings<QueueSettings>(bChan, PluginName);
+            // Blank queue response here
+            if (args.arguments.Count == 0)
             {
-                // Blank queue response here
-                if (args.arguments.Count == 0)
+                if (args.source == MESSAGESOURCE.DISCORD)
                 {
-                    if (args.source == MESSAGESOURCE.DISCORD)
+                    Discord.EmbedFooterBuilder footer = new Discord.EmbedFooterBuilder
                     {
-                        Discord.EmbedFooterBuilder footer = new Discord.EmbedFooterBuilder
-                        {
-                            Text = $"The plugin is currently {(settings._active ? "active" : "inactive")} here.{(HasActiveQueue(bChan) ? $" {QueuedUserCount(bChan)} in queue." : "")}"
-                        };
+                        Text = $"The plugin is currently {(settings._active ? "active" : "inactive")} here.{(HasActiveQueue(bChan) ? $" {QueuedUserCount(bChan)} in queue." : "")}"
+                    };
 
-                        Discord.EmbedBuilder embedded = new Discord.EmbedBuilder
+                    Discord.EmbedBuilder embedded = new Discord.EmbedBuilder
+                    {
+                        Title = "Plugin: Queue ",
+                        Description = HelpText(settings),
+                        Color = Discord.Color.DarkOrange,
+                        Footer = footer
+                    };
+
+                    // add a field listinbg all the users in the queue
+                    if (settings._active && _queues.ContainsKey(bChan.Key))
+                    {
+                        if (_queues[bChan.Key].Count > 0)
                         {
-                            Title = "Plugin: Queue ",
-                            Description = HelpText(settings),
-                            Color = Discord.Color.DarkOrange,
-                            Footer = footer
-                        };
+                            embedded.AddField(name: "Queued up users", _queues[bChan.Key].ToString(), false);
+                        }
+                    }
 
                         await SayEmbedOnDiscord(args.channelID, embedded.Build());
-                        return;
-                    }
-                    if (args.source == MESSAGESOURCE.TWITCH)
-                    {
-                        response.message = $"The plugin is currently {(settings._active ? "active" : "inactive")} here.{(HasActiveQueue(bChan) ? $" {QueuedUserCount(bChan)} in queue." : "")}";
-                        Respond(bChan, response);
-                        return;
-                    }
+                    return;
                 }
-                // resolve subcommands
-                switch (args.arguments[0])
+                if (args.source == MESSAGESOURCE.TWITCH)
                 {
-                    case "off":
-                        settings._active = false;
-                        SaveBaseSettings(bChan, PluginName, settings);
-                        response.message = $"Queue is inactive.";
-                        Respond(bChan, response);
-                        break;
-                    case "on":
-                        settings._active = true;
-                        SaveBaseSettings(bChan, PluginName, settings);
-                        response.message = $"Queue is active.";
-                        Respond(bChan, response);
-                        break;
-
-                    case "next":
-                        if (settings._active)
-                        {
-                            response.message = NextInQueue(bChan);
-                            Respond(bChan, response);
-                            if(response.source == MESSAGESOURCE.DISCORD && bChan.TwitchChannelName != string.Empty){
-                                Program.TwitchSayMessage(bChan.TwitchChannelName, response.message);
-                            }
-                        }
-                        break;
-                    case "reset":
-                        if (settings._active)
-                        {
-                            CreateQueue(bChan, settings);
-                            response.message = "Queue reset";
-                            Respond(bChan, response);
-                            if(response.source == MESSAGESOURCE.DISCORD && bChan.TwitchChannelName != string.Empty){
-                                Program.TwitchSayMessage(bChan.TwitchChannelName, response.message);
-                            }
-                        }
-                        break;
-                    case "start":
-                        if (settings._active)
-                        {
-                            CreateQueue(bChan, settings);
-                            response.message = $"Queue started";
-                            Respond(bChan, response);
-                            if(response.source == MESSAGESOURCE.DISCORD && bChan.TwitchChannelName != string.Empty){
-                                Program.TwitchSayMessage(bChan.TwitchChannelName, response.message);
-                            }
-                        }
-                        break;
-                    case "stop":
-                        if (settings._active)
-                        {
-                            StopQueue(bChan);
-                            response.message = $"Queue stopped.";
-                            Respond(bChan, response);
-                            if(response.source == MESSAGESOURCE.DISCORD && bChan.TwitchChannelName != string.Empty){
-                                Program.TwitchSayMessage(bChan.TwitchChannelName, response.message);
-                            }
-                        }
-                        break;
-
-
+                    response.message = $"The plugin is currently {(settings._active ? "active" : "inactive")} here.{(HasActiveQueue(bChan) ? $" {QueuedUserCount(bChan)} in queue." : "")}";
+                    Respond(bChan, response);
+                    return;
                 }
-
             }
         }
+        [SubCommand("start", 0), CommandHelp("Start running a queue in the twitch channel"), CommandVerified(3)]
+        public async void StartQueue(BotChannel bChan, BotWideCommandArguments args)
+        {
+            if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
+            {
+                // No access below
+                return;
+            }
+            BotWideResponseArguments response = new BotWideResponseArguments(args);
+            QueueSettings settings = await Settings<QueueSettings>(bChan, PluginName);
+            if (settings._active)
+            {
+                CreateQueue(bChan, settings);
+                response.message = $"Queue started";
+                Respond(bChan, response);
+                if (response.source == MESSAGESOURCE.DISCORD && bChan.TwitchChannelName != string.Empty)
+                {
+                    Program.TwitchSayMessage(bChan.TwitchChannelName, response.message);
+                }
+            }
+        }
+        [SubCommand("stop", 0), CommandHelp("Stop a queue that is running in the twitch channel"), CommandVerified(3)]
+        public async void StopQueue(BotChannel bChan, BotWideCommandArguments args)
+        {
+            if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
+            {
+                // No access below
+                return;
+            }
+            BotWideResponseArguments response = new BotWideResponseArguments(args);
+            QueueSettings settings = await Settings<QueueSettings>(bChan, PluginName);
+            if (settings._active)
+            {
+                StopQueue(bChan);
+                response.message = $"Queue stopped.";
+                Respond(bChan, response);
+                if (response.source == MESSAGESOURCE.DISCORD && bChan.TwitchChannelName != string.Empty)
+                {
+                    Program.TwitchSayMessage(bChan.TwitchChannelName, response.message);
+                }
+            }
+        }
+        [SubCommand("reset", 0), CommandHelp("Resets the active queue"), CommandVerified(3)]
+        public async void ResetQueue(BotChannel bChan, BotWideCommandArguments args)
+        {
+            if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
+            {
+                // No access below
+                return;
+            }
+            BotWideResponseArguments response = new BotWideResponseArguments(args);
+            QueueSettings settings = await Settings<QueueSettings>(bChan, PluginName);
+            if (settings._active && _queues.ContainsKey(bChan.Key))
+            {
+                CreateQueue(bChan, settings);
+                response.message = "Queue reset";
+                Respond(bChan, response);
+                if (response.source == MESSAGESOURCE.DISCORD && bChan.TwitchChannelName != string.Empty)
+                {
+                    Program.TwitchSayMessage(bChan.TwitchChannelName, response.message);
+                }
+            }
+        }
+        [SubCommand("next", 0), CommandHelp("Stop a queue that is running in the twitch channel"), CommandVerified(3)]
+        public async void NextInQueue(BotChannel bChan, BotWideCommandArguments args)
+        {
+            if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
+            {
+                // No access below
+                return;
+            }
+            BotWideResponseArguments response = new BotWideResponseArguments(args);
+            QueueSettings settings = await Settings<QueueSettings>(bChan, PluginName);
+            if (settings._active)
+            {
+                response.message = NextInQueue(bChan);
+                Respond(bChan, response);
+                if (response.source == MESSAGESOURCE.DISCORD && bChan.TwitchChannelName != string.Empty)
+                {
+                    Program.TwitchSayMessage(bChan.TwitchChannelName, response.message);
+                }
+            }
+        }
+        #endregion
 
         #region internal Queue methods
         private bool HasActiveQueue(BotChannel bChan)
@@ -229,6 +253,7 @@ namespace QueuePlugin
         }
         #endregion
 
+        #region Interface adherance 
         public override void OnBotChannelEntryMergeEvent(BotChannel discordGuild, BotChannel twitchChannel)
         {
             throw new NotImplementedException();
@@ -266,5 +291,27 @@ namespace QueuePlugin
             $"**{CMC}queue on/off** to turn the plugin on or off.";
             return message;
         }
+        private async void OnBotChannelGoesOffline(TwitchStreamGoOfflineEventArguments arg)
+        {
+            QueueSettings settings = await Settings<QueueSettings>(arg.bChan, PluginName);
+            if (settings._active)
+            {
+                StopQueue(arg.bChan);
+            }
+        }
+
+        private async void OnMessageRecieved(BotWideMessageArguments args)
+        {
+            BotChannel bChan = await GetBotChannel(args);
+            QueueSettings settings = await Settings<QueueSettings>(bChan, PluginName);
+            if (settings._active)
+            {
+                if (_queues.ContainsKey(bChan.Key))
+                {
+                    _queues[bChan.Key].AddMessage();
+                }
+            }
+        }
+        #endregion
     }// EOF CLASS
 }

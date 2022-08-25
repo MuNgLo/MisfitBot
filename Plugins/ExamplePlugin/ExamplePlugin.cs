@@ -9,14 +9,14 @@ namespace ExamplePlugin
     //  https://cann0nf0dder.wordpress.com/2020/08/30/basic-dotnet-command-calls-to-create-a-c-project-in-visual-studio-code/#Adding-Projects
     public class ExamplePlugin : PluginBase
     {
-        public ExamplePlugin():base("example", "ExamplePlugin", 2, "Just an example")
+        public ExamplePlugin():base("example", "ExamplePlugin", 3, "Just an example")
         {
             Program.BotEvents.OnMessageReceived += OnMessageReceived;
         }
 
 
 
-        [SubCommand("test", 0), CommandHelp("This is just a test command that don't do anything!")]
+        [SubCommand("test", 0), CommandHelp("This is just a test command that don't do anything!"), CommandVerified(3)]
         public void SubCommandTesthandler(BotChannel bChan, BotWideCommandArguments args)
         {
             BotWideResponseArguments response = new BotWideResponseArguments(args);

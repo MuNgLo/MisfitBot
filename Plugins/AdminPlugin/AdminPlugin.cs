@@ -129,50 +129,7 @@ namespace AdminPlugin
                                 break;
                         }
                         break;
-                    case "pubsub":
-                        // has to go through discord
-                        if (args.source != MESSAGESOURCE.DISCORD) { return; }
-                        // Clean command response
-                        if (args.arguments.Count == 0 || args.arguments[0] == "help")
-                        {
-                            response.message = PubSubHelpDump(bChan);
-                            Respond(bChan, response);
-                            return;
-                        }
-                        switch (args.arguments[0])
-                        {
-                            case "settoken":
-                            if(args.arguments.Count == 2){
-                                bChan.pubsubOauth = Cipher.Encrypt(args.arguments[1]);
-                                Program.Channels.ChannelSave(bChan);
-                                response.message = "Token set. Engaging PubSub Connection!";
-                                Program.PubSubStart(bChan);
-                                Program.DiscordRemoveMessage(Core.StringToUlong(args.channel), args.messageID);
-                            }else{
-                                response.message = "Did you forget the token?";
-                            }
-                                Respond(bChan, response);
-                                return;
-                            case "cleartoken":
-                                bChan.pubsubOauth = string.Empty;
-                                Program.Channels.ChannelSave(bChan);
-                                response.message = "ClearToken";
-                                Program.PubSubStop(bChan);
-                                Respond(bChan, response);
-                                return;
-                            case "start":
-                                Program.PubSubStart(bChan);
-                                return;
-                            case "stop":
-                                Program.PubSubStop(bChan);
-                                return;
-                            /*case "status":
-                                response.message = Program.PubSubStatus(bChan);
-                                Respond(bChan, response);
-                                return;
-                                */
-                        }
-                        break;
+                    
                     case "setadminchannel":
                         bChan.discordAdminChannel = Core.StringToUlong( args.channel);
                         Program.Channels.ChannelSave(bChan);
@@ -188,14 +145,69 @@ namespace AdminPlugin
             }
         }
 
-        [SubCommand("users", 0), CommandHelp("This maybe does something!")]
+        [SubCommand("users", 0), CommandHelp("This maybe does something!"), CommandVerified(3)]
         public void SubCommandTesthandler(BotChannel bChan, BotWideCommandArguments args)
         {
-            BotWideResponseArguments response = new BotWideResponseArguments(args);
-            response.message = Program.Users.UserStats();
-            Respond(bChan, response);
+            if (args.isBroadcaster || args.isModerator || args.canManageMessages)
+            {
+                BotWideResponseArguments response = new BotWideResponseArguments(args);
+                response.message = Program.Users.UserStats();
+                Respond(bChan, response);
+            }
         }
 
+        [SingleCommand("pubsub"), CommandHelp("Manage pubsub connections."), CommandSourceAccess(MESSAGESOURCE.DISCORD),  CommandVerified(3)]
+        public void PubSubCommand(BotChannel bChan, BotWideCommandArguments args)
+        {
+            if (args.isBroadcaster || args.isModerator || args.canManageMessages)
+            {
+                BotWideResponseArguments response = new BotWideResponseArguments(args);
+
+                // Clean command response
+                if (args.arguments.Count == 0 || args.arguments[0] == "help")
+                {
+                    response.message = PubSubHelpDump(bChan);
+                    Respond(bChan, response);
+                    return;
+                }
+                switch (args.arguments[0])
+                {
+                    case "settoken":
+                        if (args.arguments.Count == 2)
+                        {
+                            bChan.pubsubOauth = Cipher.Encrypt(args.arguments[1]);
+                            Program.Channels.ChannelSave(bChan);
+                            response.message = "Token set. Engaging PubSub Connection!";
+                            Program.PubSubStart(bChan);
+                            Program.DiscordRemoveMessage(Core.StringToUlong(args.channel), args.messageID);
+                        }
+                        else
+                        {
+                            response.message = "Did you forget the token?";
+                        }
+                        Respond(bChan, response);
+                        return;
+                    case "cleartoken":
+                        bChan.pubsubOauth = string.Empty;
+                        Program.Channels.ChannelSave(bChan);
+                        response.message = "ClearToken";
+                        Program.PubSubStop(bChan);
+                        Respond(bChan, response);
+                        return;
+                    case "start":
+                        Program.PubSubStart(bChan);
+                        return;
+                    case "stop":
+                        Program.PubSubStop(bChan);
+                        return;
+                        /*case "status":
+                            response.message = Program.PubSubStatus(bChan);
+                            Respond(bChan, response);
+                            return;
+                            */
+                }
+            }
+        }
 
         private string PubSubHelpDump(BotChannel bChan)
         {

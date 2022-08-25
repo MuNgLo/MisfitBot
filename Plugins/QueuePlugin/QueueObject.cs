@@ -103,5 +103,10 @@ namespace QueuePlugin
         {
             _msgSinceLastAnnounce++;
         }
+
+        public override string ToString()
+        {
+            return String.Join(", ", _queuedUsers);
+        }
     }
 }

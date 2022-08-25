@@ -29,7 +29,7 @@ namespace MisfitBot_MKII
 {
     public class Program
     {
-        public const int _version = 2;
+        public const int _version = 3;
         private static DiscordSocketClient _DiscordClient;
         private static EventCatcherDiscord _DiscordEvents;
         private static IServiceProvider _services;
@@ -57,7 +57,8 @@ namespace MisfitBot_MKII
         public static ITwitchAPI TwitchAPI { get => _TwitchAPI; private set => _TwitchAPI = value; }
         internal static PubSubManager PubSubs { get => _PubSubs; private set => _PubSubs = value; }
         public static char CommandCharacter { get => config.CMDCharacter; private set => config.CMDCharacter = value; }
-        public static string BotName { get => Cipher.Decrypt(config.TwitchUser); private set {} }
+        public static string BotNameTwitch { get => Cipher.Decrypt(config.TwitchUser); private set {} }
+        public static string BotNameDiscord { get => DiscordClient.CurrentUser.Username; private set {} }
         public static ChannelManager Channels { get => _Channels; private set => _Channels = value; }
         public static UserManagerService Users { get => _Users; private set => _Users = value; }
         public static CommandInterpreter Commands { get => commands; private set => commands = value; }

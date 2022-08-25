@@ -39,18 +39,7 @@ namespace RolesPlugin
             // break down the command
             switch (args.arguments[0].ToLower())
             {
-                case "on":
-                    settings._active = true;
-                    SaveBaseSettings(bChan, PLUGINNAME, settings);
-                    response.message = $"Roles is active.";
-                    Respond(bChan, response);
-                    break;
-                case "off":
-                    settings._active = false;
-                    SaveBaseSettings(bChan, PLUGINNAME, settings);
-                    response.message = $"Roles is inactive.";
-                    Respond(bChan, response);
-                    break;
+
                 case "mark":
                     if (!settings._active) { return; }
                     if (args.arguments.Count < 3)
@@ -159,10 +148,6 @@ namespace RolesPlugin
                             Respond(bChan, response);
                         }
                     }
-
-
-
-
                     if (args.arguments[1].ToLower() == "addrole")
                     {
                         if (args.arguments.Count < 4)
@@ -223,106 +208,113 @@ namespace RolesPlugin
                             Respond(bChan, response);
                         }
                     }
-
-                    break;
-                case "role":
-                    if (!settings._active) { return; }
-                    if (args.arguments.Count == 1){
-                        response.message = $"This manages the roles. Make sure they exist on the Discord side of things. Use add/remove like \"{CMC}roles role <add/remove>\"";
-                            Respond(bChan, response);
-                            return;
-                    }
-
-                    if (args.arguments[1].ToLower() == "add")
-                    {
-                        if (args.arguments.Count < 4)
-                        {
-                            response.message = $"Not enough arguments. Use \"{CMC}roles role add <NameofDiscordrole> <NameofEmote>\" as syntax.";
-                            Respond(bChan, response);
-                            return;
-                        }
-                        if (!MisfitBot_MKII.DiscordWrap.DiscordClient.DiscordRoleExist(bChan, args.arguments[2]))
-                        {
-                            response.message = $"That role({args.arguments[2]}) does not exist on this Discord. This matching is case sensitive.";
-                            Respond(bChan, response);
-                            return;
-                        }
-                        if (!Char.IsSurrogate(args.arguments[3], 0))
-                        {
-                            // Verify existence of custom emote
-                            if (!MisfitBot_MKII.DiscordWrap.DiscordClient.DiscordEmoteExist(bChan, args.arguments[3]))
-                            {
-                                response.message = $"That emote does not exist. This matching is case sensitive.";
-                                Respond(bChan, response);
-                                return;
-                            }
-                        }
-                        if (RoleAdd(bChan, settings, args.arguments[2], args.arguments[3]))
-                        {
-                            response.message = $"Role was added.";
-                            Respond(bChan, response);
-                        }
-                        else
-                        {
-                            response.message = $"Could not add role. Make sure role and emote isn't already used.";
-                            Respond(bChan, response);
-                        }
-                    }
-                    if (args.arguments[1].ToLower() == "remove")
-                    {
-                        // TODO also remove from topics
-                        if (args.arguments.Count < 3)
-                        {
-                            response.message = $"Not enough arguments. Use \"{CMC}roles role remove <NameofDiscordrole>\" as syntax.";
-                            Respond(bChan, response);
-                            return;
-                        }
-                        if (RoleRemove(bChan, settings, args.arguments[2]))
-                        {
-                            response.message = $"Role was removed.";
-                            Respond(bChan, response);
-                        }
-                        else
-                        {
-                            response.message = $"Could not match role.";
-                            Respond(bChan, response);
-                        }
-                    }
-                    if (args.arguments[1].ToLower() == "editemote")
-                    {
-                        if (args.arguments.Count < 4)
-                        {
-                            response.message = $"Not enough arguments. Use \"{CMC}roles role editemote <RoleToEdit> <NewEmote>\" as syntax";
-                            Respond(bChan, response);
-                            return;
-                        }
-                        if (!settings.RoleTable.ContainsKey(args.arguments[2]))
-                        {
-                            response.message = $"Can't find that role. Make sure you enter it correctly and remember it is case sensitive.";
-                            Respond(bChan, response);
-                            return;
-                        }
-                        if (settings.RoleTable[args.arguments[2]] == args.arguments[3])
-                        {
-                            response.message = $"That is the already stored emote for that role. Baka!";
-                            Respond(bChan, response);
-                        }
-                        if (RoleEdit(bChan, settings, args.arguments[2], args.arguments[3]))
-                        {
-                            response.message = $"The role {args.arguments[2]}'s emote was updated to {args.arguments[3]}.";
-                            Respond(bChan, response);
-                        }
-                        else
-                        {
-                            response.message = $"Failed to change the emote.";
-                            Respond(bChan, response);
-                        }
-                    }
                     break;
             }
 
 
         }// EOF OnCommandReceived
+
+
+        [SubCommand("role", 0), CommandHelp("Open the couch in the twitch channel tied to the botchannel command was given to."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
+        public async void Role(BotChannel bChan, BotWideCommandArguments args)
+        {
+            RolesSettings settings = await Settings<RolesSettings>(bChan, PLUGINNAME);
+            BotWideResponseArguments response = new BotWideResponseArguments(args);
+            if (!settings._active) { return; }
+            if (args.arguments.Count == 1)
+            {
+                response.message = $"This manages the roles. Make sure they exist on the Discord side of things. Use add/remove like \"{CMC}roles role <add/remove>\"";
+                Respond(bChan, response);
+                return;
+            }
+
+            if (args.arguments[1].ToLower() == "add")
+            {
+                if (args.arguments.Count < 4)
+                {
+                    response.message = $"Not enough arguments. Use \"{CMC}roles role add <NameofDiscordrole> <NameofEmote>\" as syntax.";
+                    Respond(bChan, response);
+                    return;
+                }
+                if (!MisfitBot_MKII.DiscordWrap.DiscordClient.DiscordRoleExist(bChan, args.arguments[2]))
+                {
+                    response.message = $"That role({args.arguments[2]}) does not exist on this Discord. This matching is case sensitive.";
+                    Respond(bChan, response);
+                    return;
+                }
+                if (!Char.IsSurrogate(args.arguments[3], 0))
+                {
+                    // Verify existence of custom emote
+                    if (!MisfitBot_MKII.DiscordWrap.DiscordClient.DiscordEmoteExist(bChan, args.arguments[3]))
+                    {
+                        response.message = $"That emote does not exist. This matching is case sensitive.";
+                        Respond(bChan, response);
+                        return;
+                    }
+                }
+                if (RoleAdd(bChan, settings, args.arguments[2], args.arguments[3]))
+                {
+                    response.message = $"Role was added.";
+                    Respond(bChan, response);
+                }
+                else
+                {
+                    response.message = $"Could not add role. Make sure role and emote isn't already used.";
+                    Respond(bChan, response);
+                }
+            }
+            if (args.arguments[1].ToLower() == "remove")
+            {
+                // TODO also remove from topics
+                if (args.arguments.Count < 3)
+                {
+                    response.message = $"Not enough arguments. Use \"{CMC}roles role remove <NameofDiscordrole>\" as syntax.";
+                    Respond(bChan, response);
+                    return;
+                }
+                if (RoleRemove(bChan, settings, args.arguments[2]))
+                {
+                    response.message = $"Role was removed.";
+                    Respond(bChan, response);
+                }
+                else
+                {
+                    response.message = $"Could not match role.";
+                    Respond(bChan, response);
+                }
+            }
+            if (args.arguments[1].ToLower() == "editemote")
+            {
+                if (args.arguments.Count < 4)
+                {
+                    response.message = $"Not enough arguments. Use \"{CMC}roles role editemote <RoleToEdit> <NewEmote>\" as syntax";
+                    Respond(bChan, response);
+                    return;
+                }
+                if (!settings.RoleTable.ContainsKey(args.arguments[2]))
+                {
+                    response.message = $"Can't find that role. Make sure you enter it correctly and remember it is case sensitive.";
+                    Respond(bChan, response);
+                    return;
+                }
+                if (settings.RoleTable[args.arguments[2]] == args.arguments[3])
+                {
+                    response.message = $"That is the already stored emote for that role. Baka!";
+                    Respond(bChan, response);
+                }
+                if (RoleEdit(bChan, settings, args.arguments[2], args.arguments[3]))
+                {
+                    response.message = $"The role {args.arguments[2]}'s emote was updated to {args.arguments[3]}.";
+                    Respond(bChan, response);
+                }
+                else
+                {
+                    response.message = $"Failed to change the emote.";
+                    Respond(bChan, response);
+                }
+            }
+        }
+
 
 
 
@@ -416,7 +408,7 @@ namespace RolesPlugin
         private async void OnDiscordReactionAdded(BotChannel bChan, UserEntry user, DiscordReactionArgument args)
         {
             // Ignore self reaction
-            string botName = Program.BotName;
+            string botName = Program.BotNameTwitch;
             if (user._discordUsername != botName)
             {
                 RolesSettings settings = await Settings<RolesSettings>(bChan, PLUGINNAME);
@@ -439,7 +431,7 @@ namespace RolesPlugin
         private async void OnDiscordReactionRemoved(BotChannel bChan, UserEntry user, DiscordReactionArgument args)
         {
             // Ignore self reaction
-            string botName = Program.BotName;
+            string botName = Program.BotNameTwitch;
             if (user._discordUsername != botName)
             {
                 RolesSettings settings = await Settings<RolesSettings>(bChan, PLUGINNAME);

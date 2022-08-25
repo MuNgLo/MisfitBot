@@ -8,10 +8,11 @@ using TwitchStream = TwitchLib.Api.Helix.Models.Streams.GetStreams.Stream;
 
 namespace MisfitBot_MKII
 {
-    public enum MESSAGESOURCE { DISCORD, TWITCH}
+    public enum MESSAGESOURCE { BOTH, DISCORD, TWITCH}
     public enum LOGSEVERITY {CRITICAL, ERROR, WARNING, INFO, VERBOSE, DEBUG}
     public enum RESPONSEACTION {ERROR, ADDED, REMOVED, CLEARED}
 
+    public delegate void CommandMethod(BotChannel bChan, BotWideCommandArguments args);
     public delegate void SubCommandMethod(BotChannel bChan, BotWideCommandArguments args);
 
     public struct TwitchStreamGoLiveEventArguments{

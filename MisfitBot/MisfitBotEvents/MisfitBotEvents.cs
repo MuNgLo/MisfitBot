@@ -194,7 +194,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
         }
         internal async Task RaiseTwitchOnChannelJoined(string channel, string botname)
         {
-            if(Program.BotName == botname){return;}
+            if(Program.BotNameTwitch == botname){return;}
             await Task.Run(()=>{
                 OnTwitchChannelJoined?.Invoke(channel, botname);
             });

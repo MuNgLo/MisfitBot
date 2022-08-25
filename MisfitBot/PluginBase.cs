@@ -45,15 +45,45 @@ namespace MisfitBot_MKII
         }
 
 
-        public async void CompatabilityCheck(){
+        public void CompatabilityCheck(){
             if(Program._version < _version){
-                await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, _pluginName, $"WARNING! {_pluginName} was compiled against a newer version of the bot({Program._version})."));
+                Core.LOG(new LogEntry(LOGSEVERITY.WARNING, _pluginName, $"WARNING! {_pluginName} was compiled against a newer version of the bot({Program._version})."));
             }
             if(Program._version > _version){
-                await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, _pluginName, $"WARNING! {_pluginName} was compiled against an older version of the bot({Program._version})."));
+                Core.LOG(new LogEntry(LOGSEVERITY.WARNING, _pluginName, $"WARNING! {_pluginName} was compiled against an older version of the bot({Program._version})."));
             }
         }
 
+        [SubCommand("on", 0), CommandHelp("Turn on the plugin"), CommandVerified(3)]
+        public async void TurnPluginOn(BotChannel bChan, BotWideCommandArguments args)
+        {
+            if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
+            {
+                // No access below
+                return;
+            }
+            PluginSettingsBase settings = await Settings<PluginSettingsBase>(bChan, PluginName);
+            BotWideResponseArguments response = new BotWideResponseArguments(args);
+            settings._active = true;
+            SaveBaseSettings(bChan, PluginName, settings);
+            response.message = $"{PluginName} is active.";
+            Respond(bChan, response);
+        }
+        [SubCommand("off", 0), CommandHelp("Turn off the plugin"), CommandVerified(3)]
+        public async void TurnPluginOff(BotChannel bChan, BotWideCommandArguments args)
+        {
+            if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
+            {
+                // No access below
+                return;
+            }
+            PluginSettingsBase settings = await Settings<PluginSettingsBase>(bChan, PluginName);
+            BotWideResponseArguments response = new BotWideResponseArguments(args);
+            settings._active = false;
+            SaveBaseSettings(bChan, PluginName, settings);
+            response.message = $"{PluginName} is inactive.";
+            Respond(bChan, response);
+        }
         public async Task MakeConfig<T>(BotChannel bChan, string plugin, T obj){
             await Core.Configs.ConfigSetup<T>(bChan, plugin, obj);
         }

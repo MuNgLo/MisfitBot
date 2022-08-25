@@ -28,7 +28,7 @@ namespace Couch
         private List<TimedMessage> _timedMessages = new List<TimedMessage>();
         #endregion
 
-        public Couch():base("couch", "Couch", 2)
+        public Couch() : base("couch", "Couch", 2, "Opens a couch as stream goes live")
         {
             DBDefaultLines();
             Program.BotEvents.OnMessageReceived += OnMessageReceived;
@@ -38,17 +38,17 @@ namespace Couch
             dbStrings = new DatabaseStrings(PLUGINNAME, "couch");
         }
 
-        
 
-        
 
-        
+
+
+
 
         #region Command Stuff
-        
+
         private async void CommandResolve(BotWideCommandArguments args)
         {
-            if (args.command.ToLower() != "couch" && args.command.ToLower() != "seat" && args.command.ToLower() != "seats"){return;}
+            if (args.command.ToLower() != "couch" && args.command.ToLower() != "seat" && args.command.ToLower() != "seats") { return; }
             BotChannel bChan = await GetBotChannel(args);
             if (bChan == null) { return; }
             if (args.user == null) { return; }
@@ -201,35 +201,7 @@ namespace Couch
                                     }
                                 }
                                 break;
-                            case "off":
-                                settings._active = false;
-                                SaveBaseSettings(bChan, PLUGINNAME, settings);
-                                response.message = $"Couch is inactive. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}. Open time is {settings.openTime}";
-                                Respond(bChan, response);
-                                break;
-                            case "on":
-                                settings._active = true;
-                                SaveBaseSettings(bChan, PLUGINNAME, settings);
-                                response.message = $"Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}. Open time is {settings.openTime}";
-                                Respond(bChan, response);
-                                break;
-                            case "open":
-                                if (!settings._active) { return; }
-                                OpenCouch(bChan, settings);
-                                break;
-                            /*  TODO never look at this again!!
-                            case "restore":
-                                bool removed = await dbStrings.TableDrop(bChan);
-                                if (removed)
-                                {
-                                    await SayOnDiscordAdmin(bChan, "Removed all current line data from the database.");
-                                }
-                                else
-                                {
-                                    await SayOnDiscordAdmin(bChan, "Couldn't remove anything from the database.");
-                                }
-                                break;*/
-                            
+
                             case "size":
                                 if (args.arguments.Count == 2)
                                 {
@@ -295,114 +267,25 @@ namespace Couch
                                 int page = 0;
                                 int.TryParse(args.arguments[1], out page);
                                 if (page <= 0) { page = 1; }
-
                                 await ListLinesFromDB(bChan, args.channelID, page - 1);
                                 break;
-
                         }
                     }
                     break;
                 // User Commands
-                case "seat":
-                    if (!settings._couches[bChan.Key].couchOpen || !settings._active) { return; }
-                    // To late
-                    if (Core.CurrentTime > settings._couches[bChan.Key].lastActivationTime + settings.openTime)
-                    {
-                        // only give feedback a specified count on fails
-                        if (settings.failCount <= settings.maxFails)
-                        {
-                            Respond(bChan, new BotWideResponseArguments(args)
-                            {
-                                source = args.source,
-                                twitchChannel = bChan.TwitchChannelName,
-                                discordChannel = bChan.discordAdminChannel,
-                                user = args.user,
-                                victim = null,
-                                message = dbStrings.GetRandomLine(bChan, "TARDY"),
-                                parseMessage = true
-                            });
-                            settings.failCount++;
-                            SaveBaseSettings(bChan, PLUGINNAME, settings);
-                        }
-                        return;
-                    }
-                    if (settings._couches[bChan.Key].TwitchUsernames.Contains(args.userDisplayName)) { return; }
-
-                    if (settings._couches[bChan.Key].TwitchUsernames.Count < settings.couchsize)
-                    {
-                        if (settings._couches[bChan.Key].TwitchUsernames.Count != 0)
-                        {
-                            if (RollIncident(15))
-                            {
-                                string rngSitter = GetRNGSitter(bChan, settings);
-                                if (rngSitter != null)
-                                {
-                                    UserEntry victim = await Program.Users.GetUserByTwitchDisplayName(rngSitter);
-                                    if (victim != null)
-                                    {
-                                        settings._couches[bChan.Key].TwitchUsernames.RemoveAll(p => p == victim._twitchUsername);
-                                        if (!await UserStatsExists(bChan.Key, args.user.Key))
-                                        {
-                                            UserStatsCreate(bChan.Key, args.user.Key);
-                                        }
-                                        CouchUserStats userStats1 = await UserStatsRead(bChan.Key, args.user.Key);
-                                        userStats1.CountSeated++;
-                                        UserStatsSave(bChan, userStats1);
-
-                                        if (!await UserStatsExists(bChan.Key, victim.Key))
-                                        {
-                                            UserStatsCreate(bChan.Key, args.user.Key);
-                                        }
-                                        CouchUserStats markUserStats = await UserStatsRead(bChan.Key, victim.Key);
-                                        markUserStats.CountBooted++;
-                                        UserStatsSave(bChan, markUserStats);
-
-                                        response.victim = victim;
-                                        response.message = dbStrings.GetRandomLine(bChan, "INCIDENT");
-                                        response.parseMessage = true;
-                                        Respond(bChan, response);
-
-                                        SaveBaseSettings(bChan, PLUGINNAME, settings);
-                                    }
-                                }
-                            }
-                        }
-                        if (!await UserStatsExists(bChan.Key, args.user.Key))
-                        {
-                            UserStatsCreate(bChan.Key, args.user.Key);
-                        }
-                        CouchUserStats userStats = await UserStatsRead(bChan.Key, args.user.Key);
-                        userStats.CountSeated++;
-                        UserStatsSave(bChan, userStats);
-                        settings._couches[bChan.Key].TwitchUsernames.Add(args.userDisplayName);
-
-                        Respond(bChan, new BotWideResponseArguments(args)
-                        {
-                            message = dbStrings.GetRandomLine(bChan, "SUCCESS"),
-                            parseMessage = true
-                        });
-
-                        SaveBaseSettings(bChan, PLUGINNAME, settings);
-
-                    }
-                    else
-                    {
-                        Program.TwitchSayMessage(args.channel,
-                            dbStrings.GetRandomLine(bChan, "FAIL").Replace("[USER]", args.user._twitchDisplayname)
-                            );
-                        settings.failCount++;
-                        SaveBaseSettings(bChan, PLUGINNAME, settings);
-                    }
-                    break;
-                case "seats":
-                    CouchUserStats cStats = await GetUserCouchStats(bChan.Key, args.user.Key);
-                    Program.TwitchSayMessage(args.channel,
-                                $"{args.user._twitchDisplayname}, you have sat in couch {cStats.CountSeated} times. {cStats.CountBooted} times you fell off."
-                                );
-                    break;
             }
         }
-        [SubCommand("rock", 0), CommandHelp("Rock the couch and see if anyone falls off.")]
+
+
+        [SubCommand("open", 0), CommandHelp("Open the couch in the twitch channel tied to the botchannel command was given to."), CommandVerified(3)]
+        public async void OpenCouch(BotChannel bChan, BotWideCommandArguments args)
+        {
+            CouchSettings settings = await Settings<CouchSettings>(bChan, PLUGINNAME);
+            if (!settings._active) { return; }
+            OpenCouch(bChan, settings);
+        }
+
+        [SubCommand("rock", 0), CommandHelp("Rock the couch and see if anyone falls off."), CommandVerified(3)]
         public async void RockCouch(BotChannel bChan, BotWideCommandArguments args)
         {
             CouchSettings settings = await Settings<CouchSettings>(bChan, PLUGINNAME);
@@ -410,11 +293,117 @@ namespace Couch
         }
 
 
-        [SubCommand("shake", 0), CommandHelp("Same as Rock.")]
+        [SubCommand("shake", 0), CommandHelp("Same as Rock."), CommandVerified(3)]
         public async void ShakeCouch(BotChannel bChan, BotWideCommandArguments args)
         {
             CouchSettings settings = await Settings<CouchSettings>(bChan, PLUGINNAME);
             await ShakeCouch(bChan, settings);
+        }
+
+        [SingleCommand("seats"), CommandHelp("Tells user stats about their sitting."), CommandSourceAccess(MESSAGESOURCE.TWITCH), CommandVerified(3)]
+        public async void Seats(BotChannel bChan, BotWideCommandArguments args)
+        {
+            CouchUserStats cStats = await GetUserCouchStats(bChan.Key, args.user.Key);
+            Program.TwitchSayMessage(args.channel,
+                                    $"{args.user._twitchDisplayname}, you have sat in couch {cStats.CountSeated} times. {cStats.CountBooted} times you fell off."
+                                    );
+        }
+
+        [SingleCommand("seat"), CommandHelp("Lets users sit in the couch."), CommandSourceAccess(MESSAGESOURCE.TWITCH), CommandVerified(3)]
+        public async void Seat(BotChannel bChan, BotWideCommandArguments args)
+        {
+            CouchSettings settings = await Settings<CouchSettings>(bChan, PLUGINNAME);
+            BotWideResponseArguments response = new BotWideResponseArguments(args);
+
+            if (!settings._couches[bChan.Key].couchOpen || !settings._active) { return; }
+            // To late
+            if (Core.CurrentTime > settings._couches[bChan.Key].lastActivationTime + settings.openTime)
+            {
+                // only give feedback a specified count on fails
+                if (settings.failCount <= settings.maxFails)
+                {
+                    Respond(bChan, new BotWideResponseArguments(args)
+                    {
+                        source = args.source,
+                        twitchChannel = bChan.TwitchChannelName,
+                        discordChannel = bChan.discordAdminChannel,
+                        user = args.user,
+                        victim = null,
+                        message = dbStrings.GetRandomLine(bChan, "TARDY"),
+                        parseMessage = true
+                    });
+                    settings.failCount++;
+                    SaveBaseSettings(bChan, PLUGINNAME, settings);
+                }
+                return;
+            }
+            if (settings._couches[bChan.Key].TwitchUsernames.Contains(args.userDisplayName)) { return; }
+
+            if (settings._couches[bChan.Key].TwitchUsernames.Count < settings.couchsize)
+            {
+                if (settings._couches[bChan.Key].TwitchUsernames.Count != 0)
+                {
+                    if (RollIncident(15))
+                    {
+                        string rngSitter = GetRNGSitter(bChan, settings);
+                        if (rngSitter != null)
+                        {
+                            UserEntry victim = await Program.Users.GetUserByTwitchDisplayName(rngSitter);
+                            if (victim != null)
+                            {
+                                settings._couches[bChan.Key].TwitchUsernames.RemoveAll(p => p == victim._twitchUsername);
+                                if (!await UserStatsExists(bChan.Key, args.user.Key))
+                                {
+                                    UserStatsCreate(bChan.Key, args.user.Key);
+                                }
+                                CouchUserStats userStats1 = await UserStatsRead(bChan.Key, args.user.Key);
+                                userStats1.CountSeated++;
+                                UserStatsSave(bChan, userStats1);
+
+                                if (!await UserStatsExists(bChan.Key, victim.Key))
+                                {
+                                    UserStatsCreate(bChan.Key, args.user.Key);
+                                }
+                                CouchUserStats markUserStats = await UserStatsRead(bChan.Key, victim.Key);
+                                markUserStats.CountBooted++;
+                                UserStatsSave(bChan, markUserStats);
+
+                                response.victim = victim;
+                                response.message = dbStrings.GetRandomLine(bChan, "INCIDENT");
+                                response.parseMessage = true;
+                                Respond(bChan, response);
+
+                                SaveBaseSettings(bChan, PLUGINNAME, settings);
+                            }
+                        }
+                    }
+                }
+                if (!await UserStatsExists(bChan.Key, args.user.Key))
+                {
+                    UserStatsCreate(bChan.Key, args.user.Key);
+                }
+                CouchUserStats userStats = await UserStatsRead(bChan.Key, args.user.Key);
+                userStats.CountSeated++;
+                UserStatsSave(bChan, userStats);
+                settings._couches[bChan.Key].TwitchUsernames.Add(args.userDisplayName);
+
+                Respond(bChan, new BotWideResponseArguments(args)
+                {
+                    message = dbStrings.GetRandomLine(bChan, "SUCCESS"),
+                    parseMessage = true
+                });
+
+                SaveBaseSettings(bChan, PLUGINNAME, settings);
+
+            }
+            else
+            {
+                Program.TwitchSayMessage(args.channel,
+                    dbStrings.GetRandomLine(bChan, "FAIL").Replace("[USER]", args.user._twitchDisplayname)
+                    );
+                settings.failCount++;
+                SaveBaseSettings(bChan, PLUGINNAME, settings);
+            }
         }
 
 
@@ -456,7 +445,7 @@ namespace Couch
         }
         #endregion
         #region Internal stuff
-        
+
         private async Task ShakeCouch(BotChannel bChan, CouchSettings settings)
         {
             if (!settings._active || !settings._couches[bChan.Key].couchOpen) { return; }
@@ -966,7 +955,7 @@ namespace Couch
             }
         }
 
-        
+
         // END OF DB things
         #endregion
     }// EOF CLASS
