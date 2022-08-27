@@ -62,7 +62,6 @@ namespace ShoutOut
             ShoutOutSettings settings = await Settings<ShoutOutSettings>(bChan, PluginName);
             BotWideResponseArguments response = new BotWideResponseArguments(args);
             if (!settings._active) { return; }
-            if (args.source == MESSAGESOURCE.TWITCH) { return; }
             if (args.arguments.Count <= 1)
             {
                 response.message = "You need to give a valid ID. Check the List command to see ID for the lines in the database.";
