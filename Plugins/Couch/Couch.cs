@@ -27,7 +27,7 @@ namespace Couch
         private DatabaseStrings dbStrings;
         private List<TimedMessage> _timedMessages = new List<TimedMessage>();
         #endregion
-        public Couch() : base("couch", "Couch", 2, "Opens a couch as stream goes live")
+        public Couch() : base("couch", "Couch", 3, "Opens a couch as stream goes live")
         {
             DBDefaultLines();
             Program.BotEvents.OnMessageReceived += OnMessageReceived;
@@ -36,6 +36,51 @@ namespace Couch
             dbStrings = new DatabaseStrings(PLUGINNAME, "couch");
         }
         #region Command Methods
+        [SingleCommand("couchinfo"), CommandHelp("Shows current settings and status of the couch."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
+        public async void InfoCouch(BotChannel bChan, BotWideCommandArguments args)
+        {
+            if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
+            {
+                // No access below
+                return;
+            }
+            CouchSettings settings = await Settings<CouchSettings>(bChan, PluginName);
+            BotWideResponseArguments response = new BotWideResponseArguments(args);
+            string message = $"```fix{System.Environment.NewLine}Admin/Broadcaster commands {System.Environment.NewLine}" +
+            $"{Program.CommandCharacter}couch < Arguments >{System.Environment.NewLine}{System.Environment.NewLine}" +
+            $"Arguments....{System.Environment.NewLine}" +
+            $"< none > ->responds current settings{System.Environment.NewLine}" +
+            $"open -> Manually resets and open the couch.{System.Environment.NewLine}" +
+            $"on/off -> Turns plugin on or off for the channel.{System.Environment.NewLine}" +
+            $"size # -> Sets the number of seats between 1 and 40.{System.Environment.NewLine}" +
+            $"greet # -> Sets the number of seated needed in stats for a greeting when a user joins the twitch channel.{System.Environment.NewLine}" +
+            $"time # -> Sets the time in seconds the couch will stay open.{System.Environment.NewLine}{System.Environment.NewLine}" +
+            $"Discord only arguments(make sure adminchannel is set in adminplugin){System.Environment.NewLine}" +
+            $"addsuccess < text > Text being the line returned. Use [USER] in text where username should be.{System.Environment.NewLine}" +
+            $"addfail < text >{System.Environment.NewLine}" +
+            $"addgreet < text >{System.Environment.NewLine}" +
+            $"addincident < text >{System.Environment.NewLine}" +
+            $"list / list # -> Shows stored lines by page.{System.Environment.NewLine}" +
+            $"use # -> Toggles the inuse flag for the line with given ID.{System.Environment.NewLine}" +
+            $"delete # -> Deletes the line with the ID if inuse flag is false. As in not in use.{System.Environment.NewLine}" +
+            System.Environment.NewLine + System.Environment.NewLine +
+            $"User commands{System.Environment.NewLine}" +
+            $"{Program.CommandCharacter}seat -> When couch open it responds with success of fail message.{System.Environment.NewLine}" +
+            $"{Program.CommandCharacter}seats -> User stats rundown.{System.Environment.NewLine}```{System.Environment.NewLine}";
+
+            if (settings._active)
+            {
+                message += $"> Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}. Open time is {settings.openTime}";
+            }
+            else
+            {
+                message += $"> Couch is inactive. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}. Open time is {settings.openTime}";
+            }
+            response.message = message;
+            Respond(bChan, response);
+        }
+
+
         [SubCommand("addfail", 0), CommandHelp("Add a FAIL line to the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
         public async void addfail(BotChannel bChan, BotWideCommandArguments args)
         {
@@ -171,48 +216,7 @@ namespace Couch
                 }
             }
         }
-        [SubCommand("couchinfo", 0), CommandHelp("Remove an unused line from the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
-        public async void InfoCouch(BotChannel bChan, BotWideCommandArguments args)
-        {
-            if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
-            {
-                // No access below
-                return;
-            }
-            CouchSettings settings = await Settings<CouchSettings>(bChan, PluginName);
-            BotWideResponseArguments response = new BotWideResponseArguments(args);
-            string message = $"```fix{System.Environment.NewLine}Admin/Broadcaster commands {System.Environment.NewLine}" +
-            $"{Program.CommandCharacter}couch < Arguments >{System.Environment.NewLine}{System.Environment.NewLine}" +
-            $"Arguments....{System.Environment.NewLine}" +
-            $"< none > ->responds current settings{System.Environment.NewLine}" +
-            $"open -> Manually resets and open the couch.{System.Environment.NewLine}" +
-            $"on/off -> Turns plugin on or off for the channel.{System.Environment.NewLine}" +
-            $"size # -> Sets the number of seats between 1 and 40.{System.Environment.NewLine}" +
-            $"greet # -> Sets the number of seated needed in stats for a greeting when a user joins the twitch channel.{System.Environment.NewLine}" +
-            $"time # -> Sets the time in seconds the couch will stay open.{System.Environment.NewLine}{System.Environment.NewLine}" +
-            $"Discord only arguments(make sure adminchannel is set in adminplugin){System.Environment.NewLine}" +
-            $"addsuccess < text > Text being the line returned. Use [USER] in text where username should be.{System.Environment.NewLine}" +
-            $"addfail < text >{System.Environment.NewLine}" +
-            $"addgreet < text >{System.Environment.NewLine}" +
-            $"addincident < text >{System.Environment.NewLine}" +
-            $"list / list # -> Shows stored lines by page.{System.Environment.NewLine}" +
-            $"use # -> Toggles the inuse flag for the line with given ID.{System.Environment.NewLine}" +
-            $"delete # -> Deletes the line with the ID if inuse flag is false. As in not in use.{System.Environment.NewLine}" +
-            System.Environment.NewLine + System.Environment.NewLine +
-            $"User commands{System.Environment.NewLine}" +
-            $"{Program.CommandCharacter}seat -> When couch open it responds with success of fail message.{System.Environment.NewLine}" +
-            $"{Program.CommandCharacter}seats -> User stats rundown.{System.Environment.NewLine}```{System.Environment.NewLine}";
-
-            if (settings._active)
-            {
-                message += $"> Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}. Open time is {settings.openTime}";
-            }
-            else
-            {
-                message += $"> Couch is inactive. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}. Open time is {settings.openTime}";
-            }
-            Respond(bChan, response);
-        }
+        
         [SubCommand("remove", 0), CommandHelp("Remove an unused line from the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
         public async void DBRemove(BotChannel bChan, BotWideCommandArguments args)
         {
@@ -261,7 +265,7 @@ namespace Couch
             response.message = $"Failed to delete line {id2} for some reason.";
             Respond(bChan, response);
         }
-        [SubCommand("size", 0), CommandHelp("Set the size of the couch."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
+        [SubCommand("size", 0), CommandHelp("Set the size of the couch."), CommandVerified(3)]
         public async void SizeCouch(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
@@ -274,24 +278,53 @@ namespace Couch
             if (!settings._active) { return; }
             if (args.arguments.Count == 2)
             {
-                int seats = settings.couchsize;
-                int.TryParse(args.arguments[1], out seats);
+                int.TryParse(args.arguments[1], out int seats);
                 if (seats > 0 && seats <= 100 && seats != settings.couchsize)
                 {
                     settings.couchsize = seats;
-                    response.message = $"Couch now has {settings.couchsize} seats.";
-                    Respond(bChan, response);
-                    await SayOnDiscordAdmin(bChan, $"{args.userDisplayName} changed the Couch size to {settings.couchsize}.");
                     SaveBaseSettings(bChan, PLUGINNAME, settings);
                 }
                 else
                 {
                     response.message = $"Couch size limit has to be more than 0 and max 100.";
                     Respond(bChan, response);
+                    return;
                 }
             }
+            response.message = $"Couch now has {settings.couchsize} seats.";
+            Respond(bChan, response);
         }
-        [SubCommand("who", 0), CommandHelp("List who is currently sitting in the couch."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
+        [SubCommand("time", 1), CommandHelp("How long the couch should be open."), CommandVerified(3)]
+        public async void TimeCouch(BotChannel bChan, BotWideCommandArguments args)
+        {
+            if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
+            {
+                // No access below
+                return;
+            }
+            CouchSettings settings = await Settings<CouchSettings>(bChan, PluginName);
+            BotWideResponseArguments response = new BotWideResponseArguments(args);
+            if (!settings._active) { return; }
+            int timer = settings.openTime;
+            if (args.arguments.Count == 2)
+            {
+                int.TryParse(args.arguments[1], out timer);
+                if (timer > 0 && timer <= 10000 && timer != settings.openTime)
+                {
+                    settings.openTime = timer;
+                    SaveBaseSettings(bChan, PLUGINNAME, settings);
+                }
+                else
+                {
+                    response.message = $"Couch time limit has to be more than 0 and max 10000 seconds.";
+                    Respond(bChan, response);
+                    return;
+                }
+            }
+            response.message = $"Couch is set to be open for {settings.openTime} seconds.";
+            Respond(bChan, response);
+        }
+        [SubCommand("who", 0), CommandHelp("List who is currently sitting in the couch."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
         public async void WhoCouch(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
@@ -348,36 +381,8 @@ namespace Couch
             }
             Respond(bChan, response);
         }
-        [SubCommand("time", 0), CommandHelp("How long the couch should be open."), CommandVerified(2)]
-        public async void TimeCouch(BotChannel bChan, BotWideCommandArguments args)
-        {
-            if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
-            {
-                // No access below
-                return;
-            }
-            if (args.arguments.Count == 2)
-            {
-                CouchSettings settings = await Settings<CouchSettings>(bChan, PluginName);
-                BotWideResponseArguments response = new BotWideResponseArguments(args);
-                int timer = settings.openTime;
-                int.TryParse(args.arguments[1], out timer);
-                if (timer > 0 && timer <= 10000 && timer != settings.openTime)
-                {
-                    settings.openTime = timer;
-                    response.message = $"Couch time limit is now {settings.openTime} seconds.";
-                    Respond(bChan, response);
-                    await SayOnDiscordAdmin(bChan, $"{args.user} changed the Couch open time limit setting to {settings.openTime} seconds.");
-                    SaveBaseSettings(bChan, PLUGINNAME, settings);
-                }
-                else
-                {
-                    response.message = $"Couch time limit has to be more than 0 and max 10000 seconds.";
-                    Respond(bChan, response);
-                }
-            }
-        }
-        [SubCommand("list", 0), CommandHelp("Show the collection of lines. All with use flag true will be randomly used as messages."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
+        
+        [SubCommand("list", 0), CommandHelp("Show the collection of lines. All with use flag true will be randomly used as messages."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
         public async void DBList(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
@@ -397,7 +402,7 @@ namespace Couch
             if (page <= 0) { page = 1; }
             await ListLinesFromDB(bChan, args.channelID, page - 1);
         }
-        [SubCommand("close", 0), CommandHelp("Close the couch in the twitch channel tied to the botchannel command was given to."), CommandVerified(2)]
+        [SubCommand("close", 0), CommandHelp("Closes the couch."), CommandVerified(3)]
         public async void CloseCouch(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
@@ -409,7 +414,7 @@ namespace Couch
             if (!settings._active) { return; }
             CloseCouch(bChan, settings);
         }
-        [SubCommand("open", 0), CommandHelp("Open the couch in the twitch channel tied to the botchannel command was given to."), CommandVerified(2)]
+        [SubCommand("open", 0), CommandHelp("Open the couch in the twitch channel tied to the botchannel command was given to."), CommandVerified(3)]
         public async void OpenCouch(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
@@ -611,14 +616,16 @@ namespace Couch
         }
         private async void CloseCouch(BotChannel bChan, CouchSettings settings)
         {
-            if (!settings._couches.ContainsKey(bChan.Key))
+            if (settings._couches.ContainsKey(bChan.Key))
             {
-                settings._couches[bChan.Key] = new CouchEntry();
+                if (settings._couches[bChan.Key].couchOpen)
+                {
+                    settings._couches[bChan.Key].couchOpen = false;
+                    SaveBaseSettings(bChan, PLUGINNAME, settings);
+                    Program.TwitchSayMessage(bChan.TwitchChannelName, $"Couch is now closed.");
+                    await SayOnDiscordAdmin(bChan, $"Couch is now closed.");
+                }
             }
-            settings._couches[bChan.Key].couchOpen = false;
-            SaveBaseSettings(bChan, PLUGINNAME, settings);
-            Program.TwitchSayMessage(bChan.TwitchChannelName, $"Couch is now closed.");
-            await SayOnDiscordAdmin(bChan, $"Couch is now closed.");
         }
         private void RegisterTimedMessage(BotChannel bChan, CouchSettings settings)
         {

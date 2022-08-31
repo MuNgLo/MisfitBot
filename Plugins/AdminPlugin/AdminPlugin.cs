@@ -9,12 +9,11 @@ namespace AdminPlugin
     // Invite link https://discordapp.com/oauth2/authorize?client_id=295257486708047882&scope=bot&permissions=0
     public class AdminPlugin : PluginBase
     {
-        public AdminPlugin():base("admin", "AdminPlugin", 2, "Admin functionality")
+        public AdminPlugin():base("admin", "AdminPlugin", 1, "Admin functionality")
         {
             Program.BotEvents.OnMessageReceived += OnMessageReceived;
             Program.BotEvents.OnTwitchConnected += OnTwitchConnected;
             Program.BotEvents.OnDiscordConnected += OnDiscordConnected;
-            Program.BotEvents.OnCommandReceived += OnCommandRecieved;
             //Program.BotEvents.OnDiscordGuildAvailable += OnDiscordGuildAvailable;
 
             Program.BotEvents.OnTwitchFollow += OnTwitchNewFollower;
@@ -65,85 +64,92 @@ namespace AdminPlugin
         }
         #endregion
 
-        private async void OnCommandRecieved(BotWideCommandArguments args)
-        {
-            BotChannel bChan = await GetBotChannel(args);
-            BotWideResponseArguments response = new BotWideResponseArguments(args);
+       
 
+        [SingleCommand("juanage"), CommandHelp("Manage pubsub connections."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
+        public async void BotAgeCommand(BotChannel bChan, BotWideCommandArguments args)
+        {
+            BotWideResponseArguments response = new BotWideResponseArguments(args);
             // TEMPORARY this should later move to a better suited plugin
-            if(args.command == "juanage")
+            if (args.command == "juanage")
             {
                 response.message = JuanAge();
                 Respond(bChan, response);
                 return;
             }
-
+        }
+            [SingleCommand("twitch"), CommandHelp("Manage pubsub connections."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
+        public async void TwitchCommand(BotChannel bChan, BotWideCommandArguments args)
+        {
             if (args.isBroadcaster || args.isModerator || args.canManageMessages)
             {
-
-                switch (args.command)
+                BotWideResponseArguments response = new BotWideResponseArguments(args);
+                // anything twitch has to go through discord
+                if (args.source != MESSAGESOURCE.DISCORD) { return; }
+                // Clean command response
+                if (args.arguments.Count == 0)
                 {
-                    case "twitch":
-                        // anything twitch has to go through discord
-                        if (args.source != MESSAGESOURCE.DISCORD) { return; }
-                        // Clean command response
-                        if (args.arguments.Count == 0)
+                    if (bChan.TwitchChannelName == string.Empty)
+                    {
+                        response.message = $"There is no twitch channel tied to this Discord. Use \"{CMC}twitch channel <NameOfTwitchChannel>\" to tie a channel to this Discord.";
+                    }
+                    else
+                    {
+                        response.message = $"Currently this Discord is tied to the Twitch channel \"{bChan.TwitchChannelName}\"";
+                    }
+                    Respond(bChan, response);
+                    return;
+                }
+                switch (args.arguments[0])
+                {
+                    case "channel":
+                        if (args.arguments.Count == 2)
                         {
-                            if (bChan.TwitchChannelName == string.Empty)
+                            TwitchLib.Api.Helix.Models.Users.GetUsers.User user = await Program.Users.GetUserByTwitchUsernameFromAPI(args.arguments[1].ToLower());
+
+                            if (user == null)
                             {
-                                response.message = $"There is no twitch channel tied to this Discord. Use \"{CMC}twitch channel <NameOfTwitchChannel>\" to tie a channel to this Discord.";
+                                // Failed to look up twitch channel so notify and exit
+                                response.message = "Sorry. Could not find that channel. Make sure you enter it correctly and try again.";
+                                Respond(bChan, response);
+                                return;
+                            }
+                            bChan.TwitchChannelName = args.arguments[1].ToLower();
+                            bChan.TwitchChannelID = user.Id;
+                            bChan.TwitchAutojoin = true;
+                            response.message = $"This Discord is now tied to the Twitch channel \"{bChan.TwitchChannelName}\".";
+                            Program.Channels.ChannelSave(bChan);
+                            if (Program.TwitchConnected)
+                            {
+                                await Program.Channels.JoinAllAutoJoinTwitchChannels();
                             }
                             else
                             {
-                                response.message = $"Currently this Discord is tied to the Twitch channel \"{bChan.TwitchChannelName}\"";
+                                response.message += " Not connected to Twitch so can't join the channel right now.";
                             }
                             Respond(bChan, response);
-                            return;
-                        }
-                        switch (args.arguments[0])
-                        {
-                            case "channel":
-                                if (args.arguments.Count == 2)
-                                {
-                                    TwitchLib.Api.Helix.Models.Users.GetUsers.User user = await Program.Users.GetUserByTwitchUsernameFromAPI(args.arguments[1].ToLower());
-                                    
-                                    if (user == null)
-                                    {
-                                        // Failed to look up twitch channel so notify and exit
-                                        response.message = "Sorry. Could not find that channel. Make sure you enter it correctly and try again.";
-                                        Respond(bChan, response);
-                                        return;
-                                    }
-                                    bChan.TwitchChannelName = args.arguments[1].ToLower();
-                                    bChan.TwitchChannelID = user.Id;
-                                    bChan.TwitchAutojoin = true;
-                                    response.message = $"This Discord is now tied to the Twitch channel \"{bChan.TwitchChannelName}\".";
-                                    Program.Channels.ChannelSave(bChan);
-                                    if(Program.TwitchConnected){
-                                        await Program.Channels.JoinAllAutoJoinTwitchChannels();
-                                    }else{
-                                        response.message += " Not connected to Twitch so can't join the channel right now.";
-                                    }
-                                    Respond(bChan, response);
-                                }
-                                break;
                         }
                         break;
-                    
-                    case "setadminchannel":
-                        bChan.discordAdminChannel = Core.StringToUlong( args.channel);
-                        Program.Channels.ChannelSave(bChan);
-                        response.message = $"This is now set as the default adminchannel for this DiscordServer. This is needed to direct some important messages and notifications";
-                        Respond(bChan, response);
-                    return;
-                    //case "users":
-                    //response.message = Program.Users.UserStats();
-                    //Respond(bChan, response);
-                    //return;   
                 }
-
             }
         }
+
+
+
+        [SingleCommand("setadminchannel"), CommandHelp("Manage pubsub connections."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
+        public void SetAdminChannelCommand(BotChannel bChan, BotWideCommandArguments args)
+        {
+            if (args.isBroadcaster || args.isModerator || args.canManageMessages)
+            {
+                BotWideResponseArguments response = new BotWideResponseArguments(args);
+                bChan.discordAdminChannel = Core.StringToUlong(args.channel);
+                Program.Channels.ChannelSave(bChan);
+                response.message = $"This is now set as the default adminchannel for this DiscordServer. This is needed to direct some important messages and notifications";
+                Respond(bChan, response);
+            }
+        }
+
+
 
         [SubCommand("users", 0), CommandHelp("This maybe does something!"), CommandVerified(3)]
         public void SubCommandTesthandler(BotChannel bChan, BotWideCommandArguments args)

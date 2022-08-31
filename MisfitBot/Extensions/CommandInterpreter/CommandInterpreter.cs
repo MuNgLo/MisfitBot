@@ -140,11 +140,11 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
             {
                 if (method.GetCustomAttribute<CommandVerifiedAttribute>().version < Program.Version)
                 {
-                    Core.LOG(new LogEntry(LOGSEVERITY.INFO, "CommandInterpreter", $"The command {command} in plugin {plugin} verification flag({method.GetCustomAttribute<CommandVerifiedAttribute>().version}) is older then the Bot version {Program.Version}!"));
+                    Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "CommandInterpreter", $"The command {command} in plugin {plugin} verification flag({method.GetCustomAttribute<CommandVerifiedAttribute>().version}) is older then the Bot version {Program.Version}!"));
                 }
                 else if (method.GetCustomAttribute<CommandVerifiedAttribute>().version > Program.Version)
                 {
-                    Core.LOG(new LogEntry(LOGSEVERITY.INFO, "CommandInterpreter", $"The command {command} in plugin {plugin} verification flag({method.GetCustomAttribute<CommandVerifiedAttribute>().version}) is newer then the Bot version {Program.Version}!"));
+                    Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "CommandInterpreter", $"The command {command} in plugin {plugin} verification flag({method.GetCustomAttribute<CommandVerifiedAttribute>().version}) is newer then the Bot version {Program.Version}!"));
                 }
                 return;
             }
