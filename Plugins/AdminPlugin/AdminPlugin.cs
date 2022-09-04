@@ -9,7 +9,7 @@ namespace AdminPlugin
     // Invite link https://discordapp.com/oauth2/authorize?client_id=295257486708047882&scope=bot&permissions=0
     public class AdminPlugin : PluginBase
     {
-        public AdminPlugin():base("admin", "AdminPlugin", 1, "Admin functionality")
+        public AdminPlugin():base("admin", "AdminPlugin", 3, "Admin functionality")
         {
             Program.BotEvents.OnMessageReceived += OnMessageReceived;
             Program.BotEvents.OnTwitchConnected += OnTwitchConnected;
@@ -66,8 +66,8 @@ namespace AdminPlugin
 
        
 
-        [SingleCommand("juanage"), CommandHelp("Manage pubsub connections."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
-        public async void BotAgeCommand(BotChannel bChan, BotWideCommandArguments args)
+        [SingleCommand("juanage"), CommandHelp("Manage pubsub connections."), CommandVerified(3)]
+        public void BotAgeCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             BotWideResponseArguments response = new BotWideResponseArguments(args);
             // TEMPORARY this should later move to a better suited plugin
@@ -78,7 +78,7 @@ namespace AdminPlugin
                 return;
             }
         }
-            [SingleCommand("twitch"), CommandHelp("Manage pubsub connections."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
+        [SingleCommand("twitch"), CommandHelp("Manage Twitch connection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
         public async void TwitchCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (args.isBroadcaster || args.isModerator || args.canManageMessages)
@@ -105,8 +105,25 @@ namespace AdminPlugin
                     case "channel":
                         if (args.arguments.Count == 2)
                         {
-                            TwitchLib.Api.Helix.Models.Users.GetUsers.User user = await Program.Users.GetUserByTwitchUsernameFromAPI(args.arguments[1].ToLower());
-
+                            if(bChan.TwitchChannelName == args.arguments[1].ToLower())
+                            {
+                                // Same channel as already set
+                                response.message = "Already tied to that channel.";
+                                Respond(bChan, response);
+                                return;
+                            }
+                            TwitchLib.Api.Helix.Models.Users.GetUsers.User user;
+                            try
+                            {
+                                user = await Program.Users.GetUserByTwitchUsernameFromAPI(args.arguments[1].ToLower());
+                            }
+                            catch
+                            {
+                                // Bad characters in the channel name
+                                response.message = "That channelname contains invalid characters. Make sure you do it right.";
+                                Respond(bChan, response);
+                                return;
+                            }     
                             if (user == null)
                             {
                                 // Failed to look up twitch channel so notify and exit
@@ -136,7 +153,7 @@ namespace AdminPlugin
 
 
 
-        [SingleCommand("setadminchannel"), CommandHelp("Manage pubsub connections."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
+        [SingleCommand("setadminchannel"), CommandHelp("Declare a dedicated channel on Discord to be used for special messages."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
         public void SetAdminChannelCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (args.isBroadcaster || args.isModerator || args.canManageMessages)

@@ -88,9 +88,11 @@ namespace MisfitBot_MKII.DiscordWrap
             if(iGuild == null) {return false;}
             SocketRole sRole = iGuild.Roles.FirstOrDefault(x => x.Name == role) as SocketRole;
             if(sRole == null) {return false;}
-            RequestOptions options = new RequestOptions();
-            options.Timeout = 1000;
-            options.RetryMode = RetryMode.RetryTimeouts;
+            RequestOptions options = new RequestOptions
+            {
+                Timeout = 1000,
+                RetryMode = RetryMode.RetryTimeouts
+            };
             IGuildUser iUser = await iGuild.GetUserAsync(user._discordUID, CacheMode.AllowDownload, options);
             if(iUser == null) {return false;}
 

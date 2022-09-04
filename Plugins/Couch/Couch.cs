@@ -16,7 +16,7 @@ namespace Couch
         #region old fields
         public readonly string PLUGINNAME = "Couch";
         public readonly string PLUGINSTATS = "_Couch_Stats";
-        private Random rng = new Random();
+        private readonly Random rng = new Random();
         private List<string> _success = new List<string>();
         private List<string> _fail = new List<string>();
         private List<string> _incident = new List<string>();
@@ -24,8 +24,8 @@ namespace Couch
         private List<string> _shakeF = new List<string>();
         private List<string> _shakeS = new List<string>();
         private List<string> _greets = new List<string>();
-        private DatabaseStrings dbStrings;
-        private List<TimedMessage> _timedMessages = new List<TimedMessage>();
+        private readonly DatabaseStrings dbStrings;
+        private readonly List<TimedMessage> _timedMessages = new List<TimedMessage>();
         #endregion
         public Couch() : base("couch", "Couch", 3, "Opens a couch as stream goes live")
         {
@@ -81,8 +81,8 @@ namespace Couch
         }
 
 
-        [SubCommand("addfail", 0), CommandHelp("Add a FAIL line to the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
-        public async void addfail(BotChannel bChan, BotWideCommandArguments args)
+        [SubCommand("addfail", 0), CommandHelp("Add a FAIL line to the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
+        public async void AddFailCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
             {
@@ -96,8 +96,8 @@ namespace Couch
                 await AddLine(bChan, "FAIL", args.arguments);
             }
         }
-        [SubCommand("addgreet", 0), CommandHelp("Add a GREET line to the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
-        public async void addgreet(BotChannel bChan, BotWideCommandArguments args)
+        [SubCommand("addgreet", 0), CommandHelp("Add a GREET line to the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
+        public async void AddGreetCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
             {
@@ -111,8 +111,8 @@ namespace Couch
                 await AddLine(bChan, "GREET", args.arguments);
             }
         }
-        [SubCommand("addincident", 0), CommandHelp("Add a INCIDENT line to the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
-        public async void addincident(BotChannel bChan, BotWideCommandArguments args)
+        [SubCommand("addincident", 0), CommandHelp("Add a INCIDENT line to the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
+        public async void AddIncidentCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
             {
@@ -126,8 +126,8 @@ namespace Couch
                 await AddLine(bChan, "INCIDENT", args.arguments);
             }
         }
-        [SubCommand("addsuccess", 0), CommandHelp("Add a SUCCESS line to the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
-        public async void addsuccess(BotChannel bChan, BotWideCommandArguments args)
+        [SubCommand("addsuccess", 0), CommandHelp("Add a SUCCESS line to the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
+        public async void AddSuccessCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
             {
@@ -141,8 +141,8 @@ namespace Couch
                 await AddLine(bChan, "SUCCESS", args.arguments);
             }
         }
-        [SubCommand("addtardy", 0), CommandHelp("Add a TARDY line to the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
-        public async void addtardy(BotChannel bChan, BotWideCommandArguments args)
+        [SubCommand("addtardy", 0), CommandHelp("Add a TARDY line to the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
+        public async void AddtardyCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
             {
@@ -156,8 +156,8 @@ namespace Couch
                 await AddLine(bChan, "TARDY", args.arguments);
             }
         }
-        [SubCommand("addshakes", 0), CommandHelp("Add a SHAKES line to the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
-        public async void addshakes(BotChannel bChan, BotWideCommandArguments args)
+        [SubCommand("addshakes", 0), CommandHelp("Add a shake success line to the collection. Use [REPLACE] for the users in the line."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
+        public async void AddshakesCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
             {
@@ -171,8 +171,8 @@ namespace Couch
                 await AddLine(bChan, "SHAKES", args.arguments);
             }
         }
-        [SubCommand("addshakef", 0), CommandHelp("Add a SHAKEF line to the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
-        public async void addshakef(BotChannel bChan, BotWideCommandArguments args)
+        [SubCommand("addshakef", 0), CommandHelp("Add a shake fail (Everyone stays on couch) line to the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
+        public async void AddshakefCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
             {
@@ -186,8 +186,8 @@ namespace Couch
                 await AddLine(bChan, "SHAKEF", args.arguments);
             }
         }
-        [SubCommand("greet", 0), CommandHelp("Remove an unused line from the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
-        public async void greet(BotChannel bChan, BotWideCommandArguments args)
+        [SubCommand("greet", 0), CommandHelp("Set the limit of greetings that can be used."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
+        public async void GreetCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
             {
@@ -199,8 +199,7 @@ namespace Couch
 
             if (args.arguments.Count == 2)
             {
-                int greet = settings.potatoGreeting;
-                int.TryParse(args.arguments[1], out greet);
+                int.TryParse(args.arguments[1], out int greet);
                 if (greet > 0 && greet <= 100 && greet != settings.potatoGreeting)
                 {
                     settings.potatoGreeting = greet;
@@ -217,8 +216,8 @@ namespace Couch
             }
         }
         
-        [SubCommand("remove", 0), CommandHelp("Remove an unused line from the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
-        public async void DBRemove(BotChannel bChan, BotWideCommandArguments args)
+        [SubCommand("remove", 0), CommandHelp("Remove an unused line from the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
+        public async void DBRemoveCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
             {
@@ -234,8 +233,7 @@ namespace Couch
                 Respond(bChan, response);
                 return;
             }
-            int id2 = -1;
-            int.TryParse(args.arguments[1], out id2);
+            int.TryParse(args.arguments[1], out int id2);
             if (id2 < 1)
             {
                 response.message = "You need to give a valid ID. That ID couldn't be used.";
@@ -251,7 +249,7 @@ namespace Couch
             }
             if (entry2._inuse)
             {
-                response.message = $"Only entries that is not in use can be deleted. Use \"{CMC}insults use <ID>\" to toggle the inuse flag on entries.";
+                response.message = $"Only entries that is not in use can be deleted. Use \"{CMC}{CMD} use <ID>\" to toggle the inuse flag on entries.";
                 Respond(bChan, response);
                 return;
             }
@@ -266,7 +264,7 @@ namespace Couch
             Respond(bChan, response);
         }
         [SubCommand("size", 0), CommandHelp("Set the size of the couch."), CommandVerified(3)]
-        public async void SizeCouch(BotChannel bChan, BotWideCommandArguments args)
+        public async void SizeCouchCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
             {
@@ -295,7 +293,7 @@ namespace Couch
             Respond(bChan, response);
         }
         [SubCommand("time", 1), CommandHelp("How long the couch should be open."), CommandVerified(3)]
-        public async void TimeCouch(BotChannel bChan, BotWideCommandArguments args)
+        public async void TimeCouchCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
             {
@@ -305,10 +303,9 @@ namespace Couch
             CouchSettings settings = await Settings<CouchSettings>(bChan, PluginName);
             BotWideResponseArguments response = new BotWideResponseArguments(args);
             if (!settings._active) { return; }
-            int timer = settings.openTime;
             if (args.arguments.Count == 2)
             {
-                int.TryParse(args.arguments[1], out timer);
+                int.TryParse(args.arguments[1], out int timer);
                 if (timer > 0 && timer <= 10000 && timer != settings.openTime)
                 {
                     settings.openTime = timer;
@@ -325,7 +322,7 @@ namespace Couch
             Respond(bChan, response);
         }
         [SubCommand("who", 0), CommandHelp("List who is currently sitting in the couch."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
-        public async void WhoCouch(BotChannel bChan, BotWideCommandArguments args)
+        public async void WhoCouchCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
             {
@@ -338,8 +335,8 @@ namespace Couch
             response.message = GetAllSittersAsString(bChan, settings);
             Respond(bChan, response);
         }
-        [SubCommand("use", 0), CommandHelp("Change the use flag on a line in the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(2)]
-        public async void DBSetUseFlag(BotChannel bChan, BotWideCommandArguments args)
+        [SubCommand("use", 0), CommandHelp("Change the use flag on a line in the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
+        public async void DBSetUseFlagCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
             {
@@ -355,8 +352,7 @@ namespace Couch
                 Respond(bChan, response);
                 return;
             }
-            int id = -1;
-            int.TryParse(args.arguments[1], out id);
+            int.TryParse(args.arguments[1], out int id);
             if (id < 1)
             {
                 response.message = "You need to give a valid ID. That ID couldn't be used.";
@@ -373,17 +369,17 @@ namespace Couch
             DBString edited = new DBString(entry._id, !entry._inuse, entry._topic, entry._text);
             if (dbStrings.SaveEditedLineByID(bChan, edited))
             {
-                response.message = "Entry updated.";
+                response.message = $"Entry with id {entry._id} updated to {edited._inuse}.";
             }
             else
             {
-                response.message = "Failed to update entry.";
+                response.message = $"Failed to update entry with id {entry._id}.";
             }
             Respond(bChan, response);
         }
         
         [SubCommand("list", 0), CommandHelp("Show the collection of lines. All with use flag true will be randomly used as messages."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
-        public async void DBList(BotChannel bChan, BotWideCommandArguments args)
+        public async void DBListCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
             {
@@ -397,13 +393,12 @@ namespace Couch
                 await ListLinesFromDB(bChan, args.channelID, 0);
                 return;
             }
-            int page = 0;
-            int.TryParse(args.arguments[1], out page);
+            int.TryParse(args.arguments[1], out int page);
             if (page <= 0) { page = 1; }
             await ListLinesFromDB(bChan, args.channelID, page - 1);
         }
         [SubCommand("close", 0), CommandHelp("Closes the couch."), CommandVerified(3)]
-        public async void CloseCouch(BotChannel bChan, BotWideCommandArguments args)
+        public async void CloseCouchCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
             {
@@ -414,8 +409,8 @@ namespace Couch
             if (!settings._active) { return; }
             CloseCouch(bChan, settings);
         }
-        [SubCommand("open", 0), CommandHelp("Open the couch in the twitch channel tied to the botchannel command was given to."), CommandVerified(3)]
-        public async void OpenCouch(BotChannel bChan, BotWideCommandArguments args)
+        [SubCommand("open", 0), CommandHelp("Open the couch in the twitch channel."), CommandVerified(3)]
+        public async void OpenCouchCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.isModerator && !args.isBroadcaster && !args.canManageMessages)
             {
@@ -426,8 +421,10 @@ namespace Couch
             // For Couch we don't go further if we don't have a twitch channel tied to the discord guild
             if (bChan.TwitchChannelName == string.Empty && args.arguments.Count == 0)
             {
-                BotWideResponseArguments response = new BotWideResponseArguments(args);
-                response.message = "There is no twitch channel to run a couch in.";
+                BotWideResponseArguments response = new BotWideResponseArguments(args)
+                {
+                    message = "There is no twitch channel to run a couch in."
+                };
                 Respond(bChan, response);
                 return;
             }
@@ -439,19 +436,19 @@ namespace Couch
             OpenCouch(bChan, settings);
         }
         [SubCommand("rock", 0), CommandHelp("Rock the couch and see if anyone falls off."), CommandVerified(3)]
-        public async void RockCouch(BotChannel bChan, BotWideCommandArguments args)
+        public async void RockCouchCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             CouchSettings settings = await Settings<CouchSettings>(bChan, PLUGINNAME);
             await ShakeCouch(bChan, settings);
         }
         [SubCommand("shake", 0), CommandHelp("Same as Rock."), CommandVerified(3)]
-        public async void ShakeCouch(BotChannel bChan, BotWideCommandArguments args)
+        public async void ShakeCouchCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             CouchSettings settings = await Settings<CouchSettings>(bChan, PLUGINNAME);
             await ShakeCouch(bChan, settings);
         }
         [SingleCommand("seats"), CommandHelp("Tells user stats about their sitting."), CommandSourceAccess(MESSAGESOURCE.TWITCH), CommandVerified(3)]
-        public async void Seats(BotChannel bChan, BotWideCommandArguments args)
+        public async void SeatsCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             CouchUserStats cStats = await GetUserCouchStats(bChan.Key, args.user.Key);
             Program.TwitchSayMessage(args.channel,
@@ -459,7 +456,7 @@ namespace Couch
                                     );
         }
         [SingleCommand("seat"), CommandHelp("Lets users sit in the couch."), CommandSourceAccess(MESSAGESOURCE.TWITCH), CommandVerified(3)]
-        public async void Seat(BotChannel bChan, BotWideCommandArguments args)
+        public async void SeatCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             CouchSettings settings = await Settings<CouchSettings>(bChan, PLUGINNAME);
             BotWideResponseArguments response = new BotWideResponseArguments(args);
@@ -642,6 +639,7 @@ namespace Couch
                 }
                 );
         }
+        /*
         private async void ReminderText(string twitchChannelName)
         {
             BotChannel bChan = await Program.Channels.GetTwitchChannelByName(twitchChannelName);
@@ -664,6 +662,7 @@ namespace Couch
                 _timedMessages.Find(p => p.twitchChannelName == twitchChannel).done = true;
             }
         }
+        */
         private async Task DBStringsFirstSetup(BotChannel bChan)
         {
             await Task.Run(() =>
@@ -865,20 +864,18 @@ namespace Couch
         #endregion
         public bool StatsTableExists(BotChannel bChan)
         {
-            using (SQLiteCommand cmd = new SQLiteCommand())
+            using SQLiteCommand cmd = new SQLiteCommand();
+            cmd.CommandType = CommandType.Text;
+            cmd.Connection = Core.Data;
+            cmd.CommandText = "SELECT COUNT(*) AS QtRecords FROM sqlite_master WHERE type = 'table' AND name = @name";
+            cmd.Parameters.AddWithValue("@name", bChan.Key + PLUGINSTATS);
+            if (Convert.ToInt32(cmd.ExecuteScalar()) == 0)
             {
-                cmd.CommandType = CommandType.Text;
-                cmd.Connection = Core.Data;
-                cmd.CommandText = "SELECT COUNT(*) AS QtRecords FROM sqlite_master WHERE type = 'table' AND name = @name";
-                cmd.Parameters.AddWithValue("@name", bChan.Key + PLUGINSTATS);
-                if (Convert.ToInt32(cmd.ExecuteScalar()) == 0)
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
+                return false;
+            }
+            else
+            {
+                return true;
             }
         }
         private async Task<CouchUserStats> GetUserCouchStats(string bKey, string uKey)
@@ -891,100 +888,90 @@ namespace Couch
         }
         private void StatsTableCreate(BotChannel bChan, string tablename)
         {
-            using (SQLiteCommand cmd = new SQLiteCommand())
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.Connection = Core.Data;
-                cmd.CommandText = $"CREATE TABLE \"{bChan.Key + tablename}\" (" +
-                    $"BotChannelKey VACHAR(30)," +
-                    $"UserKey VACHAR(30)," +
-                    $"CountSeated INTEGER, " +
-                    $"CountBooted INTEGER " +
-                    $")";
-                cmd.ExecuteNonQuery();
-            }
+            using SQLiteCommand cmd = new SQLiteCommand();
+            cmd.CommandType = CommandType.Text;
+            cmd.Connection = Core.Data;
+            cmd.CommandText = $"CREATE TABLE \"{bChan.Key + tablename}\" (" +
+                $"BotChannelKey VACHAR(30)," +
+                $"UserKey VACHAR(30)," +
+                $"CountSeated INTEGER, " +
+                $"CountBooted INTEGER " +
+                $")";
+            cmd.ExecuteNonQuery();
         }
         private async Task<CouchUserStats> UserStatsRead(string bKey, string uKey)
         {
-            using (SQLiteCommand cmd = new SQLiteCommand())
+            using SQLiteCommand cmd = new SQLiteCommand();
+            cmd.CommandType = CommandType.Text;
+            cmd.Connection = Core.Data;
+            cmd.CommandText = $"SELECT * FROM \"{bKey + PLUGINSTATS}\" WHERE UserKey IS @uKey AND BotChannelKey IS @bKey";
+            cmd.Parameters.AddWithValue("@uKey", uKey);
+            cmd.Parameters.AddWithValue("@bKey", bKey);
+            SQLiteDataReader result;
+            try
             {
-                cmd.CommandType = CommandType.Text;
-                cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM \"{bKey + PLUGINSTATS}\" WHERE UserKey IS @uKey AND BotChannelKey IS @bKey";
-                cmd.Parameters.AddWithValue("@uKey", uKey);
-                cmd.Parameters.AddWithValue("@bKey", bKey);
-                SQLiteDataReader result;
-                try
-                {
-                    result = cmd.ExecuteReader();
-                }
-                catch (Exception)
-                {
-                    await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
-                    throw;
-                }
-                result.Read();
-                CouchUserStats user = new CouchUserStats(result.GetString(0), result.GetString(1), result.GetInt32(2), result.GetInt32(3));
-                return user;
+                result = cmd.ExecuteReader();
             }
+            catch (Exception)
+            {
+                await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, $"Database query failed hard. ({cmd.CommandText})"));
+                throw;
+            }
+            result.Read();
+            CouchUserStats user = new CouchUserStats(result.GetString(0), result.GetString(1), result.GetInt32(2), result.GetInt32(3));
+            return user;
         }
         private void UserStatsCreate(string bKey, string uKey)
         {
             CouchUserStats userStats = new CouchUserStats(bKey, uKey, 0, 0);
-            using (SQLiteCommand cmd = new SQLiteCommand())
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.Connection = Core.Data;
-                cmd.CommandText = $"INSERT INTO \"{bKey + PLUGINSTATS}\" VALUES (" +
-                    $"@BotChannelKey, " +
-                    $"@UserKey, " +
-                    $"@CountSeated, " +
-                    $"@CountBooted " +
-                    $")";
-                cmd.Parameters.AddWithValue("@BotChannelKey", bKey);
-                cmd.Parameters.AddWithValue("@UserKey", userStats.UserKey);
-                cmd.Parameters.AddWithValue("@CountSeated", userStats.CountSeated);
-                cmd.Parameters.AddWithValue("@CountBooted", userStats.CountBooted);
-                cmd.ExecuteNonQuery();
-            }
+            using SQLiteCommand cmd = new SQLiteCommand();
+            cmd.CommandType = CommandType.Text;
+            cmd.Connection = Core.Data;
+            cmd.CommandText = $"INSERT INTO \"{bKey + PLUGINSTATS}\" VALUES (" +
+                $"@BotChannelKey, " +
+                $"@UserKey, " +
+                $"@CountSeated, " +
+                $"@CountBooted " +
+                $")";
+            cmd.Parameters.AddWithValue("@BotChannelKey", bKey);
+            cmd.Parameters.AddWithValue("@UserKey", userStats.UserKey);
+            cmd.Parameters.AddWithValue("@CountSeated", userStats.CountSeated);
+            cmd.Parameters.AddWithValue("@CountBooted", userStats.CountBooted);
+            cmd.ExecuteNonQuery();
         }
         public void UserStatsSave(BotChannel bChan, CouchUserStats userStats)
         {
-            using (SQLiteCommand cmd = new SQLiteCommand())
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.Connection = Core.Data;
+            using SQLiteCommand cmd = new SQLiteCommand();
+            cmd.CommandType = CommandType.Text;
+            cmd.Connection = Core.Data;
 
-                cmd.CommandText = $"UPDATE \"{bChan.Key + PLUGINSTATS}\" SET " +
-                    $"BotChannelKey = @BotChannelKey, " +
-                    $"CountSeated = @CountSeated, " +
-                    $"CountBooted = @CountBooted " +
-                    $" WHERE BotChannelKey is @BotChannelKey AND UserKey is @UserKey";
-                cmd.Parameters.AddWithValue("@BotChannelKey", userStats.BotChannelKey);
-                cmd.Parameters.AddWithValue("@UserKey", userStats.UserKey);
-                cmd.Parameters.AddWithValue("@CountSeated", userStats.CountSeated);
-                cmd.Parameters.AddWithValue("@CountBooted", userStats.CountBooted);
-                cmd.ExecuteNonQuery();
-            }
+            cmd.CommandText = $"UPDATE \"{bChan.Key + PLUGINSTATS}\" SET " +
+                $"BotChannelKey = @BotChannelKey, " +
+                $"CountSeated = @CountSeated, " +
+                $"CountBooted = @CountBooted " +
+                $" WHERE BotChannelKey is @BotChannelKey AND UserKey is @UserKey";
+            cmd.Parameters.AddWithValue("@BotChannelKey", userStats.BotChannelKey);
+            cmd.Parameters.AddWithValue("@UserKey", userStats.UserKey);
+            cmd.Parameters.AddWithValue("@CountSeated", userStats.CountSeated);
+            cmd.Parameters.AddWithValue("@CountBooted", userStats.CountBooted);
+            cmd.ExecuteNonQuery();
         }
         private async Task<bool> UserStatsExists(string bKey, string uKey)
         {
-            using (SQLiteCommand cmd = new SQLiteCommand())
-            {
-                cmd.CommandType = CommandType.Text;
-                cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM \"{bKey + PLUGINSTATS}\" WHERE UserKey IS @uKey AND BotChannelKey IS @bKey";
-                cmd.Parameters.AddWithValue("@uKey", uKey);
-                cmd.Parameters.AddWithValue("@bKey", bKey);
+            using SQLiteCommand cmd = new SQLiteCommand();
+            cmd.CommandType = CommandType.Text;
+            cmd.Connection = Core.Data;
+            cmd.CommandText = $"SELECT * FROM \"{bKey + PLUGINSTATS}\" WHERE UserKey IS @uKey AND BotChannelKey IS @bKey";
+            cmd.Parameters.AddWithValue("@uKey", uKey);
+            cmd.Parameters.AddWithValue("@bKey", bKey);
 
-                if (await cmd.ExecuteScalarAsync() == null)
-                {
-                    return false;
-                }
-                else
-                {
-                    return true;
-                }
+            if (await cmd.ExecuteScalarAsync() == null)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
             }
         }
         // END OF DB things

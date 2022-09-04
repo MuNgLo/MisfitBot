@@ -284,7 +284,8 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
 
         
         /// <summary>
-        /// Gets all channels from DB. Looksup all flagged as autojoin channels against Twitch.API. Then checks if we are in the valid channels. If not we join them.
+        /// Gets all channels from DB. Looksup all flagged as autojoin channels against Twitch.API. Then checks if we are in the valid channels.
+        /// If not, we join them.
         /// </summary>
         /// <returns></returns>
         public async Task JoinAllAutoJoinTwitchChannels()
@@ -516,6 +517,10 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                 return botChannels;
             }
         }
+        /// <summary>
+        /// This saves the given BotChannel to the DB
+        /// </summary>
+        /// <param name="bChan"></param>
         public void ChannelSave(BotChannel bChan)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
