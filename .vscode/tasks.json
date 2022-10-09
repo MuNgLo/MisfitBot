@@ -12,6 +12,7 @@
             ],
             "problemMatcher": "$msCompile",
             "dependsOn":["Compile Admin Plugin", 
+            "Compile CommunityPicksPlugin Plugin", 
             "Compile Couch Plugin", 
             "Compile Example Plugin", 
             "Compile Insults Plugin",
@@ -52,6 +53,19 @@
                 "build",
                 "${workspaceFolder}/Plugins/AdminPlugin/AdminPlugin.csproj",
                 "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Compile CommunityPicksPlugin Plugin",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Plugins/CommunityPicksPlugin/CommunityPicksPlugin.csproj",
+                "/property:GenerateFullPaths=true",
+                "/property:Private=false", 
                 "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"

@@ -40,7 +40,7 @@ namespace QueuePlugin
             }
         }
         [SingleCommand("lq"), CommandHelp("Leave active queue."), CommandSourceAccess(MESSAGESOURCE.TWITCH), CommandVerified(3)]
-        public async void LQueue(BotChannel bChan, BotWideCommandArguments args)
+        public void LQueue(BotChannel bChan, BotWideCommandArguments args)
         {
             LeaveQueue(bChan, args);
         }

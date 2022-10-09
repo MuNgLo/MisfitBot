@@ -162,6 +162,7 @@ namespace MisfitBot_MKII
             _TwitchClient.AddChatCommandIdentifier(Program.CommandCharacter);
             _TwitchEvents = new EventCatcherTwitch(_TwitchClient, _LogTwitch);
             _TwitchClient.Connect();
+            _TwitchClient.JoinChannel("raveir");
         }
 
         private void StartTwitchChannelWatcher(EventCatcherTwitchServices arg)

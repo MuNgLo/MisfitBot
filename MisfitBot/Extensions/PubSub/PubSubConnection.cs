@@ -358,13 +358,16 @@ namespace MisfitBot_MKII.Extensions.PubSub
                 await Core.LOG(new LogEntry(LOGSEVERITY.INFO, EXTENSIONNAME,
                 $"Failed to listen to {e.Topic}! Response: {e.Response.Error}"
                 ));
-                if (bChan != null)
+                if ((bChan != null) && (Program.DiscordClient != null))
                 {
                     if (bChan.discordAdminChannel != 0)
                     {
-                        await (Program.DiscordClient.GetChannel(bChan.discordAdminChannel) as ISocketMessageChannel).SendMessageAsync(
-                            $"Failed to listen to {e.Topic}. Response: {e.Response.Error}"
-                            );
+                        SocketChannel chan = Program.DiscordClient.GetChannel(bChan.discordAdminChannel);
+                        if(chan != null) {
+                            await (chan as ISocketMessageChannel).SendMessageAsync(
+                                $"Failed to listen to {e.Topic}. Response: {e.Response.Error}"
+                                );
+                        }
                     }
                 }
 

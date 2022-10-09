@@ -27,7 +27,7 @@ namespace ExamplePlugin
 
         private async void OnMessageReceived(BotWideMessageArguments args)
         {
-            if (args.message.ToLower() == $"{CMC}ping")
+            if (args.message.ToLower() == $"ping")
             {
                 if (args.source == MESSAGESOURCE.TWITCH)
                 {

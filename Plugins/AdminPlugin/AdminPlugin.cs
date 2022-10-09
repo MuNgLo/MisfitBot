@@ -30,6 +30,7 @@ namespace AdminPlugin
         {
             if(bChan.discordAdminChannel > 0){
                 await SayOnDiscordAdmin(bChan, message);
+                
             }
         }
         private async void OnTwitchSubGift(BotChannel bChan, TwitchSubGiftEventArguments e)
