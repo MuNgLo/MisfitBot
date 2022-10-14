@@ -187,6 +187,16 @@ namespace MisfitBot_MKII.Extensions.UserManager
             return await UserList.GetDBUserByTwitchID(twitchID);
         }
         
+        /// <summary>
+        /// This can return null
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public async Task<UserEntry> GetUserByKey(string key)
+        {
+            return await UserList.GetDBUserByTwitchID(key);
+        }
+
         public async Task<TwitchLib.Api.Helix.Models.Users.GetUsers.User> GetUserByTwitchIDFromAPI(string twitchID)
         {
             return await UserList.GetTwitchUserByIDFromAPI(twitchID);

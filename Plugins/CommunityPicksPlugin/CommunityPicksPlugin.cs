@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Threading.Tasks;
+using Discord;
+using Discord.WebSocket;
 using MisfitBot_MKII;
 using MisfitBot_MKII.DiscordWrap;
 using MisfitBot_MKII.Statics;
@@ -6,40 +9,58 @@ using MisfitBot_MKII.Statics;
 
 namespace CommunityPicksPlugin
 {
-    //  https://cann0nf0dder.wordpress.com/2020/08/30/basic-dotnet-command-calls-to-create-a-c-project-in-visual-studio-code/#Adding-Projects
     public class CommunityPicksPlugin : PluginBase
     {
-        public CommunityPicksPlugin():base("picks", "CommunityPicksPlugin", 3, "Just an example")
+        private PickCache cache;
+
+        public CommunityPicksPlugin() : base("pick", "CommunityPicksPlugin", 3, "Set up big votes of preapproved things")
         {
-            Program.BotEvents.OnMessageReceived += OnMessageReceived;
+            cache = new PickCache();
         }
 
-
-
-        [SubCommand("test", 0), CommandHelp("This is just a test command that don't do anything!"), CommandVerified(3)]
-        public void SubCommandTesthandler(BotChannel bChan, BotWideCommandArguments args)
+        #region Command Methods
+        [SubCommand("new", 0), CommandHelp("Create a new pick in the channel"), CommandSourceAccess(MESSAGESOURCE.DISCORD)]
+        public async void CreatePickCommand(BotChannel bChan, BotWideCommandArguments args)
         {
+            if (!args.canManageMessages) { return; }
             BotWideResponseArguments response = new BotWideResponseArguments(args);
-            response.message = "CommunityPicksPlugin subcommandExample working here!";
-            Respond(bChan, response);
-        }
-
-
-        private async void OnMessageReceived(BotWideMessageArguments args)
-        {
-            if (args.message.ToLower() == $"pick")
+            if (!CreateNewPick(bChan, args.channelID, String.Join(' ', args.arguments)))
             {
-                if (args.source == MESSAGESOURCE.TWITCH)
-                {
-                    Program.TwitchSayMessage(args.channel, "Puck! wopwopwop");
-                }
-                if (args.source == MESSAGESOURCE.DISCORD)
-                {
-                    await DiscordClient.DiscordSayMessage(args.channelID, "Puck! wopwopwop");
-                }
+                response.message = "Pick creation failed";
+                Respond(bChan, response);
             }
         }
 
+        [SingleCommand("nominate"), CommandHelp("Create a new pick in the channel"), CommandSourceAccess(MESSAGESOURCE.DISCORD)]
+        public async void NominateCommand(BotChannel bChan, BotWideCommandArguments args)
+        {
+            BotWideResponseArguments response = new BotWideResponseArguments(args);
+            response.message = await Nominate(bChan, args.user, args.channelID, String.Join(' ', args.arguments));
+            Respond(bChan, response);
+        }
+        #endregion
+        #region Internal Methods
+        /// <summary>
+        /// This tries to create a new pick and returns a bool True if succesful
+        /// </summary>
+        private bool CreateNewPick(BotChannel bChan, ulong dChan, string title)
+        {
+            cache.CreateNewPick(bChan, dChan, title);
+            return cache.HasPick(dChan);
+        }
+        /// <summary>
+        /// User nominate pick alternative.
+        /// </summary>
+        /// <param name="bChan"></param>
+        /// <param name="dChan"></param>
+        /// <param name="nomination"></param>
+        /// <returns></returns>
+        private async Task<string> Nominate(BotChannel bChan, UserEntry user, ulong dChan, string nomination)
+        {
+            return await cache.Nominate(dChan, bChan, user, nomination);
+        }
+        #endregion
+        #region Abstract forced from base class
         public override void OnSecondTick(int seconds)
         {
         }
@@ -55,5 +76,6 @@ namespace CommunityPicksPlugin
         public override void OnBotChannelEntryMergeEvent(BotChannel discordGuild, BotChannel twitchChannel)
         {
         }
+        #endregion
     }
 }

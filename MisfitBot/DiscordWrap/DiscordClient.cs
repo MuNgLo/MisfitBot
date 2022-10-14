@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
+using Discord.Rest;
 using Discord.WebSocket;
 using MisfitBot_MKII.Statics;
 
@@ -62,16 +63,16 @@ namespace MisfitBot_MKII.DiscordWrap
             }
             */
         }
-        public static async Task DiscordSayMessage(string channel, string message)
+        public static async Task<RestUserMessage> DiscordSayMessage(string channel, string message)
         {
-            await DiscordSayMessage(Core.StringToUlong(channel), message);
+            return await DiscordSayMessage(Core.StringToUlong(channel), message);
         }
-        public static async Task DiscordSayMessage(ulong channel, string message)
+        public static async Task<RestUserMessage> DiscordSayMessage(ulong channel, string message)
         {
-            if(Program.DiscordClient.ConnectionState != ConnectionState.Connected){return;}
-            await (Program.DiscordClient.GetChannel(channel) as ISocketMessageChannel).SendMessageAsync(message);
+            if(Program.DiscordClient.ConnectionState != ConnectionState.Connected){return null;}
+            return await (Program.DiscordClient.GetChannel(channel) as ISocketMessageChannel).SendMessageAsync(message);
         }
-        public static async Task DiscordResponse(BotWideResponseArguments args)
+        public static async Task<RestUserMessage> DiscordResponse(BotWideResponseArguments args)
         {
             SocketChannel sChannel = Program.DiscordClient.GetChannel(args.discordChannel);
             SocketGuildUser sUser = (sChannel as SocketGuildChannel).Guild.GetUser(args.user._discordUID);
@@ -79,9 +80,9 @@ namespace MisfitBot_MKII.DiscordWrap
             ChannelPermissions asd = sUser.GetPermissions(sChannel as IGuildChannel);
             if(!asd.SendMessages){
                 // Can't send to channel so aborting
-                return;
+                return null;
             }
-            await (sChannel as ISocketMessageChannel).SendMessageAsync(args.message);
+            return await (sChannel as ISocketMessageChannel).SendMessageAsync(args.message);
         }
         public static async Task<bool> RoleAddUser(BotChannel bChan, UserEntry user, string role){
             IGuild iGuild = Program.DiscordClient.GetGuild(bChan.GuildID) as IGuild;
