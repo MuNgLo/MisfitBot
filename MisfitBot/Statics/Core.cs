@@ -19,12 +19,26 @@ namespace MisfitBot_MKII.Statics
 
         public static JsonSerializer serializer = new JsonSerializer();
 
+
+        /// <summary>
+        /// Makes sure Core is setup and have what it needs
+        /// </summary>
+        public static void Init()
+        {
+            Core.Configs = new ConfigurationHandler();
+            Core.LastLaunchTime = Core.CurrentTime;
+            Core.Timers = new TimerStuff();
+            Core.LOGGER = new JuansLog();
+            Core.LOG = Core.LOGGER.LogThis;
+            Core.serializer.Formatting = Newtonsoft.Json.Formatting.Indented;
+        }
+
         #region Supporting basic methods
         private static int UnixTime()
         {
             return (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
         }
-        
+
         public static ulong StringToUlong(string text)
         {
             ulong.TryParse(text, out ulong key);

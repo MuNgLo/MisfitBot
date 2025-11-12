@@ -42,26 +42,26 @@ namespace MisfitBot_MKII.Extensions.UserManager
             if (user.linked) { return; }
             LinkToken token;
             bool informOnTwitch = true;
-            if(user._discordUID != 0)
+            if(user.discordUID != 0)
             {
-                token = new LinkToken(user._discordUID);
+                token = new LinkToken(user.discordUID);
                 informOnTwitch = false;
             }
             else
             {
-                token = new LinkToken(user._twitchUID);
+                token = new LinkToken(user.twitchUID);
             }
             Tokens.Add(token);
             if (informOnTwitch)
             {
-                Program.TwitchClient.SendWhisper(user._twitchUsername,
+                Program.TwitchClient.SendWhisper(user.twitchUsername,
                     $"Next step is to send me this code '{token.PIN}' in a direct message on Discord. Make sure to only send the code. Code expires in 180s."
                     );
             }
             else
             {
 
-                SocketUser u = Program.DiscordClient.GetUser(user._discordUID);
+                SocketUser u = Program.DiscordClient.GetUser(user.discordUID);
                 await Discord.UserExtensions.SendMessageAsync(u,
                     $"Next step is to send me this code '{token.PIN}' in a whisper on Twitch. Make sure to only send the code. Code expires in 180s."
                     );

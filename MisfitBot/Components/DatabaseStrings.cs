@@ -9,18 +9,18 @@ using MisfitBot_MKII.Statics;
 namespace MisfitBot_MKII.Components
 {
     /// <summary>
-    /// Create an instanse of this to store/grab strings from DB.
-    /// The pluginname fed to constructor is used as part of the table name
-    /// Seperation of string groups for a plugin is by using different Topics.
+    /// Create an instances of this to store/grab strings from DB.
+    /// The plugin name fed to constructor is used as part of the table name
+    /// Separation of string groups for a plugin is by using different Topics.
     /// </summary>
     public class DatabaseStrings
     {
-        readonly string PLUGINNAME; // Is used as tablename, then each row is treated as a
+        readonly string PLUGINNAME; // Is used as table name, then each row is treated as a
         readonly string BASECOMMAND; // Is used as command when making help text. Example "couch list"
         /// <summary>
-        /// pluginName is used as part of tablename
+        /// pluginName is used as part of table name
         /// baseCMD is used as command when making help text. Example "couch list"
-        /// Note the lack of commanidentifier
+        /// Note the lack of command identifier
         /// </summary>
         /// <param name="pluginName"></param>
         /// <param name="baseCMD"></param>
@@ -115,7 +115,7 @@ namespace MisfitBot_MKII.Components
                 }
                 catch (Exception)
                 {
-                    await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME + "DatabseStrings", $"Database query failed hard. ({cmd.CommandText})"));
+                    await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME + "DatabaseStrings", $"Database query failed hard. ({cmd.CommandText})"));
                     throw;
                 }
                 result.Read();
@@ -178,7 +178,7 @@ namespace MisfitBot_MKII.Components
         /// <returns></returns>
         public List<DBString> GetRowsInUse(BotChannel bChan, string topic)
         {
-            List<DBString> inuseLines = new List<DBString>();
+            List<DBString> inUseLines = new List<DBString>();
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
@@ -191,10 +191,10 @@ namespace MisfitBot_MKII.Components
                     while (result.Read())
                     {
                         DBString entry = new DBString((int)result.GetInt64(0), result.GetBoolean(1), result.GetString(2), result.GetString(3));
-                        inuseLines.Add(entry);
+                        inUseLines.Add(entry);
                     }
                 }
-                return inuseLines;
+                return inUseLines;
             }
         }
         /// <summary>
@@ -260,7 +260,7 @@ namespace MisfitBot_MKII.Components
                 }
                 catch (Exception)
                 {
-                    Core.LOG(new LogEntry(LOGSEVERITY.ERROR, PLUGINNAME+"DatabseStrings", $"Database query failed hard. ({cmd.CommandText})"));
+                    Core.LOG(new LogEntry(LOGSEVERITY.ERROR, PLUGINNAME+"DatabaseStrings", $"Database query failed hard. ({cmd.CommandText})"));
                     throw;
                 }
                 result.Read();

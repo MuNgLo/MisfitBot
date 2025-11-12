@@ -11,18 +11,18 @@ namespace MisfitBot_MKII
     {
         public bool locked = false;
         public bool linked = false;
-        public string _discordUsername = string.Empty;
-        public int _lastseen = 0;
-        public int _lastseenOnTwitch = 0;
-        public string _twitchUID = string.Empty;
-        public string _twitchUsername = string.Empty;
-        public string _twitchDisplayname = string.Empty;
-        public string _twitchColour = string.Empty;
-        public string _twitchLogo = string.Empty;
-        public DateTime _twitchCreated = new DateTime();
-        public DateTime _twitchLastUpdate = new DateTime();
-        public ulong _discordUID = 0;
-        public UserStatus _discordStatus = UserStatus.Offline;
+        public string discordUsername = string.Empty;
+        public int lastSeen = 0;
+        public int lastSeenOnTwitch = 0;
+        public string twitchUID = string.Empty;
+        public string twitchUsername = string.Empty;
+        public string twitchDisplayName = string.Empty;
+        public string twitchColour = string.Empty;
+        public string twitchLogo = string.Empty;
+        public DateTime twitchCreated = new DateTime();
+        public DateTime twitchLastUpdate = new DateTime();
+        public ulong discordUID = 0;
+        public UserStatus discordStatus = UserStatus.Offline;
         public int lastChange = -1;
         public int lastSave = -1;
         public string Key { get { return DataKey(); } }
@@ -30,39 +30,39 @@ namespace MisfitBot_MKII
         {
 
         }
-        public UserEntry(string name, int lastseen, ulong discordID)
+        public UserEntry(string name, int lastSeen, ulong discordID)
         {
-            _discordUsername = name;
-            _lastseen = lastseen;
-            _twitchUID = string.Empty;
-            _discordUID = discordID;
+            discordUsername = name;
+            this.lastSeen = lastSeen;
+            twitchUID = string.Empty;
+            discordUID = discordID;
         }
 
         public string ContextName(MESSAGESOURCE source)
         {
             if(source == MESSAGESOURCE.TWITCH){
-                return _twitchDisplayname;
+                return twitchDisplayName;
             }
-            return _discordUsername;
+            return discordUsername;
         }
 
-        public UserEntry(string name, int lastseen, string twitchID)
+        public UserEntry(string name, int lastSeen, string twitchID)
         {
-            _discordUsername = name;
-            _lastseen = lastseen;
-            _twitchUID = twitchID;
-            _discordUID = 0;
+            discordUsername = name;
+            this.lastSeen = lastSeen;
+            twitchUID = twitchID;
+            discordUID = 0;
         }
         private string DataKey()
         {
-            string key = _discordUID.ToString();
-            if (!linked && _discordUID == 0)
+            string key = discordUID.ToString();
+            if (!linked && discordUID == 0)
             {
-                key = "tw" + _twitchUID;
+                key = "tw" + twitchUID;
             }
             if (linked)
             {
-                key = _discordUID.ToString();
+                key = discordUID.ToString();
             }
             return key;
         }

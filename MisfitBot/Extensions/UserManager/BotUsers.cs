@@ -35,7 +35,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
         }
         private void OnMinuteTick(int minute){
             int preCount = _UserCache.Count;
-            _UserCache.RemoveAll(p=>p._lastseen < Core.CurrentTime - 600);
+            _UserCache.RemoveAll(p=>p.lastSeen < Core.CurrentTime - 600);
             if(preCount != _UserCache.Count){
                 _lastCacheDrop = preCount - _UserCache.Count;
             }
@@ -43,36 +43,36 @@ namespace MisfitBot_MKII.Extensions.UserManager
         #region User getters
         internal async Task<UserEntry> GetDBUserByTwitchUserName(string twitchUsername)
         {
-            if(!_UserCache.Exists(p=>p._twitchUsername == twitchUsername))
+            if(!_UserCache.Exists(p=>p.twitchUsername == twitchUsername))
             {
                 await FetchDBUserByTwitchUserName(twitchUsername);
             }
-            return _UserCache.Find(p=>p._twitchUsername == twitchUsername);
+            return _UserCache.Find(p=>p.twitchUsername == twitchUsername);
         }
         internal async Task<UserEntry> GetDBUserByTwitchDisplayName(string twitchDisplayName)
         {
-            if(!_UserCache.Exists(p=>p._twitchDisplayname == twitchDisplayName))
+            if(!_UserCache.Exists(p=>p.twitchDisplayName == twitchDisplayName))
             {
                 return await FetchDBUserByTwitchDisplayName(twitchDisplayName);
             }
-            return _UserCache.Find(p=>p._twitchDisplayname == twitchDisplayName);
+            return _UserCache.Find(p=>p.twitchDisplayName == twitchDisplayName);
         }
         internal async Task<UserEntry> GetDBUserByTwitchID(string uid)
         {
-            if(!_UserCache.Exists(p=>p._twitchUID == uid))
+            if(!_UserCache.Exists(p=>p.twitchUID == uid))
             {
                 await FetchDBUserByTwitchID(uid);
             }
-            return _UserCache.Find(p=>p._twitchUID == uid);
+            return _UserCache.Find(p=>p.twitchUID == uid);
         }
         
         internal async Task<UserEntry> GetDBUserByDiscordUID(ulong uid)
         {
-            if(!_UserCache.Exists(p=>p._discordUID == uid))
+            if(!_UserCache.Exists(p=>p.discordUID == uid))
             {
                 await FetchDBUserByDiscordUID(uid);
             }
-            return _UserCache.Find(p=>p._discordUID == uid);
+            return _UserCache.Find(p=>p.discordUID == uid);
         }
         #endregion
         #region Database user getters
@@ -96,7 +96,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
                     await Core.LOG(new LogEntry(LOGSEVERITY.CRITICAL, "BotUsers", "FetchDBUserByTwitchUserName() User created in db. Exist returned True but getting the user returned NULL"));
                     return;
                 }
-                user._lastseen = Core.CurrentTime;
+                user.lastSeen = Core.CurrentTime;
                 _UserCache.Add(user);
             }else{
                 await Core.LOG(new LogEntry(LOGSEVERITY.CRITICAL, "BotUsers", "DB Tw User lookup failed when we should have just made one!"));
@@ -124,7 +124,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
             {
                 user = DBReadTwitchUser(uid);
             }
-            user._lastseen = Core.CurrentTime;
+            user.lastSeen = Core.CurrentTime;
             _UserCache.Add(user);
         }
         private async Task FetchDBUserByDiscordUID(ulong uid)
@@ -135,7 +135,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 CreateNewDiscordUser(uid, user);
             }
             user = DBReadDiscordUser(uid);
-            user._lastseen = Core.CurrentTime;
+            user.lastSeen = Core.CurrentTime;
             _UserCache.Add(user);
         }
         #endregion
@@ -272,15 +272,15 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 UserEntry user = new UserEntry
                 {
                     linked = result.GetBoolean(0),
-                    _discordUsername = result.GetString(1),
-                    _lastseen = result.GetInt32(2),
-                    _lastseenOnTwitch = result.GetInt32(3),
-                    _twitchUID = result.GetString(4),
-                    _twitchUsername = result.GetString(5),
-                    _twitchDisplayname = result.GetString(6),
-                    _twitchColour = result.GetString(7),
-                    _twitchLogo = result.GetString(8),
-                    _discordUID = (ulong)result.GetInt64(11),
+                    discordUsername = result.GetString(1),
+                    lastSeen = result.GetInt32(2),
+                    lastSeenOnTwitch = result.GetInt32(3),
+                    twitchUID = result.GetString(4),
+                    twitchUsername = result.GetString(5),
+                    twitchDisplayName = result.GetString(6),
+                    twitchColour = result.GetString(7),
+                    twitchLogo = result.GetString(8),
+                    discordUID = (ulong)result.GetInt64(11),
                     lastChange = (int)result.GetInt64(13),
                     lastSave = (int)result.GetInt64(14)
                 };
@@ -308,15 +308,15 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 UserEntry user = new UserEntry
                 {
                     linked = result.GetBoolean(0),
-                    _discordUsername = result.GetString(1),
-                    _lastseen = result.GetInt32(2),
-                    _lastseenOnTwitch = result.GetInt32(3),
-                    _twitchUID = result.GetString(4),
-                    _twitchUsername = result.GetString(5),
-                    _twitchDisplayname = result.GetString(6),
-                    _twitchColour = result.GetString(7),
-                    _twitchLogo = result.GetString(8),
-                    _discordUID = (ulong)result.GetInt64(11),
+                    discordUsername = result.GetString(1),
+                    lastSeen = result.GetInt32(2),
+                    lastSeenOnTwitch = result.GetInt32(3),
+                    twitchUID = result.GetString(4),
+                    twitchUsername = result.GetString(5),
+                    twitchDisplayName = result.GetString(6),
+                    twitchColour = result.GetString(7),
+                    twitchLogo = result.GetString(8),
+                    discordUID = (ulong)result.GetInt64(11),
                     lastChange = (int)result.GetInt64(13),
                     lastSave = (int)result.GetInt64(14)
                 };
@@ -349,21 +349,21 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 UserEntry user = new UserEntry
                 {
                     linked = result.GetBoolean(0),
-                    _discordUsername = result.GetString(1),
-                    _lastseen = result.GetInt32(2),
-                    _lastseenOnTwitch = result.GetInt32(3),
-                    _twitchUID = result.GetString(4),
-                    _twitchUsername = result.GetString(5),
-                    _twitchDisplayname = result.GetString(6),
-                    _twitchColour = result.GetString(7),
-                    _twitchLogo = result.GetString(8),
-                    _discordUID = (ulong)result.GetInt64(11),
+                    discordUsername = result.GetString(1),
+                    lastSeen = result.GetInt32(2),
+                    lastSeenOnTwitch = result.GetInt32(3),
+                    twitchUID = result.GetString(4),
+                    twitchUsername = result.GetString(5),
+                    twitchDisplayName = result.GetString(6),
+                    twitchColour = result.GetString(7),
+                    twitchLogo = result.GetString(8),
+                    discordUID = (ulong)result.GetInt64(11),
                     lastChange = (int)result.GetInt64(13),
                     lastSave = (int)result.GetInt64(14)
                 };
                 _UserCache.Add(user);
 
-                if(_UserCache[_UserCache.Count - 1]._twitchUsername != twitchname){
+                if(_UserCache[_UserCache.Count - 1].twitchUsername != twitchname){
                     Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "BotUsers", $"Found DB username {twitchname}, read it and added to cache but last cache entry did not match!"));
                     return null;
                 }
@@ -392,15 +392,15 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 UserEntry user = new UserEntry
                 {
                     linked = result.GetBoolean(0),
-                    _discordUsername = result.GetString(1),
-                    _lastseen = result.GetInt32(2),
-                    _lastseenOnTwitch = result.GetInt32(3),
-                    _twitchUID = result.GetString(4),
-                    _twitchUsername = result.GetString(5),
-                    _twitchDisplayname = result.GetString(6),
-                    _twitchColour = result.GetString(7),
-                    _twitchLogo = result.GetString(8),
-                    _discordUID = (ulong)result.GetInt64(11),
+                    discordUsername = result.GetString(1),
+                    lastSeen = result.GetInt32(2),
+                    lastSeenOnTwitch = result.GetInt32(3),
+                    twitchUID = result.GetString(4),
+                    twitchUsername = result.GetString(5),
+                    twitchDisplayName = result.GetString(6),
+                    twitchColour = result.GetString(7),
+                    twitchLogo = result.GetString(8),
+                    discordUID = (ulong)result.GetInt64(11),
                     lastChange = (int)result.GetInt64(13),
                     lastSave = (int)result.GetInt64(14)
                 };
@@ -432,15 +432,15 @@ namespace MisfitBot_MKII.Extensions.UserManager
                     UserEntry user = new UserEntry
                     {
                         linked = result.GetBoolean(0),
-                        _discordUsername = result.GetString(1),
-                        _lastseen = result.GetInt32(2),
-                        _lastseenOnTwitch = result.GetInt32(3),
-                        _twitchUID = result.GetString(4),
-                        _twitchUsername = result.GetString(5),
-                        _twitchDisplayname = result.GetString(6),
-                        _twitchColour = result.GetString(7),
-                        _twitchLogo = result.GetString(8),
-                        _discordUID = (ulong)result.GetInt64(11),
+                        discordUsername = result.GetString(1),
+                        lastSeen = result.GetInt32(2),
+                        lastSeenOnTwitch = result.GetInt32(3),
+                        twitchUID = result.GetString(4),
+                        twitchUsername = result.GetString(5),
+                        twitchDisplayName = result.GetString(6),
+                        twitchColour = result.GetString(7),
+                        twitchLogo = result.GetString(8),
+                        discordUID = (ulong)result.GetInt64(11),
                         lastChange = (int)result.GetInt64(13),
                         lastSave = (int)result.GetInt64(14)
                     };
@@ -477,14 +477,14 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 cmd.Parameters.AddWithValue("@linked", user.linked);
                 cmd.Parameters.AddWithValue("@username", userinfo.Username);
                 cmd.Parameters.AddWithValue("@lastseen", Core.CurrentTime);
-                cmd.Parameters.AddWithValue("@lastseenOnTwitch", user._lastseenOnTwitch);
-                cmd.Parameters.AddWithValue("@twitchUID", user._twitchUID);
-                cmd.Parameters.AddWithValue("@twichUsername", user._twitchUsername);
-                cmd.Parameters.AddWithValue("@twitchDisplayname", user._twitchDisplayname);
-                cmd.Parameters.AddWithValue("@twitchColour", user._twitchColour);
-                cmd.Parameters.AddWithValue("@twitchLogo", user._twitchLogo);
-                cmd.Parameters.AddWithValue("@twitchCreated", user._twitchCreated);
-                cmd.Parameters.AddWithValue("@twitchLastUpdate", user._twitchLastUpdate);
+                cmd.Parameters.AddWithValue("@lastseenOnTwitch", user.lastSeenOnTwitch);
+                cmd.Parameters.AddWithValue("@twitchUID", user.twitchUID);
+                cmd.Parameters.AddWithValue("@twichUsername", user.twitchUsername);
+                cmd.Parameters.AddWithValue("@twitchDisplayname", user.twitchDisplayName);
+                cmd.Parameters.AddWithValue("@twitchColour", user.twitchColour);
+                cmd.Parameters.AddWithValue("@twitchLogo", user.twitchLogo);
+                cmd.Parameters.AddWithValue("@twitchCreated", user.twitchCreated);
+                cmd.Parameters.AddWithValue("@twitchLastUpdate", user.twitchLastUpdate);
                 cmd.Parameters.AddWithValue("@discordUID", uid);
                 cmd.Parameters.AddWithValue("@discordStatus", userinfo.Status);
                 cmd.Parameters.AddWithValue("@lastChange", Core.CurrentTime);
@@ -659,7 +659,7 @@ await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "BotUsers", $"{userinfo.Users[0].D
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                if (user._twitchUID == string.Empty || user.linked)
+                if (user.twitchUID == string.Empty || user.linked)
                 {
                     cmd.CommandText = $"UPDATE \"{EXTENSIONNAME}\" SET " +
                         $"linked = @linked, " +
@@ -678,7 +678,7 @@ await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "BotUsers", $"{userinfo.Users[0].D
                         $"lastChange = @lastChange, " +
                         $"lastSave = @lastSave " +
                         $" WHERE discordUID is @uid";
-                    cmd.Parameters.AddWithValue("@uid", user._discordUID);
+                    cmd.Parameters.AddWithValue("@uid", user.discordUID);
                 }
                 else
                 {
@@ -699,22 +699,22 @@ await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "BotUsers", $"{userinfo.Users[0].D
                         $"lastChange = @lastChange, " +
                         $"lastSave = @lastSave " +
                         $" WHERE twitchUID is @uid";
-                    cmd.Parameters.AddWithValue("@uid", user._twitchUID);
+                    cmd.Parameters.AddWithValue("@uid", user.twitchUID);
                 }
 
                 cmd.Parameters.AddWithValue("@linked", user.linked);
-                cmd.Parameters.AddWithValue("@username", user._discordUsername);
-                cmd.Parameters.AddWithValue("@lastseen", user._lastseen);
-                cmd.Parameters.AddWithValue("@lastseenOnTwitch", user._lastseenOnTwitch);
-                cmd.Parameters.AddWithValue("@twitchUID", user._twitchUID);
-                cmd.Parameters.AddWithValue("@twitchUsername", user._twitchUsername);
-                cmd.Parameters.AddWithValue("@twitchDisplayname", user._twitchDisplayname);
-                cmd.Parameters.AddWithValue("@twitchColour", user._twitchColour);
-                cmd.Parameters.AddWithValue("@twitchLogo", user._twitchLogo);
-                cmd.Parameters.AddWithValue("@twitchCreated", user._twitchCreated);
-                cmd.Parameters.AddWithValue("@twitchLastUpdate", user._twitchLastUpdate);
-                cmd.Parameters.AddWithValue("@discordUID", user._discordUID);
-                cmd.Parameters.AddWithValue("@discordStatus", user._discordStatus);
+                cmd.Parameters.AddWithValue("@username", user.discordUsername);
+                cmd.Parameters.AddWithValue("@lastseen", user.lastSeen);
+                cmd.Parameters.AddWithValue("@lastseenOnTwitch", user.lastSeenOnTwitch);
+                cmd.Parameters.AddWithValue("@twitchUID", user.twitchUID);
+                cmd.Parameters.AddWithValue("@twitchUsername", user.twitchUsername);
+                cmd.Parameters.AddWithValue("@twitchDisplayname", user.twitchDisplayName);
+                cmd.Parameters.AddWithValue("@twitchColour", user.twitchColour);
+                cmd.Parameters.AddWithValue("@twitchLogo", user.twitchLogo);
+                cmd.Parameters.AddWithValue("@twitchCreated", user.twitchCreated);
+                cmd.Parameters.AddWithValue("@twitchLastUpdate", user.twitchLastUpdate);
+                cmd.Parameters.AddWithValue("@discordUID", user.discordUID);
+                cmd.Parameters.AddWithValue("@discordStatus", user.discordStatus);
                 cmd.Parameters.AddWithValue("@lastChange", user.lastChange);
                 cmd.Parameters.AddWithValue("@lastSave", user.lastSave);
                 try

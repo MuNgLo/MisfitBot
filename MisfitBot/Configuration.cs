@@ -26,7 +26,7 @@ namespace MisfitBot_MKII
             //Core.serializer.Formatting = Formatting.Indented;
         }
         /// <summary>
-        /// Constructs the tablename from the BotChannel Key and plugin
+        /// Constructs the table name from the BotChannel Key and plugin
         /// also adds suffix
         /// </summary>
         /// <param name="chanKey"></param>
@@ -37,7 +37,7 @@ namespace MisfitBot_MKII
         }
         /// <summary>
         /// Returns the saved config or creates a new entry with the object passed then save it to db and return it.
-        /// If no table is found it will serielize a fresh instance of the type and save it as a sting into DB.
+        /// If no table is found it will serialize a fresh instance of the type and save it as a sting into DB.
         /// </summary>
         /// <param name="uid"></param>
         /// <param name="plugin"></param>
@@ -76,7 +76,7 @@ namespace MisfitBot_MKII
             return qwe;
         }
         /// <summary>
-        /// Takes the passed Object, serialize the object and store it as a string under the plugin's DB Table using the Botchannel Key as identifier.
+        /// Takes the passed Object, serialize the object and store it as a string under the plugin's DB Table using the Bot channel Key as identifier.
         /// </summary>
         /// <param name="bChan"></param>
         /// <param name="plugin"></param>
@@ -146,7 +146,7 @@ namespace MisfitBot_MKII
                 cmd.Connection = Core.Data;
                 cmd.CommandText = $"SELECT * FROM \"{tableName}\" WHERE configKey IS @key";
                 cmd.Parameters.AddWithValue("@key", bChan.Key);
-                // Serialize the data to store if we dont find any entry
+                // Serialize the data to store if we don't find any entry
                 string info = JsonConvert.SerializeObject(obj, Formatting.None);
                 // Check if we already have an entry
                 var i = await cmd.ExecuteScalarAsync();
@@ -199,19 +199,19 @@ namespace MisfitBot_MKII
 
                 result.Read();
                 // Deserialize the data
-                //string debugfield = result.GetString(1);
+                //string debugField = result.GetString(1);
                 T result3 = JsonConvert.DeserializeObject<T>(result.GetString(1));
                 return result3;
             }
 
         }
-        public async Task<bool> RowExists(String tablename, String key)
+        public async Task<bool> RowExists(String tableName, String key)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
-                cmd.CommandText = $"SELECT * FROM \"{tablename}\" WHERE configKey IS @key";
+                cmd.CommandText = $"SELECT * FROM \"{tableName}\" WHERE configKey IS @key";
                 cmd.Parameters.AddWithValue("@key", key);
 
                 if (await cmd.ExecuteScalarAsync() == null)

@@ -398,7 +398,7 @@ namespace RolesPlugin
         {
             // Ignore self reaction
             string botName = Program.BotNameTwitch;
-            if (user._discordUsername != botName)
+            if (user.discordUsername != botName)
             {
                 RolesSettings settings = await Settings<RolesSettings>(bChan, PLUGINNAME);
                 if(!settings._active){return;}
@@ -409,7 +409,7 @@ namespace RolesPlugin
                 if (settings.MarkedMessages.Exists(p => p.MessageID == args.MessageID))
                 {
                     if(await MisfitBot_MKII.DiscordWrap.DiscordClient.RoleAddUser(bChan, user, role) == false){
-                        await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "RolesPlugin", $"OnDiscordReactionAdded Failed to add user({user._discordUsername}) to role({role})"));
+                        await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "RolesPlugin", $"OnDiscordReactionAdded Failed to add user({user.discordUsername}) to role({role})"));
                     }
                 }
             }
@@ -421,7 +421,7 @@ namespace RolesPlugin
         {
             // Ignore self reaction
             string botName = Program.BotNameTwitch;
-            if (user._discordUsername != botName)
+            if (user.discordUsername != botName)
             {
                 RolesSettings settings = await Settings<RolesSettings>(bChan, PLUGINNAME);
                 if(!settings._active){return;}
@@ -432,7 +432,7 @@ namespace RolesPlugin
                 if (settings.MarkedMessages.Exists(p => p.MessageID == args.MessageID))
                 {
                     if(await MisfitBot_MKII.DiscordWrap.DiscordClient.RoleRemoveUser(bChan, user, role) == false){
-                        await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "RolesPlugin", $"OnDiscordReactionRemoved Failed to remove user({user._discordUsername}) from role({role})"));
+                        await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "RolesPlugin", $"OnDiscordReactionRemoved Failed to remove user({user.discordUsername}) from role({role})"));
                     }
                 }
             }

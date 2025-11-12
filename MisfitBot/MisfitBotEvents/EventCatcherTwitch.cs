@@ -9,7 +9,6 @@ namespace MisfitBot_MKII.MisfitBotEvents
     {
         internal EventCatcherTwitch(ITwitchClient client, bool doLog)
         {
-            client.OnBeingHosted += TwitchOnBeingHosted;
             client.OnChannelStateChanged += TwitchChannelStateChanged;
             client.OnChatCleared += TwitchOnChatCleared;
             client.OnChatColorChanged += TwitchOnChatColorChanged;
@@ -36,7 +35,6 @@ namespace MisfitBot_MKII.MisfitBotEvents
             //client.OnNowHosting
             client.OnRaidNotification += OnRaidNotification;
             client.OnReconnected += TwitchOnReconnect;
-            client.OnRitualNewChatter += TwitchOnRitualNewChatter;
             //client.OnSendReceiveData
             client.OnUserBanned += TwitchOnUserBanned;
             client.OnUserJoined += TwitchOnUserJoined;
@@ -106,14 +104,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
             */
         }
 
-        private async void TwitchOnBeingHosted(object sender, OnBeingHostedArgs e)
-        {
-            await Program.BotEvents.RaiseTwitchOnBeingHosted(new HostedEventArguments(
-                e.BeingHostedNotification.Channel, 
-                e.BeingHostedNotification.HostedByChannel,
-                e.BeingHostedNotification.IsAutoHosted,
-                e.BeingHostedNotification.Viewers));
-        }
+
 
         private void TwitchOnReconnect(object sender, OnReconnectedEventArgs e)
         {
@@ -143,11 +134,6 @@ namespace MisfitBot_MKII.MisfitBotEvents
         {
             Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "EventCatcherTwitch",  
                 $"Twitch login failed! {e.Exception.Message}"));
-        }
-
-        private void TwitchOnRitualNewChatter(object sender, OnRitualNewChatterArgs e)
-        {
-            JsonDumper.DumpObjectToJson(e, "TwitchOnRitualNewChatter");/// TODO look up when this fires
         }
 
         private void TwitchOnMessageThrottled(object sender, OnMessageThrottledEventArgs e)

@@ -268,7 +268,7 @@ namespace QueuePlugin
         {
             foreach (string key in _queues.Keys)
             {
-                BotChannel bChan = await Program.Channels.GetBotchannelByKey(key);
+                BotChannel bChan = await Program.Channels.GetBotChannelByKey(key);
                 QueueSettings settings = await Settings<QueueSettings>(bChan, PluginName);
                 if (settings._active)
                 {

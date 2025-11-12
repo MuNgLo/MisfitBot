@@ -12,7 +12,7 @@ using System.Linq;
 namespace MisfitBot_MKII.Extensions.ChannelManager
 {
     /// <summary>
-    /// Keeps track of botchannels and handles realtime functionality stuff.
+    /// Keeps track of bot channels and handles realtime functionality stuff.
     /// </summary>
     public class ChannelManager
     {
@@ -27,7 +27,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             {
                 TableCreate(PLUGINNAME);
             }
-            Program.BotEvents.OnDiscordGuildAvailable += OnDiscordGuildAvailable; // TODO fix with botwide discordclient connected event
+            Program.BotEvents.OnDiscordGuildAvailable += OnDiscordGuildAvailable; // TODO fix with bot wide discord client connected event
             Program.BotEvents.OnTwitchConnected += OnTwitchConnected;
             TimerStuff.OnMinuteTick += OnMinuteTick;
         }// EO Constructor
@@ -38,7 +38,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         }
 
         /// <summary>
-        /// Removes 1 botchannel with twitchID from DB and saves the passed botchannel to DB.
+        /// Removes 1 bot channel with twitchID from DB and saves the passed bot channel to DB.
         /// </summary>
         /// <param name="channel"></param>
         /// <returns></returns>
@@ -48,7 +48,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             {
                 ChannelSave(channel);
             }
-            return (await GetDiscordGuildbyID(channel.GuildID)).isLinked;
+            return (await GetDiscordGuildByID(channel.GuildID)).isLinked;
         }
         /// <summary>
         /// Tries to connect to the channel after validation through Twitch.API.
@@ -133,10 +133,10 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
 
             if (Program.DiscordClient.Guilds != null)
             {
-                // Make sure dicord guilds we are connected to exist in DB
+                // Make sure discord guilds we are connected to exist in DB
                 foreach (SocketGuild guild in Program.DiscordClient.Guilds)
                 {
-                    await GetDiscordGuildbyID(guild.Id);
+                    await GetDiscordGuildByID(guild.Id);
                 }
             }
         }// END of UpdateChannelStatuses
@@ -173,7 +173,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         /// </summary>
         /// <param name="guildID"></param>
         /// <returns></returns>
-        public async Task<BotChannel> GetDiscordGuildbyID(ulong guildID)
+        public async Task<BotChannel> GetDiscordGuildByID(ulong guildID)
         {
             if (!await ChannelDataExists(guildID))
             {
@@ -183,8 +183,8 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             return await ChannelDataRead(guildID);
         }
         /// <summary>
-        /// Returns 1 match from DB. Creates one if needed and then resolves the Twitchname against Twitch.API to get the Twitch.ID
-        /// Return Null if unkown user fails a lookup through Twitch API
+        /// Returns 1 match from DB. Creates one if needed and then resolves the Twitch name against Twitch.API to get the Twitch.ID
+        /// Return Null if unknown user fails a lookup through Twitch API
         /// </summary>
         /// <param name="TwitchName"></param>
         /// <returns></returns>
@@ -265,7 +265,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         /// </summary>
         /// <param name="TwitchName"></param>
         /// <returns></returns>
-        public async Task<BotChannel> GetBotchannelByKey(string key)
+        public async Task<BotChannel> GetBotChannelByKey(string key)
         {
             // This could be rewritten for moke exclusive hits directly from DB (once key is added to DB)
             List<BotChannel> Channels = await GetChannels();
@@ -284,25 +284,25 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
 
         
         /// <summary>
-        /// Gets all channels from DB. Looksup all flagged as autojoin channels against Twitch.API. Then checks if we are in the valid channels.
+        /// Gets all channels from DB. Looks up all flagged as auto join channels against Twitch.API. Then checks if we are in the valid channels.
         /// If not, we join them.
         /// </summary>
         /// <returns></returns>
         public async Task JoinAllAutoJoinTwitchChannels()
         {
-            List<string> chansToLookup = new List<string>();
+            List<string> channelsToLookup = new List<string>();
             foreach (BotChannel chan in await GetChannels())
             {
-                if (chan.TwitchChannelName != string.Empty && chan.TwitchAutojoin)
+                if (chan.TwitchChannelName != string.Empty && chan.TwitchAutoJoin)
                 {
-                    chansToLookup.Add(chan.TwitchChannelName);
+                    channelsToLookup.Add(chan.TwitchChannelName);
                 }
             }
-            if (chansToLookup.Count < 1)
+            if (channelsToLookup.Count < 1)
             {
                 return;
             }
-            TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse channelEntries = await Program.Users.GetUsersByTwitchUsernamesFromAPI(chansToLookup);
+            TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse channelEntries = await Program.Users.GetUsersByTwitchUsernamesFromAPI(channelsToLookup);
             if (channelEntries.Users.Length < 1)
             {
                 return;
@@ -403,7 +403,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                     throw;
                 }
                 result.Read();
-                BotChannel bChan = SQLReaderToBchan(result);
+                BotChannel bChan = SQLReaderToBotChannel(result);
                 return bChan;
             }
         }
@@ -426,7 +426,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                     throw;
                 }
                 result.Read();
-                BotChannel bChan = SQLReaderToBchan(result);
+                BotChannel bChan = SQLReaderToBotChannel(result);
                 return bChan;
             }
         }
@@ -449,7 +449,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                     throw;
                 }
                 result.Read();
-                BotChannel bChan = SQLReaderToBchan(result);
+                BotChannel bChan = SQLReaderToBotChannel(result);
                 return bChan;
             }
         }
@@ -509,7 +509,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                         TwitchChannelName = result.GetString(7),
                         isTwitch = result.GetBoolean(8),
                         isLive = result.GetBoolean(9),
-                        TwitchAutojoin = result.GetBoolean(10),
+                        TwitchAutoJoin = result.GetBoolean(10),
                         pubsubOauth = result.GetString(11)
                     };
                     botChannels.Add(bChan);
@@ -571,7 +571,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                 cmd.Parameters.AddWithValue("@TwitchChannelName", bChan.TwitchChannelName);
                 cmd.Parameters.AddWithValue("@isTwitch", bChan.isTwitch);
                 cmd.Parameters.AddWithValue("@isLive", bChan.isLive);
-                cmd.Parameters.AddWithValue("@TwitchAutojoin", bChan.TwitchAutojoin);
+                cmd.Parameters.AddWithValue("@TwitchAutojoin", bChan.TwitchAutoJoin);
                 cmd.Parameters.AddWithValue("@pubsubOauth", bChan.pubsubOauth);
                 cmd.ExecuteNonQuery();
             }
@@ -579,7 +579,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             //await Core.LOG(new LogMessage(LogSeverity.Warning, PLUGINNAME, $"Saving updated channeldata"));
         }
         /// <summary>
-        /// This only takes a botchannel instance and write it into the DB. Not for saving or udpating values
+        /// This only takes a bot channel instance and write it into the DB. Not for saving or updating values
         /// </summary>
         /// <param name="bChan"></param>
         /// <returns></returns>
@@ -614,12 +614,12 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                 cmd.Parameters.AddWithValue("@TwitchChannelName", bChan.TwitchChannelName);
                 cmd.Parameters.AddWithValue("@isTwitch", bChan.isTwitch);
                 cmd.Parameters.AddWithValue("@isLive", bChan.isLive);
-                cmd.Parameters.AddWithValue("@TwitchAutojoin", bChan.TwitchAutojoin);
+                cmd.Parameters.AddWithValue("@TwitchAutojoin", bChan.TwitchAutoJoin);
                 cmd.Parameters.AddWithValue("@pubsubOauth", bChan.pubsubOauth);
                 cmd.ExecuteNonQuery();
                 if (bChan.isLinked)
                 {
-                    await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, $"Created linked entry for Discord Guild {bChan.GuildName} and Twitchchannel {bChan.TwitchChannelName}"));
+                    await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, $"Created linked entry for Discord Guild {bChan.GuildName} and TwitchChannel {bChan.TwitchChannelName}"));
                 }
                 else if (bChan.isTwitch)
                 {
@@ -672,7 +672,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                 }
             }
         }
-        private BotChannel SQLReaderToBchan(SQLiteDataReader result)
+        private BotChannel SQLReaderToBotChannel(SQLiteDataReader result)
         {
             BotChannel bChan = new BotChannel((ulong)result.GetInt64(2), result.GetString(3));
             bChan.isLinked = result.GetBoolean(0);
@@ -685,7 +685,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
             bChan.TwitchChannelName = result.GetString(7);
             bChan.isTwitch = result.GetBoolean(8);
             bChan.isLive = result.GetBoolean(9);
-            bChan.TwitchAutojoin = result.GetBoolean(10);
+            bChan.TwitchAutoJoin = result.GetBoolean(10);
             bChan.pubsubOauth = result.GetString(11);
             return bChan;
         }

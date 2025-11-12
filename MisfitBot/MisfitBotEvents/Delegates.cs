@@ -11,12 +11,12 @@ namespace MisfitBot_MKII.MisfitBotEvents
     public delegate void DiscordGuildAvailableEvent(SocketGuild arg);
     public delegate void DiscordNewMemberEvent(BotChannel bChan, UserEntry user);
     public delegate void DiscordMemberLeftEvent(BotChannel bChan, UserEntry user);
-    public delegate void DiscordMemberUpdatedEvent(BotChannel bchan, UserEntry currentUser, UserEntry oldUser);
+    public delegate void DiscordMemberUpdatedEvent(BotChannel bChan, UserEntry currentUser, UserEntry oldUser);
     public delegate void DiscordMembersDownloadedEvent(SocketGuild arg);
     public delegate void DiscordReadyEvent();
-    public delegate void DiscordReactionClearedEvent(BotChannel bchan, ulong channelID);
-    public delegate void DiscordReactionRemovedEvent(BotChannel bchan, UserEntry currentUser, DiscordReactionArgument args);
-    public delegate void DiscordReactionAddedEvent(BotChannel bchan, UserEntry currentUser, DiscordReactionArgument args);
+    public delegate void DiscordReactionClearedEvent(BotChannel bChan, ulong channelID);
+    public delegate void DiscordReactionRemovedEvent(BotChannel bChan, UserEntry currentUser, DiscordReactionArgument args);
+    public delegate void DiscordReactionAddedEvent(BotChannel bChan, UserEntry currentUser, DiscordReactionArgument args);
     // All Twitch events here all all need to start with Twitch and end with Event
     public delegate void TwitchHostEvent(BotChannel bChan, HostedEventArguments e);
     public delegate void TwitchSubGiftEvent(BotChannel bChan, TwitchSubGiftEventArguments e);
@@ -24,17 +24,17 @@ namespace MisfitBot_MKII.MisfitBotEvents
     public delegate void TwitchConnectedEvent();
     public delegate void TwitchConnectionErrorEvent(string msg);
     public delegate void TwitchChannelChatClearedEvent(string channel);
-    public delegate void TwitchChannelJoinLeaveEvent(string channel, string botname);
+    public delegate void TwitchChannelJoinLeaveEvent(string channel, string botName);
     public delegate void TwitchCommunitySubscriptionEvent(BotChannel bChan, string message);
     public delegate void TwitchNewFollowerEvent(BotChannel botChannel, UserEntry user);
-    public delegate void TwitchResubscriberEvent(BotChannel botChannel, TwitchReSubArguments e);
-    public delegate void TwitchNewsubscriberEvent(BotChannel botChannel, TwitchNewSubArguments e);
+    public delegate void TwitchReSubscriberEvent(BotChannel botChannel, TwitchReSubArguments e);
+    public delegate void TwitchNewSubscriberEvent(BotChannel botChannel, TwitchNewSubArguments e);
     public delegate void TwitchDisconnectedEvent();
     public delegate void TwitchMessageClearedEvent(BotChannel botChannel, OnMessageClearedArgs e);
     public delegate void TwitchMessageSentEvent(string channel, string message);
     public delegate void TwitchWhisperMessageEvent(string username, string message);
     public delegate void TwitchUserJoinLeaveEvent(BotChannel botChannel, UserEntry user);
-    // Botwide type events
+    // BotWide type events
     public delegate void MessageReceivedEvent(BotWideMessageArguments args);
     public delegate void CommandReceivedEvent(BotWideCommandArguments args);
 
@@ -43,7 +43,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
     public delegate void TwitchChannelGoesOfflineEvent(TwitchStreamGoOfflineEventArguments args);
     public delegate void BanEvent(BanEventArguments e);
     public delegate void BitEvent(BitEventArguments e);
-    public delegate void DiscordUserStartsStreamEvent(BotChannel bChan, UserEntry user, StreamingGame streaminfo);
+    public delegate void DiscordUserStartsStreamEvent(BotChannel bChan, UserEntry user, StreamingGame streamInfo);
     public delegate void BotChannelMergeEvent(BotChannel discordBotChannel, BotChannel twitchBotChannel);
     public delegate void RaidEvent(BotChannel bChan, RaidEventArguments e);
     public delegate void UnBanEvent(UnBanEventArguments e);

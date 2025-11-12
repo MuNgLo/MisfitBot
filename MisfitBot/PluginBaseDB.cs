@@ -12,7 +12,7 @@ using MisfitBot_MKII.Statics;
 namespace MisfitBot_MKII
 {
     /// <summary>
-    /// This provides basic config support for servicebase class.
+    /// This provides basic config support for service base class.
     /// </summary>
     public class PluginBaseDB
     {
@@ -133,14 +133,14 @@ namespace MisfitBot_MKII
                 }
             }
         }
-        public async Task<bool> UserRowExists(String table, String userkey)
+        public async Task<bool> UserRowExists(String table, String userKey)
         {
             using (SQLiteCommand cmd = new SQLiteCommand())
             {
                 cmd.CommandType = CommandType.Text;
                 cmd.Connection = Core.Data;
                 cmd.CommandText = $"SELECT * FROM \"{table}\" WHERE userkey IS @userkey";
-                cmd.Parameters.AddWithValue("@userkey", userkey);
+                cmd.Parameters.AddWithValue("@userkey", userKey);
 
                 if (await cmd.ExecuteScalarAsync() == null)
                 {
@@ -155,7 +155,7 @@ namespace MisfitBot_MKII
 
         #endregion
         /// <summary>
-        /// Constructs the tablename from the BotChannel Key and plugin
+        /// Constructs the table name from the BotChannel Key and plugin
         /// also adds suffix
         /// </summary>
         /// <param name="chanKey"></param>

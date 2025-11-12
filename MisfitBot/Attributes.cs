@@ -3,7 +3,7 @@ namespace MisfitBot_MKII
 {
 
     /// <summary>
-    /// Methods in a PluginBase derivatie class that is marked with this and public will get registered as a subcommand in the commandinterpreter
+    /// Methods in a PluginBase derivative class that is marked with this and public will get registered as a subcommand in the command interpreter
     /// </summary>
     [System.AttributeUsage(System.AttributeTargets.Method)]
     public class SubCommandAttribute : System.Attribute
@@ -23,9 +23,9 @@ namespace MisfitBot_MKII
     public class CommandHelpAttribute : System.Attribute
     {
         public string text;
-        public CommandHelpAttribute(string helptext)
+        public CommandHelpAttribute(string helpText)
         {
-            this.text = helptext;
+            this.text = helpText;
         }
     }
     /// <summary>

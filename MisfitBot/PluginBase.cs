@@ -41,11 +41,11 @@ namespace MisfitBot_MKII
             Core.LOG(new LogEntry(LOGSEVERITY.INFO,
             "PLUGIN",
             $"{pluginName} v{version} loaded."));
-            CompatabilityCheck();
+            CompatibilityCheck();
         }
 
 
-        public void CompatabilityCheck(){
+        public void CompatibilityCheck(){
             if(Program._version < _version){
                 Core.LOG(new LogEntry(LOGSEVERITY.WARNING, _pluginName, $"WARNING! {_pluginName} was compiled against a newer version of the bot({Program._version})."));
             }
@@ -127,14 +127,14 @@ namespace MisfitBot_MKII
             if(args.source == MESSAGESOURCE.TWITCH){
                return await Program.Channels.GetTwitchChannelByName(args.channel);
             }
-            return await Program.Channels.GetDiscordGuildbyID(args.guildID);
+            return await Program.Channels.GetDiscordGuildByID(args.guildID);
         }
 
         public async Task<BotChannel> GetBotChannel(BotWideMessageArguments args){
             if(args.source == MESSAGESOURCE.TWITCH){
                return await Program.Channels.GetTwitchChannelByName(args.channel);
             }
-            return await Program.Channels.GetDiscordGuildbyID(args.guildID);
+            return await Program.Channels.GetDiscordGuildByID(args.guildID);
         }
 
         public async Task SayOnDiscord(BotChannel bChan, string message)

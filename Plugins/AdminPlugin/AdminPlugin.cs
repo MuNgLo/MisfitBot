@@ -36,25 +36,25 @@ namespace AdminPlugin
         private async void OnTwitchSubGift(BotChannel bChan, TwitchSubGiftEventArguments e)
         {
             if(bChan.discordAdminChannel > 0){
-                await SayOnDiscordAdmin(bChan, $"{e.userDisplayname} gave {e.recipientDisplayname} a {e.subscriptionplanName}.");
+                await SayOnDiscordAdmin(bChan, $"{e.userDisplayName} gave {e.recipientDisplayName} a {e.subscriptionPlanName}.");
             }
         }
         private async void OnTwitchResub(BotChannel bChan, TwitchReSubArguments args)
         {
            if(bChan.discordAdminChannel > 0){
-                await SayOnDiscordAdmin(bChan, $"{args.userDisplayname} resubbed for a total of {args.monthsTotal} months and a streak of {args.monthsStreak} months.");
+                await SayOnDiscordAdmin(bChan, $"{args.userDisplayName} resubbed for a total of {args.monthsTotal} months and a streak of {args.monthsStreak} months.");
             }
         }
         private async void OnTwitchNewSub(BotChannel bChan, TwitchNewSubArguments e)
         {
             if(bChan.discordAdminChannel > 0){
-                await SayOnDiscordAdmin(bChan, $"{e.userDisplayname} subscribed for the first time.");
+                await SayOnDiscordAdmin(bChan, $"{e.userDisplayName} subscribed for the first time.");
             }
         }
         #endregion
         private async void OnTwitchNewFollower(BotChannel bChan, UserEntry user){
             if(bChan.discordAdminChannel >0){
-                await SayOnDiscordAdmin(bChan, $"Hey we got a new Twitch follower! {user._twitchDisplayname}");
+                await SayOnDiscordAdmin(bChan, $"Hey we got a new Twitch follower! {user.twitchDisplayName}");
             }
         }
         private async void OnTwitchRaid(BotChannel bChan, RaidEventArguments e)
@@ -134,7 +134,7 @@ namespace AdminPlugin
                             }
                             bChan.TwitchChannelName = args.arguments[1].ToLower();
                             bChan.TwitchChannelID = user.Id;
-                            bChan.TwitchAutojoin = true;
+                            bChan.TwitchAutoJoin = true;
                             response.message = $"This Discord is now tied to the Twitch channel \"{bChan.TwitchChannelName}\".";
                             Program.Channels.ChannelSave(bChan);
                             if (Program.TwitchConnected)
@@ -202,7 +202,7 @@ namespace AdminPlugin
                             bChan.pubsubOauth = Cipher.Encrypt(args.arguments[1]);
                             Program.Channels.ChannelSave(bChan);
                             response.message = "Token set. Engaging PubSub Connection!";
-                            Program.PubSubStart(bChan);
+                            //Program.PubSubStart(bChan);
                             Program.DiscordRemoveMessage(Core.StringToUlong(args.channel), args.messageID);
                         }
                         else
@@ -215,14 +215,14 @@ namespace AdminPlugin
                         bChan.pubsubOauth = string.Empty;
                         Program.Channels.ChannelSave(bChan);
                         response.message = "ClearToken";
-                        Program.PubSubStop(bChan);
+                        //Program.PubSubStop(bChan);
                         Respond(bChan, response);
                         return;
                     case "start":
-                        Program.PubSubStart(bChan);
+                        //Program.PubSubStart(bChan);
                         return;
                     case "stop":
-                        Program.PubSubStop(bChan);
+                        //Program.PubSubStop(bChan);
                         return;
                         /*case "status":
                             response.message = Program.PubSubStatus(bChan);

@@ -45,18 +45,18 @@ namespace CommunityPicksPlugin
             {
                 Nominee nom = nominated.Find(p => p.Name == nomination);
                 UserEntry submitter = await Program.Users.GetUserByDiscordID(nom.SubmitterDID);
-                result = $"\"{nomination}\" is already nominated by {submitter._discordUsername}";
+                result = $"\"{nomination}\" is already nominated by {submitter.discordUsername}";
                 if (!nom.InUse)
                 {
                     UserEntry lastMod = await Program.Users.GetUserByDiscordID(nom.LastModActionByDID);
-                    result += $" Nomination rejected by {lastMod._discordUsername}.";
+                    result += $" Nomination rejected by {lastMod.discordUsername}.";
                 }
             }else{
 
                 Discord.Rest.RestUserMessage msg = await (DiscordClient.DiscordSayMessage(bChan.discordAdminChannel, $"Nomination for {nomination} submitted."));
                 DiscordChannelMessage dMessage = await DiscordClient.DiscordGetMessage(bChan.discordAdminChannel, msg.Id);
 
-                nominated.Add(new Nominee(NextID, nomination, user._discordUID){messageID = msg.Id, Timestamp = Core.CurrentTime});
+                nominated.Add(new Nominee(NextID, nomination, user.discordUID){messageID = msg.Id, Timestamp = Core.CurrentTime});
                 await DiscordClient.ReactionAdd(dMessage as DiscordChannelMessage, "👍");
                 await DiscordClient.ReactionAdd(dMessage as DiscordChannelMessage, "👎");
                 result = $"Nominated \"{nomination}\".";

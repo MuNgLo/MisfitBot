@@ -1,23 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<ItemGroup>
-		<ProjectReference Include="..\..\MisfitBot\MisfitBot-MKII.csproj"/>
-		<PackageReference Include="Discord.net" Version="3.4.1"/>
-		<PackageReference Include="Discord.Net.Commands" Version="3.4.1"/>
-		<PackageReference Include="Discord.Net.Rest" Version="3.4.1"/>
-		<PackageReference Include="Discord.Net.Webhook" Version="3.4.1"/>
-		<PackageReference Include="Discord.Net.WebSocket" Version="3.4.1"/>
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0"/>
-		<PackageReference Include="TwitchLib" Version="3.3.0"/>
-		<PackageReference Include="TwitchLib.PubSub" Version="3.2.3"/>
+		<ProjectReference Include="..\..\MisfitBot\MisfitBot-MKII.csproj" />
+		<PackageReference Include="Discord.net" Version="3.18.0" />
+		<PackageReference Include="Discord.Net.Commands" Version="3.18.0" />
+		<PackageReference Include="Discord.Net.Rest" Version="3.18.0" />
+		<PackageReference Include="Discord.Net.Webhook" Version="3.18.0" />
+		<PackageReference Include="Discord.Net.WebSocket" Version="3.18.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+		<PackageReference Include="TwitchLib" Version="3.5.3" />
+		<PackageReference Include="TwitchLib.PubSub" Version="3.2.6" />
 	</ItemGroup>
 	<PropertyGroup>
-		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<OutputType>library</OutputType>
 		<OutputPath>../../bin/netcoreapp3.1/Plugins/AdminPlugin</OutputPath>
 	</PropertyGroup>
 	<Target Name="Copying a Plugin" AfterTargets="Build">
-		<Message Text="Copying $(TargetDir)$(ProjectName).dll to $(TargetDir)..\..\..\linux-arm\publish\Plugins\$(ProjectName)\$(ProjectName).dll" Importance="High"/>
-		<Copy SourceFiles="$(TargetDir)$(ProjectName).dll" DestinationFolder="$(TargetDir)..\..\..\linux-arm\publish\Plugins\$(ProjectName)"/>
+		<Message Text="Copying $(TargetDir)$(ProjectName).dll to $(TargetDir)..\..\..\linux-arm\publish\Plugins\$(ProjectName)\$(ProjectName).dll" Importance="High" />
+		<Copy SourceFiles="$(TargetDir)$(ProjectName).dll" DestinationFolder="$(TargetDir)..\..\..\linux-arm\publish\Plugins\$(ProjectName)" />
 	</Target>
 </Project>

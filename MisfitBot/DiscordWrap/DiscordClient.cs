@@ -75,7 +75,7 @@ namespace MisfitBot_MKII.DiscordWrap
         public static async Task<RestUserMessage> DiscordResponse(BotWideResponseArguments args)
         {
             SocketChannel sChannel = Program.DiscordClient.GetChannel(args.discordChannel);
-            SocketGuildUser sUser = (sChannel as SocketGuildChannel).Guild.GetUser(args.user._discordUID);
+            SocketGuildUser sUser = (sChannel as SocketGuildChannel).Guild.GetUser(args.user.discordUID);
             // Create permissions list
             ChannelPermissions asd = sUser.GetPermissions(sChannel as IGuildChannel);
             if(!asd.SendMessages){
@@ -94,7 +94,7 @@ namespace MisfitBot_MKII.DiscordWrap
                 Timeout = 1000,
                 RetryMode = RetryMode.RetryTimeouts
             };
-            IGuildUser iUser = await iGuild.GetUserAsync(user._discordUID, CacheMode.AllowDownload, options);
+            IGuildUser iUser = await iGuild.GetUserAsync(user.discordUID, CacheMode.AllowDownload, options);
             if(iUser == null) {return false;}
 
             await iUser.AddRoleAsync(sRole as IRole);
@@ -106,7 +106,7 @@ namespace MisfitBot_MKII.DiscordWrap
             if(sGuild == null) {return false;}
             SocketRole sRole = sGuild.Roles.FirstOrDefault(x => x.Name == role);
             if(sRole == null) {return false;}
-            IGuildUser iUser = await (sGuild as IGuild).GetUserAsync(user._discordUID);
+            IGuildUser iUser = await (sGuild as IGuild).GetUserAsync(user.discordUID);
             if(iUser == null) {return false;}
 
             await iUser.RemoveRoleAsync(sRole as IRole);

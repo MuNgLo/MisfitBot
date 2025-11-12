@@ -92,7 +92,7 @@ private async Task GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> current,
             // TODO warning verify current and old is accurate
             foreach (SocketGuild guild in current.Value.MutualGuilds)
             {
-                BotChannel bChan = await Program.Channels.GetDiscordGuildbyID(guild.Id);
+                BotChannel bChan = await Program.Channels.GetDiscordGuildByID(guild.Id);
                 UserEntry currentUser = await Program.Users.GetUserByDiscordID(current.Id);
                 UserEntry oldUser = await Program.Users.GetUserByDiscordID(old.Id);
                 Program.BotEvents.RaiseOnDiscordGuildMemberUpdated(bChan, currentUser, oldUser);
@@ -103,7 +103,7 @@ private async Task GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> current,
         private async Task ReactionsCleared(Cacheable<IUserMessage, ulong> arg1, ISocketMessageChannel arg2)
         {
             await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherDiscord", "ReactionCleared"));
-            BotChannel bChan = await Program.Channels.GetDiscordGuildbyID((arg2 as SocketGuildChannel).Guild.Id);
+            BotChannel bChan = await Program.Channels.GetDiscordGuildByID((arg2 as SocketGuildChannel).Guild.Id);
             Program.BotEvents.RaiseDiscordReactionCleared(
                 bChan,
                 arg2.Id
@@ -114,7 +114,7 @@ private async Task GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> current,
         {
             await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherDiscord", "ReactionRemoved"));
             UserEntry user = await Program.Users.GetUserByDiscordID(arg3.UserId);
-            BotChannel bChan = await Program.Channels.GetDiscordGuildbyID((arg2 as SocketGuildChannel).Guild.Id);
+            BotChannel bChan = await Program.Channels.GetDiscordGuildByID((arg2 as SocketGuildChannel).Guild.Id);
             Program.BotEvents.RaiseDiscordReactionRemoved(
                 bChan,
                 user,
@@ -131,7 +131,7 @@ private async Task GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> current,
                 return;
             }
             UserEntry user = await Program.Users.GetUserByDiscordID(arg3.UserId);
-            BotChannel bChan = await Program.Channels.GetDiscordGuildbyID((Program.DiscordClient.GetChannel(arg2.Id) as IGuildChannel).GuildId);
+            BotChannel bChan = await Program.Channels.GetDiscordGuildByID((Program.DiscordClient.GetChannel(arg2.Id) as IGuildChannel).GuildId);
 
             Program.BotEvents.RaiseDiscordReactionAdded(
                 bChan,
@@ -224,7 +224,7 @@ private async Task GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> current,
         private async Task UserJoined(SocketGuildUser arg)
         {
             UserEntry user = await Program.Users.GetUserByDiscordID(arg.Id);
-            BotChannel bChan = await Program.Channels.GetDiscordGuildbyID(arg.Guild.Id);
+            BotChannel bChan = await Program.Channels.GetDiscordGuildByID(arg.Guild.Id);
             Program.BotEvents.RaiseOnDiscordNewMember(bChan, user);
         }
         /// <summary>
@@ -235,7 +235,7 @@ private async Task GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> current,
         private async Task UserLeft(SocketGuildUser arg)
         {
             UserEntry user = await Program.Users.GetUserByDiscordID(arg.Id);
-            BotChannel bChan = await Program.Channels.GetDiscordGuildbyID(arg.Guild.Id);
+            BotChannel bChan = await Program.Channels.GetDiscordGuildByID(arg.Guild.Id);
             Program.BotEvents.RaiseOnDiscordMemberLeft(bChan, user);
         }
         /// <summary>
@@ -274,7 +274,7 @@ private async Task GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> current,
         /// <returns></returns>
         private async Task LogAsync(LogMessage log)
         {
-            if (Program.Debugmode)
+            if (Program.DebugMode)
             {
                 await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherDiscord", log.ToString()));
             }

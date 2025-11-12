@@ -45,9 +45,9 @@ namespace MisfitBot_MKII.Statics
             {
                 case "[USER]":
                     if(args.source == MESSAGESOURCE.TWITCH) {
-                        value = args.user._twitchDisplayname;
+                        value = args.user.twitchDisplayName;
                     }else{
-                        value = args.user._discordUsername;
+                        value = args.user.discordUsername;
                     }
                     break;
                 /*case "[RandomUser]":
@@ -94,14 +94,14 @@ namespace MisfitBot_MKII.Statics
         private static List<string> GetAllParts(string message)
         {
             var parts = new List<string>();
-            var startpos = 0;
-            startpos = message.IndexOf("[", startpos);
-            while (startpos >= 0)
+            var startPosition = 0;
+            startPosition = message.IndexOf("[", startPosition);
+            while (startPosition >= 0)
             {
-                var endpos = message.IndexOf("]", startpos);
-                var part = message.Substring(startpos, (endpos - startpos)+1);
+                var endPosition = message.IndexOf("]", startPosition);
+                var part = message.Substring(startPosition, (endPosition - startPosition)+1);
                 parts.Add(part);
-                startpos = message.IndexOf("[", endpos);
+                startPosition = message.IndexOf("[", endPosition);
             }
             return parts;
         }

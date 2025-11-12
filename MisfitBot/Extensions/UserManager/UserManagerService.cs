@@ -14,7 +14,7 @@ using MisfitBot_MKII.Statics;
 namespace MisfitBot_MKII.Extensions.UserManager
 {
     /// <summary>
-    /// This handles all userentry load/saves. Returns userentriers as references so make sure to follow the lock in the entry.
+    /// This handles all user entry load/saves. Returns user entries as references so make sure to follow the lock in the entry.
     /// </summary>
     public class UserManagerService
     {
@@ -37,8 +37,8 @@ namespace MisfitBot_MKII.Extensions.UserManager
             if (e == null) return;
             UserEntry user = await UserList.GetDBUserByTwitchUserName(e.ChatMessage.Username);
             if (user == null) return;
-            user._twitchColour = e.ChatMessage.ColorHex;
-            user._lastseenOnTwitch = Core.CurrentTime;
+            user.twitchColour = e.ChatMessage.ColorHex;
+            user.lastSeenOnTwitch = Core.CurrentTime;
         }
 
 
@@ -50,7 +50,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
         /// <returns></returns>
         private void OnDiscordNewMember(BotChannel bChan, UserEntry user)
         {
-            Core.LOG(new LogEntry(LOGSEVERITY.INFO, "UserManagerService", $"UserJoined({user._discordUsername}) {bChan.GuildName}"));
+            Core.LOG(new LogEntry(LOGSEVERITY.INFO, "UserManagerService", $"UserJoined({user.discordUsername}) {bChan.GuildName}"));
             UpdateDiscordUserEntry(user);
 
         }
@@ -61,7 +61,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
         /// <returns></returns>
         private void OnDiscordMemberLeft(BotChannel bChan, UserEntry user)
         {
-            Core.LOG(new LogEntry(LOGSEVERITY.INFO, "UserManagerService", $"UserLeft({user._discordUsername}) from {bChan.GuildName}"));
+            Core.LOG(new LogEntry(LOGSEVERITY.INFO, "UserManagerService", $"UserLeft({user.discordUsername}) from {bChan.GuildName}"));
             UpdateDiscordUserEntry(user);
         }
         private void OnDiscordMemberUpdated(BotChannel botChannel, UserEntry currentUser, UserEntry oldUser){
@@ -104,7 +104,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 while(user.locked){
                     Thread.Sleep(50);
                 }
-            user._lastseenOnTwitch = Core.CurrentTime;
+            user.lastSeenOnTwitch = Core.CurrentTime;
             });
         }
         /// <summary>
@@ -118,7 +118,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
                 while(user.locked){
                     Thread.Sleep(50);
                 }
-            user._lastseenOnTwitch = Core.CurrentTime;
+            user.lastSeenOnTwitch = Core.CurrentTime;
             });
         }
         #endregion
@@ -144,16 +144,16 @@ namespace MisfitBot_MKII.Extensions.UserManager
             // Raise the link event so modules can listen and do whatever they need to do
             Program.BotEvents.RaiseUserLinkEvent(discordProfile, twitchProfile);
             // merge twitch user into discord user then elevate discord user to linked status
-            discordProfile._twitchUID = twitchProfile._twitchUID;
-            discordProfile._twitchUsername = twitchProfile._twitchUsername;
-            discordProfile._twitchDisplayname = twitchProfile._twitchDisplayname;
-            discordProfile._twitchLogo = twitchProfile._twitchLogo;
-            discordProfile._twitchColour = twitchProfile._twitchColour;
+            discordProfile.twitchUID = twitchProfile.twitchUID;
+            discordProfile.twitchUsername = twitchProfile.twitchUsername;
+            discordProfile.twitchDisplayName = twitchProfile.twitchDisplayName;
+            discordProfile.twitchLogo = twitchProfile.twitchLogo;
+            discordProfile.twitchColour = twitchProfile.twitchColour;
             discordProfile.linked = true;
             discordProfile.lastSave = 0;
-            SocketUser u = Program.DiscordClient.GetUser(discordProfile._discordUID);
+            SocketUser u = Program.DiscordClient.GetUser(discordProfile.discordUID);
             await u.SendMessageAsync("Your userprofile is now the same one for both Twitch and Discord.");
-            Program.TwitchClient.SendWhisper(discordProfile._twitchUsername, "Your userprofile is now the same one for both Twitch and Discord.");
+            Program.TwitchClient.SendWhisper(discordProfile.twitchUsername, "Your userprofile is now the same one for both Twitch and Discord.");
         }
         #endregion
 
@@ -238,7 +238,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
         /// <returns></returns>
         private void UpdateDiscordUserEntry(UserEntry freshUser)
         {
-            freshUser._lastseen = Core.CurrentTime;
+            freshUser.lastSeen = Core.CurrentTime;
             freshUser.lastChange = Core.CurrentTime;
         }
         private async Task UpdateDiscordUserEntry(SocketUser freshUser)
@@ -263,7 +263,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
         /// <returns></returns>
         /*private async Task ClientUserUpdated(SocketUser arg1, SocketUser arg2)
         {
-            await Core.LOG(new LogMessage(LogSeverity.Info, EXTENSIONNAME, "_client_UserUpdated")); // might be a staller
+            await Core.LOG(new LogMessage(LogSeverity.Info, EXTENSIONNAME, "_client_UserUpdated")); // might be a stall
         }*/
         /// <summary>
         /// Duuno when this fires really

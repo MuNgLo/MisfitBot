@@ -1,7 +1,7 @@
 ﻿namespace MisfitBot_MKII
 {
     /// <summary>
-    /// This represents a channel for the bot. Can be Discord guild, Twitchchannel or both as a linked entry.
+    /// This represents a channel for the bot. Can be Discord guild, Twitch channel or both as a linked entry.
     /// </summary>
     public class BotChannel
     {
@@ -15,7 +15,7 @@
         public bool isTwitch = true; // Phase this one out
         public bool isLive = false;
         public int viewerCount = 0;
-        public bool TwitchAutojoin = false;
+        public bool TwitchAutoJoin = false;
         public string pubsubOauth = string.Empty;
         public string Key = string.Empty;
         // CONSTRUCTORS
@@ -34,7 +34,7 @@
         {
             TwitchChannelID = twitchChannelID;
             TwitchChannelName = twitchChannelName;
-            TwitchAutojoin = true;
+            TwitchAutoJoin = true;
             Key = DataKey();
 
         }

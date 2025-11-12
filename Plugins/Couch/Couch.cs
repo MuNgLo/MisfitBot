@@ -452,7 +452,7 @@ namespace Couch
         {
             CouchUserStats cStats = await GetUserCouchStats(bChan.Key, args.user.Key);
             Program.TwitchSayMessage(args.channel,
-                                    $"{args.user._twitchDisplayname}, you have sat in couch {cStats.CountSeated} times. {cStats.CountBooted} times you fell off."
+                                    $"{args.user.twitchDisplayName}, you have sat in couch {cStats.CountSeated} times. {cStats.CountBooted} times you fell off."
                                     );
         }
         [SingleCommand("seat"), CommandHelp("Lets users sit in the couch."), CommandSourceAccess(MESSAGESOURCE.TWITCH), CommandVerified(3)]
@@ -497,7 +497,7 @@ namespace Couch
                             UserEntry victim = await Program.Users.GetUserByTwitchDisplayName(rngSitter);
                             if (victim != null)
                             {
-                                settings._couches[bChan.Key].TwitchUsernames.RemoveAll(p => p == victim._twitchUsername);
+                                settings._couches[bChan.Key].TwitchUsernames.RemoveAll(p => p == victim.twitchUsername);
                                 if (!await UserStatsExists(bChan.Key, args.user.Key))
                                 {
                                     UserStatsCreate(bChan.Key, args.user.Key);
@@ -545,7 +545,7 @@ namespace Couch
             else
             {
                 Program.TwitchSayMessage(args.channel,
-                    dbStrings.GetRandomLine(bChan, "FAIL").Replace("[USER]", args.user._twitchDisplayname)
+                    dbStrings.GetRandomLine(bChan, "FAIL").Replace("[USER]", args.user.twitchDisplayName)
                     );
                 settings.failCount++;
                 SaveBaseSettings(bChan, PLUGINNAME, settings);

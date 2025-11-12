@@ -22,11 +22,11 @@
             ]
         },
         {
-            "label": "Build Bot",
+            "label": "Build Bot Only",
             "command": "dotnet",
             "type": "process",
             "args": [
-                "publish",
+                "build",
                 "${workspaceFolder}/MisfitBot/MisfitBot-MKII.csproj",
                 "/property:GenerateFullPaths=true"
             ],

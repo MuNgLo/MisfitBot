@@ -2,9 +2,9 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using TwitchLib.PubSub.Enums;
 using MisfitBot_MKII.Statics;
 using TwitchStream = TwitchLib.Api.Helix.Models.Streams.GetStreams.Stream;
+using TwitchLib.Client.Enums;
 
 namespace MisfitBot_MKII
 {
@@ -102,7 +102,7 @@ public struct LogEntry
 
 
     /// <summary>
-    /// Default uservalues class. Only contains a simple timestamp so far
+    /// Default userValues class. Only contains a simple timestamp so far
     /// </summary>
     public class UserValues
     {
@@ -124,7 +124,7 @@ public struct LogEntry
         }
     }
     /// <summary>
-    /// Botwide event argument class
+    /// Bot wide event argument class
     /// </summary>
     public class BitEventArguments
     {
@@ -134,30 +134,30 @@ public struct LogEntry
         public int bitsGiven;
         public int bitsTotal;
         public string context;
-        public string chatmessage;
-        public BitEventArguments(BotChannel chan, UserEntry usr, int time, int bits, int total, string con, string chatmsg)
+        public string chatMessage;
+        public BitEventArguments(BotChannel chan, UserEntry usr, int time, int bits, int total, string con, string chatM)
         {
-            bChan = chan;user = usr;timestamp = time;bitsGiven = bits;bitsTotal = total;context = con;chatmessage = chatmsg;
+            bChan = chan;user = usr;timestamp = time;bitsGiven = bits;bitsTotal = total;context = con;chatMessage = chatM;
         }
     }
     /// <summary>
-    /// Botwide event argument class
+    /// Bot wide event argument class
     /// </summary>
     public class HostedEventArguments
     {
         public string HostedChannel, HostChannel;
         bool AutoHost;
         int Viewers;
-        public HostedEventArguments(string hostedChannel, string hostChannel, bool isautohost, int viewers)
+        public HostedEventArguments(string hostedChannel, string hostChannel, bool isAutoHost, int viewers)
         {
             HostedChannel = hostedChannel;
             HostChannel = hostChannel;
-            AutoHost = isautohost;
+            AutoHost = isAutoHost;
             Viewers = viewers;
         }
     }
     /// <summary>
-     /// Botwide event argument class
+     /// BotWide event argument class
      /// </summary>
     public class RaidEventArguments
     {
@@ -171,49 +171,46 @@ public struct LogEntry
         }
     }
     /// <summary>
-    /// Botwide event argument class
+    /// BotWide event argument class
     /// </summary>
     public class TwitchNewSubArguments
     {
         public int userID;
         public string username;
-        public string userDisplayname;
-
+        public string userDisplayName;
         public string Channelname;
-
-        public SubscriptionPlan subscriptionplan;
-        public string subscriptionplanName;
+        public SubscriptionPlan subscriptionPlan;
+        public string subscriptionPlanName;
         public int monthsTotal; 
         public int monthsStreak; 
-
         public TwitchNewSubArguments(TwitchLib.Client.Events.OnNewSubscriberArgs e){
             
             int.TryParse(e.Subscriber.UserId, out userID);
             username = e.Subscriber.Login;
-            userDisplayname = e.Subscriber.DisplayName;
+            userDisplayName = e.Subscriber.DisplayName;
 
             Channelname = e.Channel;
 
-            subscriptionplan = (SubscriptionPlan)e.Subscriber.SubscriptionPlan;
-            subscriptionplanName = e.Subscriber.SubscriptionPlanName;
+            subscriptionPlan = (SubscriptionPlan)e.Subscriber.SubscriptionPlan;
+            subscriptionPlanName = e.Subscriber.SubscriptionPlanName;
 
             int.TryParse(e.Subscriber.MsgParamCumulativeMonths, out monthsTotal);
             int.TryParse(e.Subscriber.MsgParamStreakMonths, out monthsStreak);
         }
     }// EOF CLASS
     /// <summary>
-    /// Botwide event argument class
+    /// BotWide event argument class
     /// </summary>
     public class TwitchReSubArguments
     {
         public int userID;
         public string username;
-        public string userDisplayname;
+        public string userDisplayName;
 
         public string Channelname;
 
-        public SubscriptionPlan subscriptionplan;
-        public string subscriptionplanName;
+        public SubscriptionPlan subscriptionPlan;
+        public string subscriptionPlanName;
         public int monthsTotal; 
         public int monthsStreak; 
 
@@ -221,59 +218,56 @@ public struct LogEntry
             
             int.TryParse(e.ReSubscriber.UserId, out userID);
             username = e.ReSubscriber.Login;
-            userDisplayname = e.ReSubscriber.DisplayName;
+            userDisplayName = e.ReSubscriber.DisplayName;
 
             Channelname = e.Channel;
 
-            subscriptionplan = (SubscriptionPlan)e.ReSubscriber.SubscriptionPlan;
-            subscriptionplanName = e.ReSubscriber.SubscriptionPlanName;
+            subscriptionPlan = (SubscriptionPlan)e.ReSubscriber.SubscriptionPlan;
+            subscriptionPlanName = e.ReSubscriber.SubscriptionPlanName;
 
             int.TryParse(e.ReSubscriber.MsgParamCumulativeMonths, out monthsTotal);
             int.TryParse(e.ReSubscriber.MsgParamStreakMonths, out monthsStreak);
         }
     }// EOF CLASS
     /// <summary>
-    /// Botwide event argument class
+    /// BotWide event argument class
     /// </summary>
     public class TwitchSubGiftEventArguments
     {
         public int twitchUserID;
         public string username;
-        public string userDisplayname;
-
+        public string userDisplayName;
         public int recipientUserID;
         public string recipientUsername;
-        public string recipientDisplayname;
-
+        public string recipientDisplayName;
         public int twitchChannelID;
         public string twitchChannelname;
-
-        public SubscriptionPlan subscriptionplan;
-        public string subscriptionplanName;
+        public SubscriptionPlan subscriptionPlan;
+        public string subscriptionPlanName;
         public int months; // This seems highly unreliable
 
         public TwitchSubGiftEventArguments(TwitchLib.Client.Events.OnGiftedSubscriptionArgs e){
             
             int.TryParse(e.GiftedSubscription.Id, out twitchUserID);
-            userDisplayname = e.GiftedSubscription.DisplayName;
+            userDisplayName = e.GiftedSubscription.DisplayName;
             username = e.GiftedSubscription.Login;
 
             int.TryParse(e.GiftedSubscription.MsgParamRecipientId, out recipientUserID);
             recipientUsername = e.GiftedSubscription.MsgParamRecipientUserName;
-            recipientDisplayname = e.GiftedSubscription.MsgParamRecipientDisplayName;
+            recipientDisplayName = e.GiftedSubscription.MsgParamRecipientDisplayName;
 
             twitchChannelname = e.Channel;
 
-            subscriptionplan = (SubscriptionPlan)e.GiftedSubscription.MsgParamSubPlan;
+            subscriptionPlan = (SubscriptionPlan)e.GiftedSubscription.MsgParamSubPlan;
             int.TryParse(e.GiftedSubscription.MsgParamMonths, out months);
 
-            subscriptionplanName = e.GiftedSubscription.MsgParamSubPlanName;
+            subscriptionPlanName = e.GiftedSubscription.MsgParamSubPlanName;
         }
 
-        internal string LogString { get {return $"SubGift in {twitchChannelname} from {userDisplayname} to {recipientDisplayname}";} private set{} }
+        internal string LogString { get {return $"SubGift in {twitchChannelname} from {userDisplayName} to {recipientDisplayName}";} private set{} }
     }// EOF CLASS
     /// <summary>
-    /// Botwide event argument class
+    /// BotWide event argument class
     /// </summary>
     public class BanEventArguments
     {
@@ -290,7 +284,7 @@ public struct LogEntry
         }
     }
     /// <summary>
-    /// Botwide event argument class
+    /// BotWide event argument class
     /// </summary>
     public class UnBanEventArguments
     {
@@ -305,12 +299,12 @@ public struct LogEntry
         }
     }
     /// <summary>
-    /// Inherit from this for any pluginsetting. This contains all the common variable
+    /// Inherit from this for any plugin setting. This contains all the common variable
     /// </summary>
     public class PluginSettingsBase
     {
         public bool _active = true;
-        public int _defaultCooldown = 30;
+        public int _defaultCoolDown = 30;
         public ulong _defaultDiscordChannel = 0;
         public string _defaultTwitchRoom = string.Empty;
     }
@@ -415,13 +409,5 @@ public struct LogEntry
         public int Count;
     }
 
-    internal class MainConfig {
-        public bool UseDiscord;
-        public bool UseTwitch;
-        public char CMDCharacter;
-        public string DiscordToken;
-        public string TwitchClientID;
-        public string TwitchToken;
-        public string TwitchUser;
-    }
+
 }// EO Namespace

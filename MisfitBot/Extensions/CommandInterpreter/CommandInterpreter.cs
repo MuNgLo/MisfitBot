@@ -220,7 +220,7 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
             {
                 return await Program.Channels.GetTwitchChannelByName(args.channel);
             }
-            return await Program.Channels.GetDiscordGuildbyID(args.guildID);
+            return await Program.Channels.GetDiscordGuildByID(args.guildID);
         }
         
         private async void Respond(BotChannel bChan, BotWideResponseArguments args)
