@@ -9,7 +9,7 @@ using TwitchLib.Client.Enums;
 namespace MisfitBot_MKII
 {
     public enum MESSAGESOURCE { BOTH, DISCORD, TWITCH}
-    public enum LOGSEVERITY {CRITICAL, ERROR, WARNING, INFO, VERBOSE, DEBUG}
+    public enum LOGSEVERITY {CRITICAL, ERROR, WARNING, INFO, VERBOSE, DEBUG, RESPONSE}
     public enum RESPONSEACTION {ERROR, ADDED, REMOVED, CLEARED}
 
     public delegate void CommandMethod(BotChannel bChan, BotWideCommandArguments args);
@@ -191,11 +191,11 @@ public struct LogEntry
 
             Channelname = e.Channel;
 
-            subscriptionPlan = (SubscriptionPlan)e.Subscriber.SubscriptionPlan;
-            subscriptionPlanName = e.Subscriber.SubscriptionPlanName;
+            subscriptionPlan = e.Subscriber.MsgParamSubPlan;
+            subscriptionPlanName = e.Subscriber.MsgParamSubPlanName;
 
-            int.TryParse(e.Subscriber.MsgParamCumulativeMonths, out monthsTotal);
-            int.TryParse(e.Subscriber.MsgParamStreakMonths, out monthsStreak);
+            monthsTotal = e.Subscriber.MsgParamCumulativeMonths;
+            monthsStreak = e.Subscriber.MsgParamStreakMonths;
         }
     }// EOF CLASS
     /// <summary>
@@ -222,11 +222,12 @@ public struct LogEntry
 
             Channelname = e.Channel;
 
-            subscriptionPlan = (SubscriptionPlan)e.ReSubscriber.SubscriptionPlan;
-            subscriptionPlanName = e.ReSubscriber.SubscriptionPlanName;
+            subscriptionPlan = e.ReSubscriber.MsgParamSubPlan;
+            subscriptionPlanName = e.ReSubscriber.MsgParamSubPlanName;
 
-            int.TryParse(e.ReSubscriber.MsgParamCumulativeMonths, out monthsTotal);
-            int.TryParse(e.ReSubscriber.MsgParamStreakMonths, out monthsStreak);
+
+            monthsTotal = e.ReSubscriber.MsgParamCumulativeMonths;
+            monthsStreak = e.ReSubscriber.MsgParamStreakMonths;
         }
     }// EOF CLASS
     /// <summary>

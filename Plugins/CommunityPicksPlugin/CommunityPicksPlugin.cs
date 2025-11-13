@@ -13,21 +13,21 @@ namespace CommunityPicksPlugin
     {
         private PickCache cache;
 
-        public CommunityPicksPlugin() : base("pick", "CommunityPicksPlugin", 3, "Set up big votes of preapproved things")
+        public CommunityPicksPlugin() : base("pick", "CommunityPicksPlugin", 3, "Set up big votes of pre approved things")
         {
             cache = new PickCache();
         }
 
         #region Command Methods
         [SubCommand("new", 0), CommandHelp("Create a new pick in the channel"), CommandSourceAccess(MESSAGESOURCE.DISCORD)]
-        public async void CreatePickCommand(BotChannel bChan, BotWideCommandArguments args)
+        public async Task CreatePickCommand(BotChannel bChan, BotWideCommandArguments args)
         {
             if (!args.canManageMessages) { return; }
             BotWideResponseArguments response = new BotWideResponseArguments(args);
             if (!CreateNewPick(bChan, args.channelID, String.Join(' ', args.arguments)))
             {
                 response.message = "Pick creation failed";
-                Respond(bChan, response);
+                await Respond(bChan, response);
             }
         }
 
@@ -36,12 +36,12 @@ namespace CommunityPicksPlugin
         {
             BotWideResponseArguments response = new BotWideResponseArguments(args);
             response.message = await Nominate(bChan, args.user, args.channelID, String.Join(' ', args.arguments));
-            Respond(bChan, response);
+            await Respond(bChan, response);
         }
         #endregion
         #region Internal Methods
         /// <summary>
-        /// This tries to create a new pick and returns a bool True if succesful
+        /// This tries to create a new pick and returns a bool True if successful
         /// </summary>
         private bool CreateNewPick(BotChannel bChan, ulong dChan, string title)
         {
@@ -61,9 +61,7 @@ namespace CommunityPicksPlugin
         }
         #endregion
         #region Abstract forced from base class
-        public override void OnSecondTick(int seconds)
-        {
-        }
+
 
         public override void OnMinuteTick(int minutes)
         {

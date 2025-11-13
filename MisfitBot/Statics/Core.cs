@@ -19,6 +19,18 @@ namespace MisfitBot_MKII.Statics
 
         public static JsonSerializer serializer = new JsonSerializer();
 
+        public static async Task LogInfo(string msg)
+        {
+            await LogInfo("Bot", msg);
+        }
+        internal static async Task LogResponse(string v)
+        {
+            await Core.LOG(new LogEntry(LOGSEVERITY.RESPONSE, "Bot", v));
+        }
+        public static async Task LogInfo(string sender, string msg)
+        {
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, sender, msg));
+        }
 
         /// <summary>
         /// Makes sure Core is setup and have what it needs
@@ -44,6 +56,8 @@ namespace MisfitBot_MKII.Statics
             ulong.TryParse(text, out ulong key);
             return key;
         }
+
+     
         #endregion
     }
 

@@ -321,9 +321,7 @@ namespace ShoutOut
         public override void OnMinuteTick(int minutes)
         {
         }
-        public override void OnSecondTick(int seconds)
-        {
-        }
+
         public override void OnUserEntryMergeEvent(UserEntry discordUser, UserEntry twitchUser)
         {
         }

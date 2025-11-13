@@ -67,18 +67,9 @@ public class Program
     public static int PluginCount { get => plugins.Count; private set { } }
 
     #region Main config values
-    static bool useDiscord = false;
-    public static bool UseDiscord => useDiscord;
-    static bool useTwitch = false;
-    public static bool UseTwitch => useTwitch;
-    static string twitchAccessToken = string.Empty;
-    public static string TwitchAccessToken => twitchAccessToken;
+
     static string discordToken = string.Empty;
     public static string DiscordToken => discordToken;
-    static char commandCharacter = '!';
-    public static char CommandCharacter => commandCharacter;
-    static string botNameTwitch = "";
-    public static string BotNameTwitch => botNameTwitch;
     static string botNameDiscord = "";
     public static string BotNameDiscord => botNameDiscord;
 
@@ -93,9 +84,9 @@ public class Program
     public async Task MainAsync(List<string> args)
     {
         _BotEvents = new BotWideEvents();
+        Core.Init();
 
         await ReactToStartupArguments(args);
-        Core.Init();
         CreateNewDatabase();
         ConnectToDatabase();
 
@@ -103,54 +94,71 @@ public class Program
         _Channels = new ChannelManager();
         _Users = new UserManagerService();
 
-        await VerifyFoldersAndStartupFiles();
-
+        VerifyFoldersAndStartupFiles();
 
         // Check that we have a config table for bot if not create one
         VerifyConfigTableExists();
 
+        // Try load TokenData
+        Secrets.Load();
+
         // start authentication things
-        Console.WriteLine("Checking authentication....");
-        await DeviceToken.Initialize();
-        if(!await DeviceToken.Validate())
+        await Core.LogInfo("Checking authentication....");
+        DeviceToken.Initialize();
+        if (!await DeviceToken.Validate())
         {
-            Console.WriteLine("Validation failed");
+            await Core.LogInfo("Validation failed");
             string userCode = await DeviceToken.GetDeviceCode();
-            Console.WriteLine("Validation failed");
-            Console.WriteLine("//////////////////////////////////////////////////////////");
-            Console.WriteLine("       Please go to https://www.twitch.tv/activate");
-            Console.WriteLine($"               Enter the code \"{userCode}\"");
-            Console.WriteLine("           Accept the authorization to run this");
-            Console.WriteLine("//////////////////////////////////////////////////////////");
+            await Core.LogInfo("Validation failed");
+            await Core.LogInfo("//////////////////////////////////////////////////////////");
+            await Core.LogInfo("       Please go to https://www.twitch.tv/activate");
+            await Core.LogInfo($"               Enter the code \"{userCode}\"");
+            await Core.LogInfo("           Accept the authorization to run this");
+            await Core.LogInfo("//////////////////////////////////////////////////////////");
             await DeviceToken.WaitForAuthentication(60.0f);
         }
 
-        PromptForCommandCharacter();
+        if (!await DeviceToken.Validate())
+        {
+            await Core.LogInfo("       Validating failed!!");
+            await Core.LogInfo("       Please relaunch and try again");
+            await Core.LogInfo("//////////////////////////////////////////////////////////");
+            return;
+        }
 
+        Secrets.Save();
 
-        /*
-        await PromptForDis
-        cordToken();
-        PromptForTwitchChannel();
+        if (Secrets.CommandCharacter == string.Empty)
+        {
+            await PromptForCommandCharacter();
+            Secrets.Save();
+        }
 
-        LoadPlugins();
-        InitCommandInterpreter();
         _TwitchServiceEvents = new EventCatcherTwitchServices();
         StartTwitchAPI(_TwitchServiceEvents);
-        StartTwitchClient();
+
+
+
+        LoadPlugins();
+        await InitCommandInterpreter();
+        await StartTwitchClient();
+
+        /*
+        await PromptForDiscordToken();
         await StartDiscordClient();
-*/
+        */
         // Block the program until it is closed.
         await Task.Delay(Timeout.Infinite);
     }
 
-    private void InitCommandInterpreter()
+    private async Task InitCommandInterpreter()
     {
         commands = new CommandInterpreter();
         foreach (PluginBase pl in plugins)
         {
             commands.ProcessPlugin(pl);
         }
+        await Core.LogInfo( $"CommandInterpreter() [{commands.CommandsCount}] commands registered");
     }
 
     private void LoadPlugins()
@@ -158,6 +166,7 @@ public class Program
         plugins = new List<PluginBase>();
         string PluginFolder = "Plugins";
         string[] FolderContent = Directory.GetDirectories(PluginFolder);
+        Console.WriteLine( $"Attempting to load plugins from [{FolderContent.Length}] folders");
         foreach (string fileName in FolderContent)
         {
             if (Directory.Exists(fileName))
@@ -178,7 +187,7 @@ public class Program
 
     private void StartTwitchAPI(EventCatcherTwitchServices arg)
     {
-        if (!UseTwitch) { return; }
+        if (!Secrets.UseTwitch) { return; }
         Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Bot", $"Starting up Twitch API"));
         KSLogger logger = new KSLogger();
         if (_LogTwitch) { TwitchAPI = new TwitchAPI(logger); }
@@ -186,21 +195,28 @@ public class Program
         { TwitchAPI = new TwitchAPI(); }
         TwitchAPI.Settings.SkipDynamicScopeValidation = true;
         TwitchAPI.Settings.ClientId = Secrets.ClientID;
-        TwitchAPI.Settings.AccessToken = Secrets.AuthToken;
+        TwitchAPI.Settings.AccessToken = Secrets.TwitchAuthToken;
         StartTwitchChannelWatcher(arg);
     }
 
-    private void StartTwitchClient()
+    private async Task StartTwitchClient()
     {
-        if (!UseTwitch) { return; }
-        Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Bot", $"Starting up Twitch"));
-        ConnectionCredentials cred = new ConnectionCredentials(BotNameTwitch, TwitchAccessToken);
+        if (!Secrets.UseTwitch) { return; }
+        await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Bot", $"Starting up Twitch chat connection"));
+        ConnectionCredentials cred = new ConnectionCredentials("juanthebot", Secrets.TwitchAuthToken);
         _TwitchClient = new TwitchClient();
-        _TwitchClient.Initialize(cred, BotNameTwitch);
-        _TwitchClient.RemoveChatCommandIdentifier('!');
-        _TwitchClient.AddChatCommandIdentifier(Program.CommandCharacter);
+        _TwitchClient.ChatCommandIdentifiers.Add(Secrets.CommandCharacter.ToString());
+        _TwitchClient.Initialize(cred, Secrets.UserLogin);
+        //_TwitchClient.ChatCommandIdentifiers.Clear();
         _TwitchEvents = new EventCatcherTwitch(_TwitchClient, _LogTwitch);
-        _TwitchClient.Connect();
+        if(await _TwitchClient.ConnectAsync())
+        {
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Bot", $"Connected to chat"));
+        }
+        else
+        {
+            await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "Bot", $"Connection failed"));
+        }
     }
 
     private void StartTwitchChannelWatcher(EventCatcherTwitchServices arg)
@@ -208,26 +224,26 @@ public class Program
         _TwitchChannelWatcher = new TwitchChannelWatcher(arg);
     }
 
-    
+
     private async Task ReactToStartupArguments(List<string> args)
     {
         foreach (string arg in args)
         {
             if (arg == "debug")
             {
-                Console.WriteLine("!!!!RUNNING IN DEBUGMODE!!!!");
+                await Core.LogInfo("!!!!RUNNING IN DEBUGMODE!!!!");
                 DebugMode = true;
             }
             if (arg == "logtwitch")
             {
-                Console.WriteLine("!!!!LOGGING TWITCH OUTPUT!!!!");
+                await Core.LogInfo("!!!!LOGGING TWITCH OUTPUT!!!!");
                 _LogTwitch = true;
             }
             if (arg == "cleanlaunch")
             {
                 if (File.Exists("DATABASE.sqlite"))
                 {
-                    Console.WriteLine("!!!! CLEAN FRESH START !!!!");
+                    await Core.LogInfo("!!!! CLEAN FRESH START !!!!");
                     File.Delete("DATABASE.sqlite");
                     await Task.Delay(100);
                 }
@@ -245,22 +261,18 @@ public class Program
     /// This verifies there is a plugin folder
     /// </summary>
     /// <returns></returns>
-    private async Task VerifyFoldersAndStartupFiles()
+    private void VerifyFoldersAndStartupFiles()
     {
-
-        await Task.Run(async () =>
+        if (!Directory.Exists("Plugins"))
         {
-            if (!Directory.Exists("Plugins"))
-            {
-                if (DebugMode) { Console.WriteLine("Creating plugins folder!"); }
-                Directory.CreateDirectory("Plugins");
-            }
-        });
+            if (DebugMode) { Console.WriteLine("Creating plugins folder!"); }
+            Directory.CreateDirectory("Plugins");
+        }
     }
 
     private async Task StartDiscordClient()
     {
-        if (!UseDiscord) { return; }
+        if (!Secrets.UseDiscord) { return; }
         await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Bot", $"Starting up Discord"));
 
         DiscordSocketConfig dConfig = new DiscordSocketConfig()
@@ -288,7 +300,7 @@ public class Program
     /// Prompts the user to input a single valid commandCharacter<br/>
     /// re-prompts until a valid one is entered
     /// </summary>
-    private void PromptForCommandCharacter()
+    private async Task PromptForCommandCharacter()
     {
         string inCMDChar;
         do
@@ -299,8 +311,8 @@ public class Program
             {
                 inCMDChar = inCMDChar.Trim();
                 string character = inCMDChar[0].ToString();
-                string valids = "!?&%";
-                if (valids.Contains(character))
+                string valid = "!?&%";
+                if (valid.Contains(character))
                 {
                     inCMDChar = character.ToString();
                 }
@@ -310,8 +322,8 @@ public class Program
                 }
             }
         } while (inCMDChar == null || inCMDChar == string.Empty || inCMDChar.Length > 1);
-        Console.WriteLine($"Command character now set to \"{inCMDChar}\".");
-        SetCommandCharacter(inCMDChar);
+        await Core.LogResponse($"Command character now set to \"{inCMDChar}\".");
+        Secrets.SetCommandCharacter(inCMDChar);
     }
 
 
@@ -330,9 +342,9 @@ public class Program
             }
         } while (inKey.Key != ConsoleKey.Y && inKey.Key != ConsoleKey.N);
 
-        useDiscord = discordQuery;
+        Secrets.SetUseDiscord(discordQuery);
 
-        if (!UseDiscord) { return; }
+        if (!Secrets.UseDiscord) { return; }
 
         Console.WriteLine(System.Environment.NewLine + "Enter your Discord Token.");
         string inToken;
@@ -353,74 +365,6 @@ public class Program
         });
     }
 
-    private void PromptForTwitchChannel()
-    {
-        Console.WriteLine("Do you want a Twitch connection? Y/N");
-        bool twitchQuery = false;
-        ConsoleKeyInfo inKey;
-        do
-        {
-            inKey = Console.ReadKey();
-            if (inKey.Key == ConsoleKey.Y || inKey.Key == ConsoleKey.N)
-            {
-                twitchQuery = inKey.Key == ConsoleKey.Y;
-            }
-        } while (inKey.Key != ConsoleKey.Y && inKey.Key != ConsoleKey.N);
-        useTwitch = inKey.Key == ConsoleKey.Y;
-        if (!UseTwitch) { return; }
-
-        Console.WriteLine(System.Environment.NewLine + $"To use PubSub events like subscriber, bits and such you need a token from this link https://twitchtokengenerator.com/quick/YfuRoOx9WW " +
-                    $"It is to generate a token specific for your Twitch channel. To later remove access through this token you remove it on Twitch under " +
-                    $"settings>Connections. It will be called \"Twitch Token Generator by swiftyspiffy\".");
-        Console.WriteLine("");
-        Console.WriteLine("Enter the Twitch OAUTH Token.");
-        string inOATHToken;
-        do
-        {
-            inOATHToken = Console.ReadLine();
-            if (inOATHToken != null)
-            {
-                string outOATHToken = Cipher.Encrypt(inOATHToken.Trim());
-                if (inOATHToken.Trim() == Cipher.Decrypt(outOATHToken))
-                {
-                    //config.TwitchToken = outOATHToken;
-                }
-            }
-        } while (inOATHToken == null);
-
-        Console.WriteLine("");
-        Console.WriteLine("Enter the Bot Twitch Client ID.");
-        string inClientID;
-        do
-        {
-            inClientID = Console.ReadLine();
-            if (inClientID != null)
-            {
-                inClientID = inClientID.Trim();
-                string outClientID = Cipher.Encrypt(inClientID);
-                if (inClientID == Cipher.Decrypt(outClientID))
-                {
-                    //config.TwitchClientID = outClientID;
-                }
-            }
-        } while (inClientID == null);
-        Console.WriteLine("");
-        Console.WriteLine("Enter the Twitch username of this bot. This channel will also be auto joined always when bot connects to Twitch.");
-        string inUserName;
-        do
-        {
-            inUserName = Console.ReadLine();
-            if (inUserName != null)
-            {
-                inUserName = inUserName.Trim();
-                string outUserName = Cipher.Encrypt(inUserName);
-                if (inUserName == Cipher.Decrypt(outUserName))
-                {
-                    //config.TwitchUser = outUserName;
-                }
-            }
-        } while (inUserName == null);
-    }
     #endregion
 
     #region Discord stuff
@@ -485,30 +429,30 @@ public class Program
                 cmd.Connection = Core.Data;
                 //ID int primary key IDENTITY(1,1) NOT NULL
                 cmd.CommandText = $"CREATE TABLE \"{tableName}\" (" +
-                    $"ROWID INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    $"ClientID VACHAR(255), " +
+                    $"ClientSecret VACHAR(255), " +
                     $"UseDiscord BOOLEAN, " +
                     $"UseTwitch BOOLEAN, " +
                     $"CMDCharacter VACHAR(1), " +
                     $"DiscordToken VACHAR(255), " +
-                    $"TwitchToken VACHAR(255)" +
+                    $"TwitchToken VACHAR(255), " +
+                    $"UserLogin VACHAR(255), " +
+                    $"UserID VACHAR(255)" +
                     $")";
                 cmd.ExecuteNonQuery();
             }
         }
     }
-    private void SetCommandCharacter(string inCMDChar)
-    {
-        throw new NotImplementedException();
-    }
+
     #endregion
 
     public static void TwitchSayMessage(string channel, string message)
     {
-        TwitchClient.SendMessage(channel, message);
+        TwitchClient.SendMessageAsync(channel, message);
     }
     public static void TwitchResponse(BotWideResponseArguments args)
     {
-        TwitchClient.SendMessage(args.twitchChannel, args.message);
+        TwitchClient.SendMessageAsync(args.twitchChannel, args.message);
     }
 
 

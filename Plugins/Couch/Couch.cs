@@ -47,7 +47,7 @@ namespace Couch
             CouchSettings settings = await Settings<CouchSettings>(bChan, PluginName);
             BotWideResponseArguments response = new BotWideResponseArguments(args);
             string message = $"```fix{System.Environment.NewLine}Admin/Broadcaster commands {System.Environment.NewLine}" +
-            $"{Program.CommandCharacter}couch < Arguments >{System.Environment.NewLine}{System.Environment.NewLine}" +
+            $"{CMC}couch < Arguments >{System.Environment.NewLine}{System.Environment.NewLine}" +
             $"Arguments....{System.Environment.NewLine}" +
             $"< none > ->responds current settings{System.Environment.NewLine}" +
             $"open -> Manually resets and open the couch.{System.Environment.NewLine}" +
@@ -55,7 +55,7 @@ namespace Couch
             $"size # -> Sets the number of seats between 1 and 40.{System.Environment.NewLine}" +
             $"greet # -> Sets the number of seated needed in stats for a greeting when a user joins the twitch channel.{System.Environment.NewLine}" +
             $"time # -> Sets the time in seconds the couch will stay open.{System.Environment.NewLine}{System.Environment.NewLine}" +
-            $"Discord only arguments(make sure adminchannel is set in adminplugin){System.Environment.NewLine}" +
+            $"Discord only arguments(make sure admin channel is set in admin plugin){System.Environment.NewLine}" +
             $"addsuccess < text > Text being the line returned. Use [USER] in text where username should be.{System.Environment.NewLine}" +
             $"addfail < text >{System.Environment.NewLine}" +
             $"addgreet < text >{System.Environment.NewLine}" +
@@ -65,19 +65,19 @@ namespace Couch
             $"delete # -> Deletes the line with the ID if inuse flag is false. As in not in use.{System.Environment.NewLine}" +
             System.Environment.NewLine + System.Environment.NewLine +
             $"User commands{System.Environment.NewLine}" +
-            $"{Program.CommandCharacter}seat -> When couch open it responds with success of fail message.{System.Environment.NewLine}" +
-            $"{Program.CommandCharacter}seats -> User stats rundown.{System.Environment.NewLine}```{System.Environment.NewLine}";
+            $"{CMC}seat -> When couch open it responds with success of fail message.{System.Environment.NewLine}" +
+            $"{CMC}seats -> User stats rundown.{System.Environment.NewLine}```{System.Environment.NewLine}";
 
             if (settings._active)
             {
-                message += $"> Couch is active. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}. Open time is {settings.openTime}";
+                message += $"> Couch is active. {settings.couchSize} seats. Greet limit is {settings.potatoGreeting}. Open time is {settings.openTime}";
             }
             else
             {
-                message += $"> Couch is inactive. {settings.couchsize} seats. Greetlimit is {settings.potatoGreeting}. Open time is {settings.openTime}";
+                message += $"> Couch is inactive. {settings.couchSize} seats. Greet limit is {settings.potatoGreeting}. Open time is {settings.openTime}";
             }
             response.message = message;
-            Respond(bChan, response);
+            await Respond(bChan, response);
         }
 
 
@@ -204,14 +204,14 @@ namespace Couch
                 {
                     settings.potatoGreeting = greet;
                     response.message = $"Couch greeting limit is now {settings.potatoGreeting}.";
-                    Respond(bChan, response);
-                    await SayOnDiscordAdmin(bChan, $"{args.userDisplayName} changed the Couch Greetlimit setting to {settings.potatoGreeting}.");
+                    await Respond(bChan, response);
+                    await SayOnDiscordAdmin(bChan, $"{args.userDisplayName} changed the Couch Greet limit setting to {settings.potatoGreeting}.");
                     SaveBaseSettings(bChan, PLUGINNAME, settings);
                 }
                 else
                 {
                     response.message = $"Couch greeting limit has to be more than 0 and max 100.";
-                    Respond(bChan, response);
+                    await Respond(bChan, response);
                 }
             }
         }
@@ -230,38 +230,38 @@ namespace Couch
             if (args.arguments.Count <= 1)
             {
                 response.message = "You need to give a valid ID. Check the List command to see ID for the lines in the database.";
-                Respond(bChan, response);
+                await Respond(bChan, response);
                 return;
             }
             int.TryParse(args.arguments[1], out int id2);
             if (id2 < 1)
             {
                 response.message = "You need to give a valid ID. That ID couldn't be used.";
-                Respond(bChan, response);
+                await Respond(bChan, response);
                 return;
             }
             DBString entry2 = await dbStrings.GetStringByID(bChan, id2);
             if (entry2 == null)
             {
-                response.message = "That ID didn't match anything I could find. Doublecheck it.";
-                Respond(bChan, response);
+                response.message = "That ID didn't match anything I could find. Double check it.";
+                await Respond(bChan, response);
                 return;
             }
             if (entry2._inuse)
             {
                 response.message = $"Only entries that is not in use can be deleted. Use \"{CMC}{CMD} use <ID>\" to toggle the inuse flag on entries.";
-                Respond(bChan, response);
+                await Respond(bChan, response);
                 return;
             }
             // Remove the actual entry
             if (dbStrings.DeleteEntry(bChan, id2))
             {
                 response.message = $"Entry {id2} deleted.";
-                Respond(bChan, response);
+                await Respond(bChan, response);
                 return;
             }
             response.message = $"Failed to delete line {id2} for some reason.";
-            Respond(bChan, response);
+            await Respond(bChan, response);
         }
         [SubCommand("size", 0), CommandHelp("Set the size of the couch."), CommandVerified(3)]
         public async void SizeCouchCommand(BotChannel bChan, BotWideCommandArguments args)
@@ -277,20 +277,20 @@ namespace Couch
             if (args.arguments.Count == 2)
             {
                 int.TryParse(args.arguments[1], out int seats);
-                if (seats > 0 && seats <= 100 && seats != settings.couchsize)
+                if (seats > 0 && seats <= 100 && seats != settings.couchSize)
                 {
-                    settings.couchsize = seats;
+                    settings.couchSize = seats;
                     SaveBaseSettings(bChan, PLUGINNAME, settings);
                 }
                 else
                 {
                     response.message = $"Couch size limit has to be more than 0 and max 100.";
-                    Respond(bChan, response);
+                    await Respond(bChan, response);
                     return;
                 }
             }
-            response.message = $"Couch now has {settings.couchsize} seats.";
-            Respond(bChan, response);
+            response.message = $"Couch now has {settings.couchSize} seats.";
+            await Respond(bChan, response);
         }
         [SubCommand("time", 1), CommandHelp("How long the couch should be open."), CommandVerified(3)]
         public async void TimeCouchCommand(BotChannel bChan, BotWideCommandArguments args)
@@ -314,12 +314,12 @@ namespace Couch
                 else
                 {
                     response.message = $"Couch time limit has to be more than 0 and max 10000 seconds.";
-                    Respond(bChan, response);
+                    await Respond(bChan, response);
                     return;
                 }
             }
             response.message = $"Couch is set to be open for {settings.openTime} seconds.";
-            Respond(bChan, response);
+            await Respond(bChan, response);
         }
         [SubCommand("who", 0), CommandHelp("List who is currently sitting in the couch."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
         public async void WhoCouchCommand(BotChannel bChan, BotWideCommandArguments args)
@@ -333,7 +333,7 @@ namespace Couch
             BotWideResponseArguments response = new BotWideResponseArguments(args);
             if (!settings._active) { return; }
             response.message = GetAllSittersAsString(bChan, settings);
-            Respond(bChan, response);
+            await Respond(bChan, response);
         }
         [SubCommand("use", 0), CommandHelp("Change the use flag on a line in the collection."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
         public async void DBSetUseFlagCommand(BotChannel bChan, BotWideCommandArguments args)
@@ -349,21 +349,21 @@ namespace Couch
             if (args.arguments.Count <= 1)
             {
                 response.message = "You need to give a valid ID. Check the List command to see ID for the lines in the database.";
-                Respond(bChan, response);
+                await Respond(bChan, response);
                 return;
             }
             int.TryParse(args.arguments[1], out int id);
             if (id < 1)
             {
                 response.message = "You need to give a valid ID. That ID couldn't be used.";
-                Respond(bChan, response);
+                await Respond(bChan, response);
                 return;
             }
             DBString entry = await dbStrings.GetStringByID(bChan, id);
             if (entry == null)
             {
-                response.message = "That ID didn't match anything I could find. Doublecheck it.";
-                Respond(bChan, response);
+                response.message = "That ID didn't match anything I could find. Double check it.";
+                await Respond(bChan, response);
                 return;
             }
             DBString edited = new DBString(entry._id, !entry._inuse, entry._topic, entry._text);
@@ -375,7 +375,7 @@ namespace Couch
             {
                 response.message = $"Failed to update entry with id {entry._id}.";
             }
-            Respond(bChan, response);
+            await Respond(bChan, response);
         }
         
         [SubCommand("list", 0), CommandHelp("Show the collection of lines. All with use flag true will be randomly used as messages."), CommandSourceAccess(MESSAGESOURCE.DISCORD), CommandVerified(3)]
@@ -425,7 +425,7 @@ namespace Couch
                 {
                     message = "There is no twitch channel to run a couch in."
                 };
-                Respond(bChan, response);
+                await Respond(bChan, response);
                 return;
             }
             if (!settings._couches.ContainsKey(bChan.Key))
@@ -468,7 +468,7 @@ namespace Couch
                 // only give feedback a specified count on fails
                 if (settings.failCount <= settings.maxFails)
                 {
-                    Respond(bChan, new BotWideResponseArguments(args)
+                    await Respond(bChan, new BotWideResponseArguments(args)
                     {
                         source = args.source,
                         twitchChannel = bChan.TwitchChannelName,
@@ -485,7 +485,7 @@ namespace Couch
             }
             if (settings._couches[bChan.Key].TwitchUsernames.Contains(args.userDisplayName)) { return; }
 
-            if (settings._couches[bChan.Key].TwitchUsernames.Count < settings.couchsize)
+            if (settings._couches[bChan.Key].TwitchUsernames.Count < settings.couchSize)
             {
                 if (settings._couches[bChan.Key].TwitchUsernames.Count != 0)
                 {
@@ -517,7 +517,7 @@ namespace Couch
                                 response.victim = victim;
                                 response.message = dbStrings.GetRandomLine(bChan, "INCIDENT");
                                 response.parseMessage = true;
-                                Respond(bChan, response);
+                                await Respond(bChan, response);
 
                                 SaveBaseSettings(bChan, PLUGINNAME, settings);
                             }
@@ -533,7 +533,7 @@ namespace Couch
                 UserStatsSave(bChan, userStats);
                 settings._couches[bChan.Key].TwitchUsernames.Add(args.userDisplayName);
 
-                Respond(bChan, new BotWideResponseArguments(args)
+                await Respond(bChan, new BotWideResponseArguments(args)
                 {
                     message = dbStrings.GetRandomLine(bChan, "SUCCESS"),
                     parseMessage = true
@@ -607,9 +607,9 @@ namespace Couch
             settings.failCount = 0;
             SaveBaseSettings(bChan, PLUGINNAME, settings);
             RegisterTimedMessage(bChan, settings);
-            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, PLUGINNAME, $"Opening couch in twitchchannel {bChan.TwitchChannelName}."));
-            Program.TwitchSayMessage(bChan.TwitchChannelName, $"Couch is now open. Take a {Program.CommandCharacter}seat.");
-            await SayOnDiscordAdmin(bChan, $"Couch is now open. Click https://twitch.tv/{bChan.TwitchChannelName} and take a {Program.CommandCharacter}seat.");
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, PLUGINNAME, $"Opening couch in twitch channel {bChan.TwitchChannelName}."));
+            Program.TwitchSayMessage(bChan.TwitchChannelName, $"Couch is now open. Take a {CMC}seat.");
+            await SayOnDiscordAdmin(bChan, $"Couch is now open. Click https://twitch.tv/{bChan.TwitchChannelName} and take a {CMC}seat.");
         }
         private async void CloseCouch(BotChannel bChan, CouchSettings settings)
         {
@@ -633,8 +633,8 @@ namespace Couch
                     twitchChannelName = bChan.TwitchChannelName,
                     interval = settings.reminderInterval,
                     msgInterval = settings.reminderMessageInterval,
-                    lastused = Core.CurrentTime,
-                    msgSinceLastused = 0,
+                    lastUsed = Core.CurrentTime,
+                    msgSinceLastUsed = 0,
                     done = false
                 }
                 );
@@ -646,7 +646,7 @@ namespace Couch
             CouchSettings settings = await Settings<CouchSettings>(bChan, PLUGINNAME);
             if (settings._active == false) { RemoveTimedMessage(bChan.TwitchChannelName); return; }
             if (!settings._couches[bChan.Key].couchOpen) { RemoveTimedMessage(bChan.TwitchChannelName); return; }
-            if (settings._couches[bChan.Key].Count >= settings.couchsize)
+            if (settings._couches[bChan.Key].Count >= settings.couchSize)
             {
                 Program.TwitchSayMessage(bChan.TwitchChannelName, $"Couch is now full.");
                 RemoveTimedMessage(bChan.TwitchChannelName);
@@ -736,15 +736,15 @@ namespace Couch
             {
                 if (_timedMessages.Exists(p => p.twitchChannelName == args.channel))
                 {
-                    _timedMessages.Find(p => p.twitchChannelName == args.channel).msgSinceLastused++;
+                    _timedMessages.Find(p => p.twitchChannelName == args.channel).msgSinceLastUsed++;
                 }
             }
         }
         public override void OnMinuteTick(int minutes) { }
-        public override void OnSecondTick(int seconds) { }
-        private async void OnTwitchChannelJoined(string channel, string botname)
+     
+        private async void OnTwitchChannelJoined(string channel, string botName)
         {
-            if (channel == botname) { return; }
+            if (channel == botName) { return; }
             // Make sure we have all couch database tables for any twitch channel we join
             BotChannel bChan = null;
             while (bChan == null)
@@ -771,7 +771,7 @@ namespace Couch
             }
         }
         #endregion
-        #region DATABSE METHODS
+        #region DATABASE METHODS
         #region DB Strings stuff
         /// <summary>
         /// Builds the default DB string lists. Does not add them to Database
@@ -784,7 +784,7 @@ namespace Couch
             _success.Add("[USER] manages to escape the restraints and takes a seat on the couch.");
             _success.Add("[USER] suddenly materializes on the couch with a hint of a smirk.");
             _success.Add("[USER] claws their way up from the void between the cushions.");
-            _success.Add("[USER] does an impressive herolanding then proceeds to stumble to the couch with intense knee pain.");
+            _success.Add("[USER] does an impressive hero landing then proceeds to stumble to the couch with intense knee pain.");
             _success.Add("[USER] accepts their fate as a decoration on the couch.");
             _success.Add("[USER] stridently claims their seat on the couch and act very smug about it.");
 
@@ -795,8 +795,8 @@ namespace Couch
             _fail.Add("[USER] hair catches fire from rage and others reach for the marshmallows.");
             _fail.Add("[USER] is carried away by a flock of chairs to the land of standing space.");
             _fail.Add("[USER] lacks the basic understanding of how to couch so they end up on the table.");
-            _fail.Add("[USER] storms in with a cavelry, but misses the couch.");
-            _fail.Add("[USER] eagerly runs towards the couch but trips and slides under it only to come out on the other side covered in dustbunnies.");
+            _fail.Add("[USER] storms in with a cavalry, but misses the couch.");
+            _fail.Add("[USER] eagerly runs towards the couch but trips and slides under it only to come out on the other side covered in dust bunnies.");
 
             // Incidents
             _incident.Add("[USER] catches [VICTIM] a couch cushion and leave their spot from embarrassment.");
@@ -816,7 +816,7 @@ namespace Couch
 
             _shakeS.Add($"The couch is shaking! [REPLACE] couldn't hold on.");
             _shakeS.Add($"A stampede of angry coasters make the couch flip! [REPLACE] couldn't hold on.");
-            _shakeS.Add($"A cheesewheel falls of the couch! [REPLACE] starts chasing it.");
+            _shakeS.Add($"A cheese wheel falls of the couch! [REPLACE] starts chasing it.");
 
             _greets.Add("Welcome back [USER]. You truly are a proper couch potato. BloodTrail");
             _greets.Add("❤️❤️❤️ Senpai [USER] ❤️❤️❤️");
@@ -849,7 +849,7 @@ namespace Couch
                 }
             }
 
-            inuseText += $"```Use command {Program.CommandCharacter}couch list <page> to list a page. Those marked with an X for INUSE are in rotation. Topic is what the text is used for.";
+            inuseText += $"```Use command {CMC}couch list <page> to list a page. Those marked with an X for INUSE are in rotation. Topic is what the text is used for.";
             await SayOnDiscord(inuseText, channelID);
         }
         private async Task AddLine(BotChannel bChan, string topic, List<string> arguments)
@@ -886,12 +886,12 @@ namespace Couch
             }
             return await UserStatsRead(bKey, uKey);
         }
-        private void StatsTableCreate(BotChannel bChan, string tablename)
+        private void StatsTableCreate(BotChannel bChan, string tableName)
         {
             using SQLiteCommand cmd = new SQLiteCommand();
             cmd.CommandType = CommandType.Text;
             cmd.Connection = Core.Data;
-            cmd.CommandText = $"CREATE TABLE \"{bChan.Key + tablename}\" (" +
+            cmd.CommandText = $"CREATE TABLE \"{bChan.Key + tableName}\" (" +
                 $"BotChannelKey VACHAR(30)," +
                 $"UserKey VACHAR(30)," +
                 $"CountSeated INTEGER, " +
@@ -1052,7 +1052,7 @@ namespace Couch
                         cmd2.ExecuteNonQuery();
                     }
                 }
-                await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, "Channelmerge detected. DB updated."));
+                await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, PLUGINNAME, "ChannelMerge detected. DB updated."));
             }
         */
 

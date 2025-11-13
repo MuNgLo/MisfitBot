@@ -82,7 +82,7 @@ namespace Insults
             DBString entry2 = await dbStrings.GetStringByID(bChan, id2);
             if (entry2 == null)
             {
-                response.message = "That ID didn't match anything I could find. Doublecheck it.";
+                response.message = "That ID didn't match anything I could find. Double check it.";
                 Respond(bChan, response);
                 return;
             }
@@ -131,7 +131,7 @@ namespace Insults
             DBString entry = await dbStrings.GetStringByID(bChan, id);
             if (entry == null)
             {
-                response.message = "That ID didn't match anything I could find. Doublecheck it.";
+                response.message = "That ID didn't match anything I could find. Double check it.";
                 Respond(bChan, response);
                 return;
             }
@@ -192,7 +192,7 @@ namespace Insults
             await ListLinesFromDB(bChan, args.channelID, page - 1);
         }
         [SingleCommand("insult"), CommandHelp("Pick line from DB and insults the user who used the command."), CommandVerified(3)]
-        public async void Inslut(BotChannel bChan, BotWideCommandArguments args)
+        public async void Insult(BotChannel bChan, BotWideCommandArguments args)
         {
             InsultSettings settings = await Settings<InsultSettings>(bChan, PluginName);
             BotWideResponseArguments response = new BotWideResponseArguments(args);
@@ -235,7 +235,7 @@ namespace Insults
 
 
 
-        private async void OnMessageRecieved(BotWideMessageArguments args)
+        private async void OnMessageReceived(BotWideMessageArguments args)
         {
             BotChannel bChan = await GetBotChannel(args);
             if (bChan == null) { return; }
@@ -275,10 +275,7 @@ namespace Insults
             throw new NotImplementedException();
         }
 
-        public override void OnSecondTick(int seconds)
-        {
-            throw new NotImplementedException();
-        }
+  
 
         public override void OnUserEntryMergeEvent(UserEntry discordUser, UserEntry twitchUser)
         {

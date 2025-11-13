@@ -19,7 +19,6 @@ namespace MisfitBot_MKII.Extensions.UserManager
     public class UserManagerService
     {
         private BotUsers UserList = new BotUsers();
-        private Userlinking userlinking = new Userlinking();
         // CONSTRUCTOR
         internal UserManagerService()
         {
@@ -37,7 +36,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
             if (e == null) return;
             UserEntry user = await UserList.GetDBUserByTwitchUserName(e.ChatMessage.Username);
             if (user == null) return;
-            user.twitchColour = e.ChatMessage.ColorHex;
+            user.twitchColour = e.ChatMessage.HexColor;
             user.lastSeenOnTwitch = Core.CurrentTime;
         }
 
@@ -122,40 +121,7 @@ namespace MisfitBot_MKII.Extensions.UserManager
             });
         }
         #endregion
-        #region User Linking related
-        public async Task LinkTokenRequest(ulong discordID, IMessageChannel discordChannel)
-        {
-            UserEntry user = await GetUserByDiscordID(discordID);
-            await userlinking.SetupAndInformLinkToken(user);
-        }
-        /// <summary>
-        /// Links a Discord UserEnty and a Twitch UserEntry. Also raises the Core.OnUserEntryMerge event.
-        /// </summary>
-        /// <param name="discordProfile"></param>
-        /// <param name="twitchProfile"></param>
-        /// <returns></returns>
-        public async Task LinkAccounts(UserEntry discordProfile, UserEntry twitchProfile)
-        {
-            // Null check the profiles
-            if (twitchProfile == null || discordProfile == null)
-            {
-                return;
-            }
-            // Raise the link event so modules can listen and do whatever they need to do
-            Program.BotEvents.RaiseUserLinkEvent(discordProfile, twitchProfile);
-            // merge twitch user into discord user then elevate discord user to linked status
-            discordProfile.twitchUID = twitchProfile.twitchUID;
-            discordProfile.twitchUsername = twitchProfile.twitchUsername;
-            discordProfile.twitchDisplayName = twitchProfile.twitchDisplayName;
-            discordProfile.twitchLogo = twitchProfile.twitchLogo;
-            discordProfile.twitchColour = twitchProfile.twitchColour;
-            discordProfile.linked = true;
-            discordProfile.lastSave = 0;
-            SocketUser u = Program.DiscordClient.GetUser(discordProfile.discordUID);
-            await u.SendMessageAsync("Your userprofile is now the same one for both Twitch and Discord.");
-            Program.TwitchClient.SendWhisper(discordProfile.twitchUsername, "Your userprofile is now the same one for both Twitch and Discord.");
-        }
-        #endregion
+        
 
         #region Get User Methods
         /// <summary>

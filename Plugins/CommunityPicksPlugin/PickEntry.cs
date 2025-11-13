@@ -16,7 +16,7 @@ namespace CommunityPicksPlugin
     {
         public readonly ulong DiscordChannelID;
         public readonly string Name;
-        private ulong pinnedMessageID;
+        //private ulong pinnedMessageID;
         private List<Nominee> nominated; // List of all the nominated entries for this pick
         private VotesCache votes;
         private int lastIDUsed = 0;
@@ -29,7 +29,7 @@ namespace CommunityPicksPlugin
             votes = new VotesCache();
             DiscordChannelID = dChannelID;
             Name = title;
-            pinnedMessageID = 0;
+            //pinnedMessageID = 0;
         }
         /// <summary>
         /// Tries to add a candidate to the nominee list, Returns response

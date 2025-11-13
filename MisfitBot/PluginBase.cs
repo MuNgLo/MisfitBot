@@ -10,12 +10,12 @@ namespace MisfitBot_MKII
     /// </summary>
     public abstract class PluginBase : PluginBaseDB
     {
-        abstract public void OnSecondTick(int seconds);
+        public virtual void OnSecondTick(object sender, int seconds){}
         abstract public void OnMinuteTick(int minutes);
         abstract public void OnUserEntryMergeEvent(MisfitBot_MKII.UserEntry discordUser, MisfitBot_MKII.UserEntry twitchUser);
         abstract public void OnBotChannelEntryMergeEvent(MisfitBot_MKII.BotChannel discordGuild, MisfitBot_MKII.BotChannel twitchChannel);
 
-        public char CMC { get { return Program.CommandCharacter; } set {}}
+        public string CMC => Secrets.CommandCharacter;
 
 
         private readonly string _pluginName;
@@ -67,7 +67,7 @@ namespace MisfitBot_MKII
             settings._active = true;
             SaveBaseSettings(bChan, PluginName, settings);
             response.message = $"{PluginName} is active.";
-            Respond(bChan, response);
+            await Respond(bChan, response);
         }
         [SubCommand("off", 0), CommandHelp("Turn off the plugin"), CommandVerified(3)]
         public async void TurnPluginOff(BotChannel bChan, BotWideCommandArguments args)
@@ -82,7 +82,7 @@ namespace MisfitBot_MKII
             settings._active = false;
             SaveBaseSettings(bChan, PluginName, settings);
             response.message = $"{PluginName} is inactive.";
-            Respond(bChan, response);
+            await Respond(bChan, response);
         }
         public async Task MakeConfig<T>(BotChannel bChan, string plugin, T obj){
             await Core.Configs.ConfigSetup<T>(bChan, plugin, obj);
@@ -100,7 +100,7 @@ namespace MisfitBot_MKII
             return settings;
         }
 
-        public async void Respond(BotChannel bChan, BotWideResponseArguments args)
+        public async Task Respond(BotChannel bChan, BotWideResponseArguments args)
         {
             if(args.parseMessage){
                 args.message = StringFormatter.ConvertMessage(ref args);

@@ -18,7 +18,7 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<OutputType>library</OutputType>
-		<OutputPath>../../bin/netcoreapp3.1/Plugins/Couch</OutputPath>
+		<OutputPath>../../bin/net8.0/Plugins/Couch</OutputPath>
 	</PropertyGroup>
 	<Target Name="Copying a Plugin" AfterTargets="Build">
 		<Message Text="Copying $(TargetDir)$(ProjectName).dll to $(TargetDir)..\..\..\linux-arm\publish\Plugins\$(ProjectName)\$(ProjectName).dll" Importance="High" />

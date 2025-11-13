@@ -40,9 +40,7 @@ namespace ExamplePlugin
             }
         }
 
-        public override void OnSecondTick(int seconds)
-        {
-        }
+  
 
         public override void OnMinuteTick(int minutes)
         {

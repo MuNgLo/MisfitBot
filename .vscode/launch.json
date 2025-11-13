@@ -5,14 +5,27 @@
    "version": "0.2.0",
    "configurations": [
        {
-            "name": "Zassy",
+            "name": "Normal",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "Build Bot Only",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
             "cwd": "${workspaceFolder}/bin/net8.0", 
-            "args": ["debug", "cleanlaunch"], // Has to be after CWD in this file because reasons
+            "args": ["debug", "logtwitch"], // Has to be after CWD in this file because reasons
+            // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
+            "console": "integratedTerminal",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Clean",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "Build Bot Only",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
+            "cwd": "${workspaceFolder}/bin/net8.0", 
+            "args": ["debug", "logtwitch", "cleanlaunch"], // Has to be after CWD in this file because reasons
             // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
             "console": "integratedTerminal",
             "stopAtEntry": false
@@ -36,7 +49,7 @@
             "name": "Build Bot",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "Build Bot bins",
+            "preLaunchTask": "Build Bot Only",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "MisfitBot-MKII.dll", // THIS DEPENDS ON CWD FFS!
             "cwd": "${workspaceFolder}/bin/net8.0", 

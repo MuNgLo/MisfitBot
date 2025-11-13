@@ -2,7 +2,10 @@
 using System.Text;
 using System.Security.Cryptography;
 using System.IO;
-using System.Linq;
+
+// Disable the warning about Rfc2898DeriveBytes being obsolete
+#pragma warning disable SYSLIB0041
+
 /// <summary>
 /// Static class to handle encrypting and decrypting
 /// </summary>
@@ -82,7 +85,8 @@ public static class Cipher
 
         using (MemoryStream ms = new MemoryStream())
         {
-            using (RijndaelManaged AES = new())
+            //using (RijndaelManaged AES = new())
+            using (Aes AES = Aes.Create())
             {
                 var key = new Rfc2898DeriveBytes(passwordBytes, saltBytes, 1000);
 
@@ -115,10 +119,11 @@ public static class Cipher
 
         using (MemoryStream ms = new MemoryStream())
         {
-            using (RijndaelManaged AES = new RijndaelManaged())
+            //using (RijndaelManaged AES = new RijndaelManaged())
+            using (Aes AES = Aes.Create())
             {
                 var key = new Rfc2898DeriveBytes(passwordBytes, saltBytes, 1000);
-
+                
                 AES.KeySize = 256;
                 AES.BlockSize = 128;
                 AES.Key = key.GetBytes(AES.KeySize / 8);
@@ -139,4 +144,6 @@ public static class Cipher
     }
 }// EOF CLASS
 
+// Re-enable the warning.
+#pragma warning restore SYSLIB0041
 

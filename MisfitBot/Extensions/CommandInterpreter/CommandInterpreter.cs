@@ -43,7 +43,7 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
                 BotWideResponseArguments response = new BotWideResponseArguments(args);
                 if (args.source == MESSAGESOURCE.TWITCH)
                 {
-                    response.message = $"To get full command list, use the \"{Program.CommandCharacter}commands\" command on Discord.";
+                    response.message = $"To get full command list, use the \"{Secrets.CommandCharacter}commands\" command on Discord.";
                     Respond(bChan, response);
                     return;
                 }

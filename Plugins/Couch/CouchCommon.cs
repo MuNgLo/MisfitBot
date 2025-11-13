@@ -9,8 +9,8 @@ namespace Couch
         public string twitchChannelName;
         public int interval;
         public int msgInterval;
-        public int lastused;
-        public int msgSinceLastused;
+        public int lastUsed;
+        public int msgSinceLastUsed;
         public bool done;
     }
 

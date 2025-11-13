@@ -71,7 +71,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                 await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, PLUGINNAME, $"Twitch channel lookup failed! Couldn't find channel. Not connecting to \"{channelName.ToLower()}\""));
                 return false;
             }
-            Program.TwitchClient.JoinChannel(channelName);
+            await Program.TwitchClient.JoinChannelAsync(channelName);
             return true;
         }
 
@@ -84,6 +84,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
         /// </summary>
         private async void UpdateChannelStatuses()
         {
+            if(!Secrets.UseTwitch || Program.TwitchClient is null || Program.TwitchClient.JoinedChannels.Count < 1){return;}
             try
             {
                 //TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse channels;
@@ -131,7 +132,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
 
 
 
-            if (Program.DiscordClient.Guilds != null)
+            if (Program.DiscordClient is not null && Program.DiscordClient.Guilds != null)
             {
                 // Make sure discord guilds we are connected to exist in DB
                 foreach (SocketGuild guild in Program.DiscordClient.Guilds)
@@ -312,7 +313,7 @@ namespace MisfitBot_MKII.Extensions.ChannelManager
                 var channel = Program.TwitchClient.GetJoinedChannel(usr.Login);
                 if (channel == null)
                 {
-                    Program.TwitchClient.JoinChannel(usr.Login);
+                    await Program.TwitchClient.JoinChannelAsync(usr.Login);
                 }
             }
         }

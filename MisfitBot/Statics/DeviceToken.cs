@@ -22,7 +22,7 @@ public static class DeviceToken
     /// <summary>
     /// Read existing info from DB
     /// </summary>
-    public static async Task Initialize()
+    public static void Initialize()
     {
 
     }
@@ -32,7 +32,16 @@ public static class DeviceToken
     /// <returns></returns>
     public static async Task<bool> Validate()
     {
-        return false;
+        using (Twitch.TwitchAPICalls calls = new Twitch.TwitchAPICalls())
+        {
+            string[] user = await calls.GetUserFromToken(Secrets.TwitchAuthToken);
+            if (user is not null)
+            {
+                Secrets.SetUserID(user[0]);
+                Secrets.SetUserLogin(user[1]);
+            }
+        }
+        return Secrets.UserID != string.Empty && Secrets.UserLogin != string.Empty;
     }
     /// <summary>
     /// Gets a device code from twitch that we can sue to direct user<br/>
@@ -120,15 +129,15 @@ public static class DeviceToken
     private class AuthPageResponse
     {
         [JsonInclude]
-        public string device_code;
+        public string device_code = string.Empty;
         [JsonInclude]
-        public int expires_in;
+        public int expires_in = 0;
         [JsonInclude]
-        public int interval;
+        public int interval = 0;
         [JsonInclude]
-        public string user_code;
+        public string user_code = string.Empty;
         [JsonInclude]
-        public string verification_uri;
+        public string verification_uri = string.Empty;
         public override string ToString()
         {
             return $"device_code:{device_code} expires_in:{expires_in} interval:{interval} user_code:{user_code} verification_uri:{verification_uri}";
@@ -139,26 +148,26 @@ public static class DeviceToken
         [JsonInclude]
         public string access_token = string.Empty;
         [JsonInclude]
-        public int expires_in;
+        public int expires_in = 0;
         [JsonInclude]
-        public string refresh_token;
+        public string refresh_token = string.Empty;
         [JsonInclude]
-        public string[] scopes;
+        public string[] scopes = null;
         [JsonInclude]
-        public string token_type;
+        public string token_type = string.Empty;
     }
     private class ValidationResponse
     {
         [JsonInclude]
-        public string client_id;
+        public string client_id = string.Empty;
         [JsonInclude]
-        public string login;
+        public string login = string.Empty;
         [JsonInclude]
-        public string[] scopes;
+        public string[] scopes = null;
         [JsonInclude]
-        public string user_id;
+        public string user_id = string.Empty;
         [JsonInclude]
-        public int expires_in;
+        public int expires_in = 0;
     }
 
 }// EOF CLASS

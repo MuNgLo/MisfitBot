@@ -303,10 +303,7 @@ namespace AdminPlugin
                 }
             }
         }
-        public override void OnSecondTick(int seconds)
-        {
-            throw new NotImplementedException();
-        }
+      
         public override void OnMinuteTick(int minutes)
         {
             throw new NotImplementedException();

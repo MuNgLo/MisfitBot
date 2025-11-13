@@ -33,7 +33,7 @@ namespace MisfitBot_MKII.Components
         #region WiP
         /// <summary>
         /// Call this to get a list string wrapped in code flags for monospace layout returned with the fitting results.
-        /// NOTE! Topic not implemneted yet TODO
+        /// NOTE! Topic not implemented yet TODO
         /// </summary>
         /// <param name="bChan"></param>
         /// <param name="page"></param>
@@ -64,7 +64,7 @@ namespace MisfitBot_MKII.Components
                 }
             });
             text.Append(Environment.NewLine);
-            text.Append($"Use command {Program.CommandCharacter}{BASECOMMAND} <page> to list a page. Those marked with an X for INUSE are in rotation. Topic is what the text is used for.");
+            text.Append($"Use command {Secrets.CommandCharacter}{BASECOMMAND} <page> to list a page. Those marked with an X for INUSE are in rotation. Topic is what the text is used for.");
             text.Append($"```");
             return text.ToString();
         }
@@ -359,7 +359,7 @@ namespace MisfitBot_MKII.Components
         #endregion
         #region Internals
         /// <summary>
-        /// Constructs the tablename from the BotChannel Key and PLUGINNAME fed through constructor.
+        /// Constructs the table name from the BotChannel Key and PLUGINNAME fed through constructor.
         /// </summary>
         /// <param name="chanKey"></param>
         /// <returns></returns>

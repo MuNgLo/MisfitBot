@@ -25,7 +25,7 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
         private string[] kce = new string[14] { "0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟", "⬅️", "➡️", "🏠" };
         private Task[] rTasks = new Task[14];
         private string NL = System.Environment.NewLine;
-        private Dictionary<ulong, Helpmenu> openMenus;
+        private Dictionary<ulong, HelpMenu> openMenus;
         //private delegate void ReactionDirection(ulong msgID, int page=0);
         /*private Task RZero;
         private Task ROne;
@@ -46,7 +46,7 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
         #region Public Methods
         public Pages()
         {
-            openMenus = new Dictionary<ulong, Helpmenu>();
+            openMenus = new Dictionary<ulong, HelpMenu>();
             TimerStuff.OnMinuteTick += OnMinuteTick;
             Program.BotEvents.OnDiscordReactionAdded += OnDiscordReactionAdded;
             //Program.BotEvents.OnDiscordReactionRemoved += OnDiscordReactionRemoved;
@@ -56,7 +56,7 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
         {
             Embed page = Frontpage();
             Discord.Rest.RestUserMessage msg = await(Program.DiscordClient.GetChannel(args.channelID) as ISocketMessageChannel).SendMessageAsync("", false, page);
-            openMenus[msg.Channel.Id] = new Helpmenu(msg.Channel.Id, msg.Id);
+            openMenus[msg.Channel.Id] = new HelpMenu(msg.Channel.Id, msg.Id);
             FrontPageReactions(msg.Channel.Id, msg.Id, Program.PluginCount);
         }
         #endregion
@@ -88,19 +88,19 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
             await (message as Discord.IUserMessage).ModifyAsync(m => m.Embed = page);
 
             // Update timestamp
-            openMenus[channelID] = new Helpmenu(channelID, openMenus[channelID].MessageID);
+            openMenus[channelID] = new HelpMenu(channelID, openMenus[channelID].MessageID);
             FrontPageReactions(channelID, openMenus[channelID].MessageID, Program.PluginCount);
         }
         private Embed Frontpage()
         {
             EmbedBuilder embedded = new Discord.EmbedBuilder
             {
-                Title = Program.BotNameTwitch,
+                Title = "JuanTheBot",
                 Description = $"Here you will find general info about how to use the bot as well as generated info about running plugins.{NL}" +
                 $"{NL}**Navigation**{NL}" +
                 $"To navigate this help click the reactions bellow the message and the message will be updated. A message will only work for a while though, so if it doesn't respond try opening a new one again.{NL}" +
                 $"Some reactions will always have the same role.{NL}" +
-                $"> 🏠 Brings you to the startpage.{NL}" +
+                $"> 🏠 Brings you to the start page.{NL}" +
                 $"> ⬅️ Go back/Previous page.{NL}" +
                 $"> ➡️ Forward/Next page.{NL}{NL}",
                 Color = Discord.Color.DarkOrange,
@@ -120,27 +120,27 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
             await MisfitBot_MKII.DiscordWrap.DiscordClient.ClearReactionsOnMessage(dMessage);
             ClearReactionBinds();
             await MisfitBot_MKII.DiscordWrap.DiscordClient.ReactionAdd(dMessage, kce[1]);
-            rTasks[1] = new Task(async () => { await Generalpage(dChannel); });
+            rTasks[1] = new Task(async () => { await GeneralPage(dChannel); });
             await MisfitBot_MKII.DiscordWrap.DiscordClient.ReactionAdd(dMessage, kce[2]);
             rTasks[2] = new Task<Task>(async () => { await PluginListPage(dChannel, 0); });
         }
         #endregion
         #region General Page
-        private async Task Generalpage(ulong channelID)
+        private async Task GeneralPage(ulong channelID)
         {
             await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Pages", $"Generalpage"));
             EmbedBuilder embedded = new Discord.EmbedBuilder
             {
                 Title = "MisfitBot",
-                Description = $"This bot is made by MuNgLo and the code can be found on Github. It is based on Discord.NET and TwitchLib and uses both of those to wrap the API's and then present an enviroment for plugins where you can easily write a plugin, compile and distribute just the binary dll file. On lauch the bot will check for and load plugins.{NL}" +
-                $"The bot can also be used on Twitch or Discord or both. A plugin can be eaily written to work on both or just one of them. In fact you could run the bot with no connection but why would you.{NL}" +
-                $"{NL}**About Plugins**{NL} Most plugins should follow this pattern. They have a master command for all other commands. So for say **Admin** plugin you would...{NL} {Program.CommandCharacter}admin *subcommand* *arguments*{NL}" +
+                Description = $"This bot is made by MuNgLo and the code can be found on Github. It is based on Discord.NET and TwitchLib and uses both of those to wrap the API's and then present an environment for plugins where you can easily write a plugin, compile and distribute just the binary dll file. On launch the bot will check for and load plugins.{NL}" +
+                $"The bot can also be used on Twitch or Discord or both. A plugin can be easily written to work on both or just one of them. In fact you could run the bot with no connection but why would you.{NL}" +
+                $"{NL}**About Plugins**{NL} Most plugins should follow this pattern. They have a master command for all other commands. So for say **Admin** plugin you would...{NL} {Secrets.CommandCharacter}admin *subcommand* *arguments*{NL}" +
                 $"Subcommands would then follow the master command. After that all relevant arguments for the command.{NL}" +
-                $"> Example -> {Program.CommandCharacter}admin setadminchannel{NL}" +
+                $"> Example -> {Secrets.CommandCharacter}admin setadminchannel{NL}" +
                 $"In this case the command would only work on Discord side and would designate the channel to be the adminchannel for the Discord server. Since it would use the channel the command is given in nor extra arguments are needed." +
                 $"{NL}{NL}**General Commands**{NL}" +
                 $"There are commands from the bot itself or even from plugins that do not use the mastercommand. Usually it will be a single word command with no arguments.{NL}" +
-                $"The most obvious one would be the **{Program.CommandCharacter}commands** that got you here.",
+                $"The most obvious one would be the **{Secrets.CommandCharacter}commands** that got you here.",
                 Url = "https://github.com/MuNgLo/MisfitBot", 
                 Color = Discord.Color.DarkOrange,
                 //Footer = new EmbedFooterBuilder
@@ -152,7 +152,7 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
             //embedded.AddField(name: $"{kce[2]}", $">  Running plugins", true);
             //embedded.AddField(name: $"{kce[3]}", $">  About this Bot", true);
             Discord.Rest.RestUserMessage msg = await(Program.DiscordClient.GetChannel(channelID) as ISocketMessageChannel).SendMessageAsync("", false, embedded.Build());
-            openMenus[msg.Channel.Id] = new Helpmenu(msg.Channel.Id, msg.Id);
+            openMenus[msg.Channel.Id] = new HelpMenu(msg.Channel.Id, msg.Id);
             GeneralPageReactions(msg.Channel.Id, msg.Id, Program.PluginCount);
         }
         private async void GeneralPageReactions(ulong dChannel, ulong msgID, int pages, bool backArrow = false, bool nextArrow = false)
@@ -168,7 +168,7 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
 
 
 
-        #region PluginListpage
+        #region PluginListPage
         private async Task PluginListPage(ulong channelID, int page)
         {
             await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Pages", $"PluginListPage {page}"));
@@ -198,10 +198,10 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
                 Footer = new EmbedFooterBuilder
                 {
                     //Text = $"({Program.PluginCount})Plugins running with {Program.Commands.CommandsCount} commands in total. Bot v{Program.Version}"
-                    Text = $"Pluginpage"
+                    Text = $"Plugin page"
                 }
             };
-            // check how many pages we need to shopw all running plugins
+            // check how many pages we need to show all running plugins
             int maxPage = (int)Math.Ceiling(Program.PluginCount / 5.0f);
             int pageOffset = 5 * page;
 
@@ -219,10 +219,10 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
 
             await (message as Discord.IUserMessage).ModifyAsync(m => m.Embed = embed);
 
-            // Set up reations
+            // Set up reactions
             DiscordChannelMessage dMessage = await DiscordWrap.DiscordClient.DiscordGetMessage(channelID, openMenus[channelID].MessageID);
 
-            // Link to startpage
+            // Link to start page
             await DiscordWrap.DiscordClient.ReactionAdd(dMessage, kce[13]);
             rTasks[13] = new Task(() => { BackToStartPage(channelID); });
 
@@ -254,7 +254,7 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
 
 
             // Update timestamp
-            openMenus[channelID] = new Helpmenu(channelID, openMenus[channelID].MessageID);
+            openMenus[channelID] = new HelpMenu(channelID, openMenus[channelID].MessageID);
         }
 
 
@@ -262,7 +262,7 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
 
 
         #region Plugin Information Page
-        private async Task PluginInfoPage(ulong channelID, int pluginIndex, int page, int privpage)
+        private async Task PluginInfoPage(ulong channelID, int pluginIndex, int page, int privPage)
         {
             await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Pages", $"PluginInfoPage ({Program.Plugins[pluginIndex].PluginName}  index:{pluginIndex} p.{page})"));
             if (!openMenus.ContainsKey(channelID))
@@ -292,10 +292,10 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
                 Footer = new EmbedFooterBuilder
                 {
                     //Text = $"({Program.PluginCount})Plugins running with {Program.Commands.CommandsCount} commands in total. Bot v{Program.Version}"
-                    Text = $"Pluginpage"
+                    Text = $"Plugin page"
                 }
             };
-            // check how many pages we need to shopw all running plugins
+            // check how many pages we need to show all running plugins
             int maxPage = (int)Math.Ceiling(Program.PluginCount / 5.0f);
             int pageOffset = 5 * page;
 
@@ -314,7 +314,7 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
 
                     embedded.AddField(
                             name: $"{key}",
-                            commands[key].helptext
+                            commands[key].helpText
                             );
                 }
             }
@@ -326,14 +326,14 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
             // Set up reactions
             DiscordChannelMessage dMessage = await DiscordWrap.DiscordClient.DiscordGetMessage(channelID, openMenus[channelID].MessageID);
 
-            // Link to startpage
+            // Link to start page
             await DiscordWrap.DiscordClient.ReactionAdd(dMessage, kce[13]);
             rTasks[13] = new Task(() => { BackToStartPage(channelID); });
 
             // Add link to previous page
             
             await DiscordWrap.DiscordClient.ReactionAdd(dMessage, kce[11]);
-            rTasks[11] = new Task(async () => { await PluginListPage(channelID, privpage); });
+            rTasks[11] = new Task(async () => { await PluginListPage(channelID, privPage); });
 
             // Add reactions for each plugin listed
             //for (int i = 0; i < 5; i++)
@@ -355,7 +355,7 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
 
 
             // Update timestamp
-            openMenus[channelID] = new Helpmenu(channelID, openMenus[channelID].MessageID);
+            openMenus[channelID] = new HelpMenu(channelID, openMenus[channelID].MessageID);
         }
 
 
@@ -391,7 +391,7 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
                 foreach (string subKey in registeredCommands[key].Keys)
                 {
                     pluginName = registeredCommands[key][subKey].method.GetMethodInfo().DeclaringType.Name;
-                    commandList += $"> **{Program.CommandCharacter}{key} {subKey}** ```{registeredCommands[key][subKey].helptext}```{NL}";
+                    commandList += $"> **{Secrets.CommandCharacter}{key} {subKey}** ```{registeredCommands[key][subKey].helpText}```{NL}";
                 }
                 embedded.AddField(
                     name: $"Plugin: {pluginName}",
@@ -401,13 +401,13 @@ namespace MisfitBot_MKII.Extensions.CommandInterpreter
         }
 
         /// <summary>
-        /// All this does is clean up the references we have to help menus. ANy older then 300s will become inresponsive
+        /// All this does is clean up the references we have to help menus. Any older then 300s will become unresponsive
         /// </summary>
         /// <param name="minute"></param>
         private void OnMinuteTick(int minute)
         {
-            // flush old messages we cont have to repspond to anymore
-            foreach (KeyValuePair<ulong, Helpmenu> entry in openMenus.Where(p => p.Value.Timestamp < TimerStuff.Uptime - 300).ToList())
+            // flush old messages we cont have to respond to anymore
+            foreach (KeyValuePair<ulong, HelpMenu> entry in openMenus.Where(p => p.Value.Timestamp < TimerStuff.Uptime - 300).ToList())
             {
                 openMenus.Remove(entry.Key);
             }

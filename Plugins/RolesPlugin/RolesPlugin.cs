@@ -27,7 +27,7 @@ namespace RolesPlugin
             RolesSettings settings = await Settings<RolesSettings>(bChan, PLUGINNAME);
             BotWideResponseArguments response = new BotWideResponseArguments(args);
             string message = $"```fix{System.Environment.NewLine}Admin/Broadcaster commands {System.Environment.NewLine}" +
-                                $"{Program.CommandCharacter}roles < Arguments >{System.Environment.NewLine}{System.Environment.NewLine}" +
+                                $"{CMC}roles < Arguments >{System.Environment.NewLine}{System.Environment.NewLine}" +
                                 $"Arguments....{System.Environment.NewLine}" +
                                 $"role add/edit/remove -> manage the roles that should be used.{System.Environment.NewLine}{System.Environment.NewLine}" +
                                 $"Roles : {settings.Roles()}{System.Environment.NewLine}{System.Environment.NewLine}" +
@@ -53,7 +53,7 @@ namespace RolesPlugin
             {
                 if (args.arguments.Count < 4)
                 {
-                    response.message = $"Not enough arguments. Use \"{CMC}roles role add <NameofDiscordrole> <NameofEmote>\" as syntax.";
+                    response.message = $"Not enough arguments. Use \"{CMC}roles role add <NameofDiscordRole> <NameofEmote>\" as syntax.";
                     Respond(bChan, response);
                     return;
                 }
@@ -253,13 +253,13 @@ namespace RolesPlugin
             if (!settings._active) { return; }
             if (args.arguments.Count < 3)
             {
-                response.message = $"Not enough arguments. Use \"{CMC}roles mark <DiscordMessageID> <topic>\" as syntax. Get The ID by rightclicking the message when your Discordclient has developer mode turned on in advanced settings.";
+                response.message = $"Not enough arguments. Use \"{CMC}roles mark <DiscordMessageID> <topic>\" as syntax. Get The ID by right clicking the message when your Discord client has developer mode turned on in advanced settings.";
                 Respond(bChan, response);
                 return;
             }
             if (!settings.Topics.Exists(p => p.TopicName == args.arguments[2]))
             {
-                response.message = $"Can't find that topic. Doublecheck that it exist and you spelled it right.";
+                response.message = $"Can't find that topic. Double check that it exist and you spelled it right.";
                 Respond(bChan, response);
                 return;
             }
@@ -397,7 +397,7 @@ namespace RolesPlugin
         private async void OnDiscordReactionAdded(BotChannel bChan, UserEntry user, DiscordReactionArgument args)
         {
             // Ignore self reaction
-            string botName = Program.BotNameTwitch;
+            string botName = "JuanTheBot";
             if (user.discordUsername != botName)
             {
                 RolesSettings settings = await Settings<RolesSettings>(bChan, PLUGINNAME);
@@ -420,7 +420,7 @@ namespace RolesPlugin
         private async void OnDiscordReactionRemoved(BotChannel bChan, UserEntry user, DiscordReactionArgument args)
         {
             // Ignore self reaction
-            string botName = Program.BotNameTwitch;
+            string botName = "JuanTheBot";
             if (user.discordUsername != botName)
             {
                 RolesSettings settings = await Settings<RolesSettings>(bChan, PLUGINNAME);
@@ -439,10 +439,7 @@ namespace RolesPlugin
         }
         #endregion
         #region Unused Interface compliance
-        public override void OnSecondTick(int seconds)
-        {
 
-        }
         public override void OnMinuteTick(int minutes)
         {
 

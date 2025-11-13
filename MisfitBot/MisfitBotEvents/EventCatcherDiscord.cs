@@ -167,14 +167,14 @@ private async Task GuildMemberUpdated(Cacheable<SocketGuildUser, ulong> current,
 
 
 
-            if (msg.Content[0] == Program.CommandCharacter)
+            if (msg.Content[0].ToString() == Secrets.CommandCharacter)
             {
                 List<string> args = new List<string>();
                 args.AddRange(msg.Content.Split(' '));
                 string cmd = args[0];
                 cmd = cmd.Remove(0, 1);
                 args.RemoveAt(0);
-                Program.BotEvents.RaiseOnCommandRecieved(new BotWideCommandArguments()
+                Program.BotEvents.RaiseOnCommandReceived(new BotWideCommandArguments()
                 {
                     source = MESSAGESOURCE.DISCORD,
                     channelID = msg.Channel.Id,

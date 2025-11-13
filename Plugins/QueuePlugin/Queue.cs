@@ -264,7 +264,7 @@ namespace QueuePlugin
             throw new NotImplementedException();
         }
 
-        public override async void OnSecondTick(int seconds)
+        public override async void OnSecondTick(object sender, int seconds)
         {
             foreach (string key in _queues.Keys)
             {

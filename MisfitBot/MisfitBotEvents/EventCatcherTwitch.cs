@@ -2,6 +2,8 @@ using TwitchLib.Client.Events;
 using TwitchLib.Client.Interfaces;
 using TwitchLib.Communication.Events;
 using MisfitBot_MKII.Statics;
+using System.Threading.Tasks;
+using System;
 
 namespace MisfitBot_MKII.MisfitBotEvents
 {
@@ -9,85 +11,88 @@ namespace MisfitBot_MKII.MisfitBotEvents
     {
         internal EventCatcherTwitch(ITwitchClient client, bool doLog)
         {
-            client.OnChannelStateChanged += TwitchChannelStateChanged;
-            client.OnChatCleared += TwitchOnChatCleared;
-            client.OnChatColorChanged += TwitchOnChatColorChanged;
-            client.OnChatCommandReceived += TwitchOnChatCommandRecieved;
+            client.OnChatCommandReceived += TwitchOnChatCommandReceived;
             client.OnConnected += TwitchOnConnected;
             client.OnConnectionError += TwitchOnConnectionError;
             client.OnDisconnected += OnDisconnected;
             client.OnError += TwitchOnError;
+
+
+            //client.OnChannelStateChanged += TwitchChannelStateChanged;
+            //client.OnChatCleared += TwitchOnChatCleared;
+
             client.OnExistingUsersDetected += TwitchOnExistingUsersDetected; // Maybe only the twitch user extension should listen to this
-            //client.OnHostingStarted
-            //client.OnHostingStopped
-            //client.OnHostLeft
             client.OnIncorrectLogin += TwitchOnIncorrectLogin;
-            client.OnJoinedChannel += TwitchOnJoinedChannel;
-            client.OnLeftChannel += TwitchOnLeftChannel;
-            if (doLog) { client.OnLog += OnLog; }
-            client.OnMessageCleared += TwitchOnMessageCleared;
-            client.OnMessageReceived += OnMessageReceived;
-            client.OnMessageSent += TwitchOnMessageSent;
+            //client.OnJoinedChannel += TwitchOnJoinedChannel;
+            //client.OnLeftChannel += TwitchOnLeftChannel;
+            //client.OnMessageCleared += TwitchOnMessageCleared;
+            //client.OnMessageReceived += OnMessageReceived;
+            //client.OnMessageSent += TwitchOnMessageSent;
             client.OnMessageThrottled += TwitchOnMessageThrottled;
             //client.OnModeratorJoined
             //client.OnModeratorLeft
             //client.OnModeratorsReceived
             //client.OnNowHosting
-            client.OnRaidNotification += OnRaidNotification;
-            client.OnReconnected += TwitchOnReconnect;
+            //client.OnRaidNotification += OnRaidNotification;
+            //client.OnReconnected += TwitchOnReconnect;
             //client.OnSendReceiveData
-            client.OnUserBanned += TwitchOnUserBanned;
-            client.OnUserJoined += TwitchOnUserJoined;
-            client.OnUserLeft += TwitchOnUserLeft;
+            //client.OnUserBanned += TwitchOnUserBanned;
+            //client.OnUserJoined += TwitchOnUserJoined;
+            //client.OnUserLeft += TwitchOnUserLeft;
             //client.OnUserStateChanged
             //client.OnUserTimedout
             //client.OnVIPsReceived
             //client.OnWhisperCommandReceived
-            client.OnWhisperReceived += TwitchWhisperReceived;
+            //client.OnWhisperReceived += TwitchWhisperReceived;
             //client.OnWhisperSent
-            client.OnWhisperThrottled += TwitchOnWhisperThrottled;
+            //client.OnWhisperThrottled += TwitchOnWhisperThrottled;
 
-            client.OnCommunitySubscription += TwitchOnCommunitySubscription;
-            client.OnGiftedSubscription += TwitchOnGiftedSubscription;
-            client.OnNewSubscriber += TwitchOnNewSubscriber;
-            client.OnReSubscriber += TwitchOnReSubscriber;
+            //client.OnCommunitySubscription += TwitchOnCommunitySubscription;
+            //client.OnGiftedSubscription += TwitchOnGiftedSubscription;
+            //client.OnNewSubscriber += TwitchOnNewSubscriber;
+            //client.OnReSubscriber += TwitchOnReSubscriber;
         }
-        private async void TwitchOnChatCommandRecieved(object sender, OnChatCommandReceivedArgs e)
-        {
-                if(e.Command.ChatMessage.IsMe){return;}
-                UserEntry usr = await Program.Users.GetUserByTwitchUserName(e.Command.ChatMessage.Username);
-                if (usr == null) return;
 
-                Program.BotEvents.RaiseOnCommandRecieved(new BotWideCommandArguments(){
-                    source = MESSAGESOURCE.TWITCH, 
-                    channel = e.Command.ChatMessage.Channel,
-                    isBroadcaster = e.Command.ChatMessage.IsBroadcaster,
-                    isModerator = e.Command.ChatMessage.IsModerator, 
-                    user = usr, 
-                    userDisplayName = e.Command.ChatMessage.DisplayName,
-                    command = e.Command.CommandText.ToLower(),
-                    message = e.Command.ChatMessage.Message,
-                    arguments = e.Command.ArgumentsAsList
-                });
+    
+
+        private async Task TwitchOnChatCommandReceived(object sender, OnChatCommandReceivedArgs e)
+        {
+            //if(e.Command.ChatMessage.IsMe){return;}
+            UserEntry usr = await Program.Users.GetUserByTwitchUserName(e.ChatMessage.Username);
+            if (usr == null) return;
+
+            Program.BotEvents.RaiseOnCommandReceived(new BotWideCommandArguments()
+            {
+                source = MESSAGESOURCE.TWITCH,
+                channel = e.ChatMessage.Channel,
+                isBroadcaster = e.ChatMessage.IsBroadcaster,
+                isModerator = e.ChatMessage.UserType == TwitchLib.Client.Enums.UserType.Moderator,
+                user = usr,
+                userDisplayName = e.ChatMessage.DisplayName,
+                command = e.Command.Name.ToLower(),
+                message = e.ChatMessage.Message,
+                arguments = e.Command.ArgumentsAsList
+            });
         }
 
         private async void TwitchOnMessageCleared(object sender, OnMessageClearedArgs e)
         {
             BotChannel bChan = await Program.Channels.GetTwitchChannelByName(e.Channel);
-            if(bChan != null) {
-                Program.BotEvents.RaiseonTwitchMessageCleared(bChan, e);
+            if (bChan != null)
+            {
+                Program.BotEvents.RaiseOnTwitchMessageCleared(bChan, e);
             }
         }
 
         private async void TwitchOnGiftedSubscription(object sender, OnGiftedSubscriptionArgs e)
         {
             BotChannel bChan = await Program.Channels.GetTwitchChannelByName(e.Channel);
-            Program.BotEvents.RaiseTwitchOnSubGift(bChan,  new TwitchSubGiftEventArguments(e));
+            Program.BotEvents.RaiseTwitchOnSubGift(bChan, new TwitchSubGiftEventArguments(e));
         }
-
-        private void TwitchChannelStateChanged(object sender, OnChannelStateChangedArgs e)
+/*
+        private async void TwitchChannelStateChanged(object sender, OnChannelStateChangedArgs e)
         {
-            /* Structure Example
+             Structure Example
                 "ChannelState": {
                     "BroadcasterLanguage": null,
                     "Channel": "munglo",
@@ -101,27 +106,14 @@ namespace MisfitBot_MKII.MisfitBotEvents
                     "SubOnly": false
                     },
                 "Channel": "munglo"
-            */
-        }
-
-
-
-        private void TwitchOnReconnect(object sender, OnReconnectedEventArgs e)
-        {
-            Core.LOG(new LogEntry(LOGSEVERITY.WARNING,
-                "EventCatcherTwitch",  
-                $"Twitch reconnect!"));
-        }
-
-        private void TwitchOnChatColorChanged(object sender, OnChatColorChangedArgs e)
-        {
-            // WTF! Look into this WHy just channel? Whne does it fire?
             
         }
+*/
 
-        private void TwitchOnError(object sender, OnErrorEventArgs e)
+
+        private async Task TwitchOnError(object sender, OnErrorEventArgs e)
         {
-            Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "EventCatcherTwitch",  
+            await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "EventCatcherTwitch",
                 $"Twitch Error! {e.Exception.Message}"));
         }
 
@@ -130,21 +122,22 @@ namespace MisfitBot_MKII.MisfitBotEvents
             await Program.BotEvents.RaiseOnTwitchMessageSent(e.SentMessage.Channel, e.SentMessage.Message);
         }
 
-        private void TwitchOnIncorrectLogin(object sender, OnIncorrectLoginArgs e)
+        private async Task TwitchOnIncorrectLogin(object sender, OnIncorrectLoginArgs e)
         {
-            Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "EventCatcherTwitch",  
+            await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "EventCatcherTwitch",
                 $"Twitch login failed! {e.Exception.Message}"));
         }
 
-        private void TwitchOnMessageThrottled(object sender, OnMessageThrottledEventArgs e)
+
+        private async Task TwitchOnMessageThrottled(object sender, TwitchLib.Client.Events.OnMessageThrottledArgs e)
         {
-            Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "EventCatcherTwitch",  $"Twitch Message Throttled!! {e.AllowedInPeriod}:Allowed {e.Period}:Period {e.SentMessageCount}:sent count"));
+            await Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "EventCatcherTwitch", $"Twitch Message Throttled!! {e.AllowedInPeriod}:Allowed {e.Period}:Period"));
         }
 
-        private void TwitchOnWhisperThrottled(object sender, OnWhisperThrottledEventArgs e)
-        {
-            Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "EventCatcherTwitch",  $"Twitch Whisper Throttled!! {e.AllowedInPeriod}:Allowed {e.Period}:Period {e.SentWhisperCount}:sent count"));
-        }
+        //private void TwitchOnWhisperThrottled(object sender, OnWhisperThrottledEventArgs e)
+        //{
+        //    Core.LOG(new LogEntry(LOGSEVERITY.WARNING, "EventCatcherTwitch", $"Twitch Whisper Throttled!! {e.AllowedInPeriod}:Allowed {e.Period}:Period {e.SentWhisperCount}:sent count"));
+        //}
 
         private async void TwitchWhisperReceived(object sender, OnWhisperReceivedArgs e)
         {
@@ -154,7 +147,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
         private async void TwitchOnCommunitySubscription(object sender, OnCommunitySubscriptionArgs e)
         {
             BotChannel bChan = await Program.Channels.GetTwitchChannelByName(e.Channel);
-            await Program.BotEvents.RaiseTwitchOnCommunitySubscription(bChan, e.GiftedSubscription.SystemMsgParsed);
+            //await Program.BotEvents.RaiseTwitchOnCommunitySubscription(bChan, e.GiftedSubscription.SystemMsgParsed);
         }
 
         private async void TwitchOnLeftChannel(object sender, OnLeftChannelArgs e)
@@ -178,7 +171,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void TwitchOnExistingUsersDetected(object sender, OnExistingUsersDetectedArgs e)
+        private async Task TwitchOnExistingUsersDetected(object sender, OnExistingUsersDetectedArgs e)
         {
             TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse userList = await Program.Users.GetUsersByTwitchUsernamesFromAPI(e.Users);
             foreach (TwitchLib.Api.Helix.Models.Users.GetUsers.User user in userList.Users)
@@ -225,17 +218,18 @@ namespace MisfitBot_MKII.MisfitBotEvents
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void TwitchOnConnected(object sender, OnConnectedArgs e)
+        private async Task TwitchOnConnected(object sender, TwitchLib.Client.Events.OnConnectedEventArgs e)
         {
-            await Program.BotEvents.RaiseOnTwitchConnected(e.AutoJoinChannel);
+            await Core.LogInfo("EventCatcherTwitch", $"TwitchOnConnected as [{e.BotUsername}]");
+            await Program.BotEvents.RaiseOnTwitchConnected();
         }
         /// <summary>
-        /// Fires when twitch client gets an errror I guess
+        /// Fires when twitch client gets an error I guess
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         /// <returns></returns>
-        private async void TwitchOnConnectionError(object sender, OnConnectionErrorArgs e)
+        private async Task TwitchOnConnectionError(object sender, OnConnectionErrorArgs e)
         {
             await Program.BotEvents.RaiseOnTwitchConnectionError(e.ToString());
         }
@@ -245,22 +239,12 @@ namespace MisfitBot_MKII.MisfitBotEvents
         /// <param name="sender"></param>
         /// <param name="e"></param>
         /// <returns></returns>
-        private async void OnDisconnected(object sender, TwitchLib.Communication.Events.OnDisconnectedEventArgs e)
+        private async Task OnDisconnected(object sender, OnDisconnectedArgs e)
         {
             await Program.BotEvents.RaiseOnTwitchDisconnected(e.ToString());
         }
         /// <summary>
-        /// Just grab log output from Twitch client.await Only used if start argument logtwitch is given.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        /// <returns></returns>
-        private async void OnLog(object sender, OnLogArgs e)
-        {
-            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "EventCatcherTwitch", $"LOG:{e.Data}"));
-        }
-        /// <summary>
-        /// Reformats any message recieved and raises the botwide event.
+        /// Reformats any message received and raises the botWide event.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -287,7 +271,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
             Program.BotEvents.RaiseRaidEvent(bChan, new RaidEventArguments(e.RaidNotification.DisplayName, e.Channel, i));
         }
         /// <summary>
-        /// Reformats and raise a botwide event when a twitch user is banned
+        /// Reformats and raise a botWide event when a twitch user is banned
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -302,7 +286,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
                 BannedUser,
                 Core.CurrentTime,
                 0,
-                e.UserBan.BanReason,
+                "NotSet",
                 true
                 );
             Program.BotEvents.RaiseBanEvent(banEvent);

@@ -5,15 +5,14 @@ using System.Threading.Tasks;
 
 namespace MisfitBot_MKII
 {
-    public delegate void SecondTick(int second);
     public delegate void MinuteTick(int minute);
     /// <summary>
     /// This class creates and fires events on every second and minute.
     /// </summary>
     public class TimerStuff
     {
+        static public event EventHandler<int> OnSecondTick;
         static private System.Threading.Timer seconds;
-        static public SecondTick OnSecondTick;
         private static int _secondsFromStart = 0;
         static public int Uptime { get { return _secondsFromStart; } private set { } }
         static public MinuteTick OnMinuteTick;
@@ -32,10 +31,10 @@ namespace MisfitBot_MKII
         private void ProcessTimerEvent(object obj)
         {
             _secondsFromStart++;
-            //if(OnSecondTick != null)
-            //{
-                OnSecondTick?.Invoke(_secondsFromStart);
-            //}
+            if(OnSecondTick is not null)
+            {
+                OnSecondTick?.Invoke(this, _secondsFromStart);
+            }
             if(_secondsFromStart % 60 == 0)
             {
                 OnMinuteTick?.Invoke(_secondsFromStart / 60);

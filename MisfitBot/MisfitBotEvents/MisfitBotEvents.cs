@@ -137,7 +137,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
         {
             OnMessageReceived?.Invoke(args);
         }
-        internal void RaiseOnCommandRecieved(BotWideCommandArguments args)
+        internal void RaiseOnCommandReceived(BotWideCommandArguments args)
         {
             OnCommandReceived?.Invoke(args);
         }
@@ -165,7 +165,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
             }
         }
 
-        internal async void RaiseonTwitchMessageCleared(BotChannel bChan, OnMessageClearedArgs e)
+        internal async void RaiseOnTwitchMessageCleared(BotChannel bChan, OnMessageClearedArgs e)
         {
             await Task.Run(()=>{
                     OnTwitchMessageCleared?.Invoke(bChan, e);
@@ -194,15 +194,14 @@ namespace MisfitBot_MKII.MisfitBotEvents
         }
         internal async Task RaiseTwitchOnChannelJoined(string channel, string botname)
         {
-            if(Program.BotNameTwitch == botname){return;}
             await Task.Run(()=>{
                 OnTwitchChannelJoined?.Invoke(channel, botname);
             });
         }
         #region Twitch raisers pass 1
-        internal async Task RaiseOnTwitchConnected(string msg)
+        internal async Task RaiseOnTwitchConnected()
         {
-            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Events", "Twitch Connected: " + msg));
+            await Core.LOG(new LogEntry(LOGSEVERITY.INFO, "Events", "Twitch Connected"));
             OnTwitchConnected?.Invoke();
         }
 
@@ -222,7 +221,7 @@ namespace MisfitBot_MKII.MisfitBotEvents
         }
         internal async Task RaiseOnTwitchDisconnected(string msg)
         {
-            await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "Events", "Twitch Disconnected: " + msg));
+            await Core.LOG(new LogEntry(LOGSEVERITY.ERROR, "Events", "Twitch Disconnected ASDASD: " + msg));
             OnTwitchDisconnected?.Invoke();
         }
         #endregion

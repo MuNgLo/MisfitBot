@@ -33,7 +33,7 @@ namespace QueuePlugin
             return Core.CurrentTime > _tsLastAnnounce + _announceTimer;
         }
 
-        internal string Announce(Char CMC)
+        internal string Announce(string CMC)
         {
             string tail = string.Empty;
             if(_msgSinceLastAnnounce < 10){return null;}
